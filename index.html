@@ -1,8 +1,8 @@
-
-
 import smtplib
 import os
 import json
+import time
+import threading
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -10,1174 +10,198 @@ from email.mime.base import MIMEBase
 from email import encoders
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
 import schedule
-import time
-import threading
 from flask import Flask, request, jsonify, render_template_string
 
+
 class StoryAssessmentEmailSystem:
-def **init**(self):
-# Email configuration - UPDATE THESE WITH YOUR CREDENTIALS
-self.smtp_server = “smtp.gmail.com”  # Change if using different provider
-self.smtp_port = 587
-self.sender_email = “your_email@gmail.com”  # Your email
-self.sender_password = “your_app_password”  # Your app password
-self.admin_email = “sanphatsamura@gmail.com”  # Email to receive daily reports
+    def __init__(self):
+        # Email configuration - UPDATE THESE WITH YOUR CREDENTIALS
+        self.smtp_server = "smtp.gmail.com"
+        self.smtp_port = 587
+        self.sender_email = "your_email@gmail.com"  # Your email
+        self.sender_password = "your_app_password"  # Your Gmail App Password
+        self.admin_email = "sanphatsamura@gmail.com"
 
-```
-    # File to store email list
-    self.email_list_file = "email_list.json"
-    
-    # Website URL
-    self.website_url = "https://samurainoi.github.io/Personal-Narrative-Assessment-Tool-Application/"
-    
-    # Load existing email list
-    self.load_email_list()
-    
-def load_email_list(self):
-    """Load email list from file"""
-    try:
-        with open(self.email_list_file, 'r') as f:
-            self.email_list = json.load(f)
-    except FileNotFoundError:
-        self.email_list = []
+        # File to store email list
+        self.email_list_file = "email_list.json"
 
-def save_email_list(self):
-    """Save email list to file"""
-    with open(self.email_list_file, 'w') as f:
-        json.dump(self.email_list, f, indent=2)
+        # Website URL
+        self.website_url = "https://samurainoi.github.io/Personal-Narrative-Assessment-Tool-Application/"
 
-def add_email_to_list(self, email):
-    """Add email to the list with timestamp"""
-    email_entry = {
-        "email": email,
-        "timestamp": datetime.now().isoformat(),
-        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    }
-    self.email_list.append(email_entry)
-    self.save_email_list()
+        # Load existing email list
+        self.load_email_list()
 
-def setup_chrome_driver(self):
-    """Setup Chrome driver for screenshot"""
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--window-size=1920,1080")
-    
-    # You may need to specify the path to chromedriver
-    # service = Service('/path/to/chromedriver')  # Uncomment and update path if needed
-    
-    try:
-        driver = webdriver.Chrome(options=chrome_options)
-        return driver
-    except Exception as e:
-        print(f"Error setting up Chrome driver: {e}")
-        return None
+    def load_email_list(self):
+        """Load email list from JSON"""
+        try:
+            with open(self.email_list_file, 'r') as f:
+                self.email_list = json.load(f)
+        except FileNotFoundError:
+            self.email_list = []
 
-def take_screenshot(self):
-    """Take a screenshot of the website"""
-    driver = self.setup_chrome_driver()
-    if not driver:
-        return None
-    
-    try:
-        driver.get(self.website_url)
-        time.sleep(5)  # Wait for page to load completely
-        
-        # Get full page height
-        total_height = driver.execute_script("return document.body.scrollHeight")
-        driver.set_window_size(1920, total_height)
-        
-        screenshot_filename = f"story_assessment_screenshot_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
-        driver.save_screenshot(screenshot_filename)
-        
-        return screenshot_filename
-    except Exception as e:
-        print(f"Error taking screenshot: {e}")
-        return None
-    finally:
-        driver.quit()
+    def save_email_list(self):
+        """Save email list to JSON"""
+        with open(self.email_list_file, 'w') as f:
+            json.dump(self.email_list, f, indent=2)
 
-def send_screenshot_email(self, recipient_email):
-    """Send screenshot to user email"""
-    try:
-        # Take screenshot
-        screenshot_file = self.take_screenshot()
-        if not screenshot_file:
+    def add_email_to_list(self, email):
+        """Add email entry with timestamp"""
+        email_entry = {
+            "email": email,
+            "timestamp": datetime.now().isoformat(),
+            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        self.email_list.append(email_entry)
+        self.save_email_list()
+
+    def setup_chrome_driver(self):
+        """Setup Chrome driver"""
+        chrome_options = Options()
+        chrome_options.add_argument("--headless=new")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--window-size=1920,1080")
+        try:
+            driver = webdriver.Chrome(options=chrome_options)
+            return driver
+        except Exception as e:
+            print(f"Error setting up Chrome driver: {e}")
+            return None
+
+    def take_screenshot(self):
+        """Take screenshot of website"""
+        driver = self.setup_chrome_driver()
+        if not driver:
+            return None
+        try:
+            driver.get(self.website_url)
+            time.sleep(5)
+            total_height = driver.execute_script("return document.body.scrollHeight")
+            driver.set_window_size(1920, total_height)
+            screenshot_filename = f"story_assessment_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+            driver.save_screenshot(screenshot_filename)
+            return screenshot_filename
+        except Exception as e:
+            print(f"Error taking screenshot: {e}")
+            return None
+        finally:
+            driver.quit()
+
+    def send_screenshot_email(self, recipient_email):
+        """Send screenshot to user"""
+        try:
+            screenshot_file = self.take_screenshot()
+            if not screenshot_file:
+                return False
+
+            self.add_email_to_list(recipient_email)
+
+            msg = MIMEMultipart()
+            msg['From'] = self.sender_email
+            msg['To'] = recipient_email
+            msg['Subject'] = "Your Story Assessment Results"
+
+            body = f"""
+            Hello,
+
+            Thank you for completing the Story Assessment.
+            Please find your complete assessment screenshot attached.
+
+            Website: {self.website_url}
+            Completed on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+            Regards,  
+            Story Assessment Team
+            """
+            msg.attach(MIMEText(body, 'plain'))
+
+            with open(screenshot_file, "rb") as attachment:
+                part = MIMEBase('application', 'octet-stream')
+                part.set_payload(attachment.read())
+                encoders.encode_base64(part)
+                part.add_header('Content-Disposition', f'attachment; filename={screenshot_file}')
+                msg.attach(part)
+
+            server = smtplib.SMTP(self.smtp_server, self.smtp_port)
+            server.starttls()
+            server.login(self.sender_email, self.sender_password)
+            server.sendmail(self.sender_email, recipient_email, msg.as_string())
+            server.quit()
+
+            os.remove(screenshot_file)
+            print(f"Sent Story Assessment screenshot to {recipient_email}")
+            return True
+
+        except Exception as e:
+            print(f"Error sending email: {e}")
             return False
-        
-        # Add email to our list
-        self.add_email_to_list(recipient_email)
-        
-        # Create message
-        msg = MIMEMultipart()
-        msg['From'] = self.sender_email
-        msg['To'] = recipient_email
-        msg['Subject'] = "Your Personal Narrative Assessment Tool Results"
-        
-        # Email body
-        body = f"""
-        Hello!
-        
-        Thank you for completing the Story Assessment - your behavioral narrative patterns analysis.
-        
-        Please find your complete assessment screenshot attached, showing your results across all four quadrants:
-        • North: Belonging Story (Institution vs Outsider)
-        • East: Strategy Story (Internal Politics)  
-        • South: Innovation Story (Individual vs Institution)
-        • West: Boundary Story (Individual vs Cosmos)
-        
-        Original Website: {self.website_url}
-        Assessment completed on: {datetime.now().strftime('%Y-%m-%d at %H:%M:%S')}
-        
-        Your personalized insights, archetype analysis, and recommendations are preserved in this screenshot for your reference.
-        
-        Thank you for exploring your story with us!
-        
-        Best regards,
-        Story Assessment Team
-        """
-        
-        msg.attach(MIMEText(body, 'plain'))
-        
-        # Attach screenshot
-        with open(screenshot_file, "rb") as attachment:
-            part = MIMEBase('application', 'octet-stream')
-            part.set_payload(attachment.read())
-            encoders.encode_base64(part)
-            part.add_header(
-                'Content-Disposition',
-                f'attachment; filename= {screenshot_file}',
-            )
-            msg.attach(part)
-        
-        # Send email
-        server = smtplib.SMTP(self.smtp_server, self.smtp_port)
-        server.starttls()
-        server.login(self.sender_email, self.sender_password)
-        text = msg.as_string()
-        server.sendmail(self.sender_email, recipient_email, text)
-        server.quit()
-        
-        # Clean up screenshot file
-        os.remove(screenshot_file)
-        
-        print(f"Story Assessment screenshot sent successfully to {recipient_email}")
-        return True
-        
-    except Exception as e:
-        print(f"Error sending screenshot email: {e}")
-        return False
 
-def send_daily_report(self):
-    """Send daily email list to admin"""
-    try:
-        # Get emails from the past day
-        day_ago = datetime.now() - timedelta(days=1)
-        recent_emails = [
-            entry for entry in self.email_list 
-            if datetime.fromisoformat(entry['timestamp']) >= day_ago
-        ]
-        
-        # Create message
-        msg = MIMEMultipart()
-        msg['From'] = self.sender_email
-        msg['To'] = self.admin_email
-        msg['Subject'] = f"Story Assessment Daily Report - {datetime.now().strftime('%Y-%m-%d')}"
-        
-        # Email body
-        body = f"""
-        Story Assessment Daily Email Report
-        ===================================
-        
-        Report Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-        Website: {self.website_url}
-        
-        New assessments completed in the past 24 hours: {len(recent_emails)}
-        Total email addresses collected: {len(self.email_list)}
-        
-        New Email Addresses (Past 24 Hours):
-        {'-' * 50}
-        """
-        
-        if recent_emails:
-            for entry in recent_emails:
-                body += f"Email: {entry['email']}\nCompleted: {entry['date']}\n{'-' * 50}\n"
-        else:
-            body += "No new assessments completed in the past 24 hours.\n"
-        
-        body += f"""
-        
-        All Email Addresses in Database:
-        {'-' * 50}
-        """
-        
-        for entry in self.email_list:
-            body += f"Email: {entry['email']}\nDate: {entry['date']}\n{'-' * 50}\n"
-        
-        body += f"""
-        
-        Summary:
-        - Total unique users who completed the Story Assessment: {len(self.email_list)}
-        - Average assessments per day (last 7 days): {len([e for e in self.email_list if datetime.fromisoformat(e['timestamp']) >= datetime.now() - timedelta(days=7)]) / 7:.1f}
-        
-        This report is automatically generated daily at 8:00 PM.
-        """
-        
-        msg.attach(MIMEText(body, 'plain'))
-        
-        # Send email
-        server = smtplib.SMTP(self.smtp_server, self.smtp_port)
-        server.starttls()
-        server.login(self.sender_email, self.sender_password)
-        text = msg.as_string()
-        server.sendmail(self.sender_email, self.admin_email, text)
-        server.quit()
-        
-        print(f"Daily Story Assessment report sent to {self.admin_email}")
-        return True
-        
-    except Exception as e:
-        print(f"Error sending daily report: {e}")
-        return False
+    def send_daily_report(self):
+        """Send daily report to admin"""
+        try:
+            day_ago = datetime.now() - timedelta(days=1)
+            recent_emails = [
+                entry for entry in self.email_list
+                if datetime.fromisoformat(entry['timestamp']) >= day_ago
+            ]
 
-def schedule_daily_reports(self):
-    """Schedule daily reports to be sent every day at 8:00 PM"""
-    schedule.every().day.at("20:00").do(self.send_daily_report)
-    
-    def run_scheduler():
-        while True:
-            schedule.run_pending()
-            time.sleep(60)  # Check every minute
-    
-    # Run scheduler in a separate thread
-    scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
-    scheduler_thread.start()
-    print("Daily report scheduler started (Every day at 8:00 PM)")
-    print(f"Reports will be sent to: {self.admin_email}")
-```
+            msg = MIMEMultipart()
+            msg['From'] = self.sender_email
+            msg['To'] = self.admin_email
+            msg['Subject'] = f"Daily Story Assessment Report - {datetime.now().strftime('%Y-%m-%d')}"
 
-# Flask web application with your V13 HTML
+            body = f"Daily Report\n\nNew emails: {len(recent_emails)}\nTotal: {len(self.email_list)}\n"
+            for e in recent_emails:
+                body += f"\n{e['email']} at {e['date']}"
 
-app = Flask(**name**)
+            msg.attach(MIMEText(body, 'plain'))
+
+            server = smtplib.SMTP(self.smtp_server, self.smtp_port)
+            server.starttls()
+            server.login(self.sender_email, self.sender_password)
+            server.sendmail(self.sender_email, self.admin_email, msg.as_string())
+            server.quit()
+
+            print(f"Daily report sent to {self.admin_email}")
+            return True
+        except Exception as e:
+            print(f"Error sending daily report: {e}")
+            return False
+
+    def schedule_daily_reports(self):
+        """Run scheduler for reports at 8pm daily"""
+        schedule.every().day.at("20:00").do(self.send_daily_report)
+
+        def run_scheduler():
+            while True:
+                schedule.run_pending()
+                time.sleep(60)
+
+        thread = threading.Thread(target=run_scheduler, daemon=True)
+        thread.start()
+        print("Daily scheduler started")
+
+
+# -----------------------------
+# Flask Web App
+# -----------------------------
+app = Flask(__name__)
 email_system = StoryAssessmentEmailSystem()
 
-# Your complete V13 HTML template
-
-HTML_TEMPLATE = “””<!DOCTYPE html>
-
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Story Assessment Combined</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/compromise/14.10.0/compromise.min.js"></script>
-    <style>
-        /* --- CSS from V6/V9, unchanged --- */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0c29 100%);
-            min-height: 100vh;
-            color: #fff;
-            overflow-x: hidden;
-        }
-        .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
-        .star { position: absolute; width: 2px; height: 2px; background: rgba(255, 255, 255, 0.8); border-radius: 50%; animation: twinkle 3s infinite; }
-        @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
-        .container { position: relative; z-index: 10; max-width: 414px; margin: 0 auto; min-height: 100vh; background: rgba(0, 0, 0, 0.3); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .header { text-align: center; padding: 40px 20px 30px; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%); backdrop-filter: blur(30px); border-bottom: 1px solid rgba(255,255,255,0.1);}
-        .header h1 { font-size: 2.2rem; font-weight: 300; margin-bottom: 8px; background: linear-gradient(135deg, #fff 0%, #a8edea 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;}
-        .header .subtitle { font-size: 0.95rem; opacity: 0.7; font-weight: 300; letter-spacing: 0.5px;}
-        .main-content { padding: 20px;}
-        .question-section { display: none; animation: slideIn 0.8s cubic-bezier(0.25,0.46,0.45,0.94);}
-        .question-section.active { display: block;}
-        @keyframes slideIn { from{opacity:0;transform:translateY(30px);} to{opacity:1;transform:translateY(0);} }
-        .quadrant-header { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 25px 20px; margin-bottom: 25px; text-align: center; backdrop-filter: blur(20px);}
-        .quadrant-icon { font-size: 3.5rem; margin-bottom: 15px; display: block;}
-        .quadrant-title { font-size: 1.4rem; font-weight: 600; margin-bottom: 8px; background: linear-gradient(135deg, #fff 0%, #a8edea 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
-        .quadrant-subtitle { font-size: 0.9rem; opacity: 0.7; font-weight: 300;}
-        .question { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin-bottom: 20px; backdrop-filter: blur(20px);}
-        .question h3 { font-size: 1.1rem; font-weight: 500; margin-bottom: 15px; line-height: 1.4; color: rgba(255,255,255,0.9);}
-        .question textarea { width: 100%; min-height: 100px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 15px; font-size: 0.95rem; font-family: inherit; color: #fff; resize: vertical; transition: all 0.3s ease;}
-        .question textarea::placeholder { color: rgba(255,255,255,0.5);}
-        .question textarea:focus { outline: none; border-color: rgba(168,237,234,0.5); box-shadow: 0 0 20px rgba(168,237,234,0.2); background: rgba(255,255,255,0.12);}
-        .progress-container { padding: 0 20px 20px;}
-        .progress-bar { width: 100%; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;}
-        .progress-fill { height: 100%; background: linear-gradient(90deg, #a8edea, #fed6e3); border-radius: 2px; transition: width 0.6s cubic-bezier(0.25,0.46,0.45,0.94);}
-        .nav-buttons { display: flex; justify-content: space-between; padding: 20px; gap: 15px;}
-        .btn { flex: 1; padding: 16px; border: none; border-radius: 25px; font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(20px); letter-spacing: 0.3px;}
-        .btn-primary { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #1a1a2e; border: none;}
-        .btn-primary:hover, .btn-primary:active { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(168,237,234,0.3);}
-        .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2);}
-        .btn-secondary:hover, .btn-secondary:active { background: rgba(255,255,255,0.15);}
-        .intro-screen { padding: 20px; text-align: center;}
-        .intro-screen.hidden { display: none;}
-        .intro-title { font-size: 1.8rem; font-weight: 300; margin-bottom: 20px; background: linear-gradient(135deg, #fff 0%, #a8edea 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
-        .intro-text { font-size: 0.95rem; line-height: 1.6; opacity: 0.8; margin-bottom: 30px;}
-        .quadrant-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 30px 0;}
-        .mini-quadrant { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; text-align: center; backdrop-filter: blur(20px);}
-        .mini-quadrant-icon { font-size: 2.5rem; margin-bottom: 10px; display: block;}
-        .mini-quadrant h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 5px; color: rgba(255,255,255,0.9);}
-        .mini-quadrant p { font-size: 0.8rem; opacity: 0.6;}
-        .results { display: none; padding: 20px;}
-        .results.active { display: block; animation: slideIn 0.8s ease;}
-        .results-header { text-align: center; margin-bottom: 30px; padding: 25px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; backdrop-filter: blur(20px);}
-        .results-title { font-size: 1.6rem; font-weight: 300; margin-bottom: 10px; background: linear-gradient(135deg, #fff 0%, #a8edea 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
-        .quadrant-result { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin-bottom: 20px; backdrop-filter: blur(20px);}
-        .result-header { display: flex; align-items: center; margin-bottom: 15px;}
-        .result-icon { font-size: 2rem; margin-right: 15px;}
-        .result-info h4 { font-size: 1.1rem; font-weight: 600; margin-bottom: 5px; color: rgba(255,255,255,0.9);}
-        .result-score { font-size: 0.9rem; opacity: 0.7;}
-        .strength-meter { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin: 15px 0;}
-        .strength-fill { height: 100%; background: linear-gradient(90deg, #a8edea, #fed6e3); border-radius: 3px; transition: width 1.5s cubic-bezier(0.25,0.46,0.45,0.94);}
-        .result-description { font-size: 0.95rem; line-height: 1.5; opacity: 0.8; margin-bottom: 15px;}
-        .personalized-insights { background: rgba(168,237,234,0.1); border: 1px solid rgba(168,237,234,0.2); border-radius: 12px; padding: 20px; margin-top: 15px;}
-        .insight-section { margin-bottom: 15px;}
-        .insight-section:last-child { margin-bottom: 0;}
-        .insight-section h5 { font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; color: #a8edea; display: flex; align-items: center; gap: 8px;}
-        .insight-section p { font-size: 0.9rem; line-height: 1.4; opacity: 0.9;}
-        .email-capture { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin: 20px 0; text-align: center; backdrop-filter: blur(20px);}
-        .email-capture h3 { font-size: 1.1rem; margin-bottom: 15px; color: rgba(255,255,255,0.9);}
-        .email-capture input { padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: #fff; font-size: 1rem; margin-right: 10px; width: 200px;}
-        .email-capture input::placeholder { color: rgba(255,255,255,0.5);}
-        .email-capture input:focus { outline: none; border-color: rgba(168,237,234,0.5); box-shadow: 0 0 10px rgba(168,237,234,0.2);}
-        .final-note { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin-top: 20px; text-align: center; backdrop-filter: blur(20px);}
-        .final-note h4 { font-size: 1.1rem; font-weight: 500; margin-bottom: 10px; color: rgba(255,255,255,0.9);}
-        .final-note p { font-size: 0.9rem; line-height: 1.5; opacity: 0.7; margin-bottom: 15px;}
-        @media (max-width: 375px) {
-            .header h1 { font-size: 1.9rem;}
-            .quadrant-icon { font-size: 3rem;}
-            .mini-quadrant-icon { font-size: 2rem;}
-        }
-        ul { margin:0 0 15px 20px; padding:0;}
-        .archetype-extras ul {margin-bottom:15px;}
-        .archetypeQuestion {
-            width: 100%;
-            min-height: 60px;
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 8px;
-            padding: 10px;
-            font-size: 0.9rem;
-            font-family: inherit;
-            color: #fff;
-            resize: vertical;
-            margin-bottom: 10px;
-        }
-        .archetypeQuestion::placeholder {
-            color: rgba(255,255,255,0.5);
-        }
-        .archetypeQuestion:focus {
-            outline: none;
-            border-color: rgba(168,237,234,0.5);
-            background: rgba(255,255,255,0.12);
-        }
-        .archetypeAskBtn {
-            padding: 8px 16px;
-            margin: 0;
-            font-size: 0.9rem;
-        }
-        .archetypeAnswer {
-            margin-top: 10px;
-            color: #a8edea;
-            font-size: 0.9rem;
-            line-height: 1.4;
-            padding: 10px;
-            background: rgba(168,237,234,0.1);
-            border-radius: 8px;
-            min-height: 20px;
-        }
-    </style>
-</head>
-<body>
-<div class="stars" id="stars"></div>
-<div class="container">
-    <div class="header">
-        <h1>✦ Story Assessment ✦</h1>
-        <div class="subtitle">Discover your behavioral narrative patterns</div>
-    </div>
-    <!-- Introduction Screen -->
-    <div class="intro-screen" id="intro">
-        <div class="main-content">
-            <h2 class="intro-title">Welcome to Your Story Assessment</h2>
-            <p class="intro-text">
-                Explore the four fundamental survival stories that drive human behavior. 
-                Discover how you navigate belonging, strategy, innovation, and boundary exploration.
-            </p>
-            <div class="quadrant-grid">
-                <div class="mini-quadrant">
-                    <div class="mini-quadrant-icon">🛡️</div>
-                    <h4>NORTH: BELONGING</h4>
-                    <p>Institution vs Outsider</p>
-                </div>
-                <div class="mini-quadrant">
-                    <div class="mini-quadrant-icon">♟</div>
-                    <h4>EAST: STRATEGY</h4>
-                    <p>Internal Politics</p>
-                </div>
-                <div class="mini-quadrant">
-                    <div class="mini-quadrant-icon">🔥</div>
-                    <h4>SOUTH: INNOVATION</h4>
-                    <p>Individual vs Institution</p>
-                </div>
-                <div class="mini-quadrant">
-                    <div class="mini-quadrant-icon">🌌</div>
-                    <h4>WEST: BOUNDARY</h4>
-                    <p>Individual vs Cosmos</p>
-                </div>
-            </div>
-            <p class="intro-text">
-                Take your time with each question. The more honest and detailed your responses, 
-                the more accurate your results will be.
-            </p>
-        </div>
-        <div class="nav-buttons">
-            <button class="btn btn-primary" onclick="startAssessment()">Begin Your Journey</button>
-        </div>
-    </div>
-    <!-- Progress Bar -->
-    <div class="progress-container" id="progressContainer" style="display:none;">
-        <div class="progress-bar">
-            <div class="progress-fill" id="progress" style="width:0%;"></div>
-        </div>
-    </div>
-    <!-- Assessment Sections -->
-    <div class="main-content" id="assessment" style="display:none;">
-        <!-- North Quadrant -->
-        <div class="question-section active" data-quadrant="north">
-            <div class="quadrant-header">
-                <div class="quadrant-icon">🛡️</div>
-                <div class="quadrant-title">North Quadrant: The Belonging Story</div>
-                <div class="quadrant-subtitle">Institution vs Outsider</div>
-            </div>
-            <div class="question">
-                <h3>How important is it for you to feel accepted and appreciated by your group or community?</h3>
-                <textarea id="north1" placeholder="Think about times when you felt included vs excluded..."></textarea>
-            </div>
-            <div class="question">
-                <h3>Describe a situation where you went out of your way to get attention or recognition.</h3>
-                <textarea id="north2" placeholder="What drove you to seek that attention? What would have happened if no one noticed you?"></textarea>
-            </div>
-            <div class="question">
-                <h3>What does 'belonging' mean to you, and how do you know when you truly belong somewhere?</h3>
-                <textarea id="north3" placeholder="Think about the signs that tell you you're 'in' vs 'out' of a group..."></textarea>
-            </div>
-        </div>
-        <!-- East Quadrant -->
-        <div class="question-section" data-quadrant="east">
-            <div class="quadrant-header">
-                <div class="quadrant-icon">♟</div>
-                <div class="quadrant-title">East Quadrant: The Strategy Story</div>
-                <div class="quadrant-subtitle">Internal Politics</div>
-            </div>
-            <div class="question">
-                <h3>How do you handle situations where you sense hidden motives or social politics?</h3>
-                <textarea id="east1" placeholder="Describe your strategies for navigating complex social situations..."></textarea>
-            </div>
-            <div class="question">
-                <h3>Tell me about a time when you avoided a social situation because it felt too risky or complicated.</h3>
-                <textarea id="east2" placeholder="What made it feel dangerous? What were you protecting yourself from?"></textarea>
-            </div>
-            <div class="question">
-                <h3>How do you protect yourself when you're in environments where you can't fully trust everyone?</h3>
-                <textarea id="east3" placeholder="Think about your strategies for staying safe in complex social dynamics..."></textarea>
-            </div>
-        </div>
-        <!-- South Quadrant -->
-        <div class="question-section" data-quadrant="south">
-            <div class="quadrant-header">
-                <div class="quadrant-icon">🔥</div>
-                <div class="quadrant-title">South Quadrant: The Innovation Story</div>
-                <div class="quadrant-subtitle">Individual vs Institution</div>
-            </div>
-            <div class="question">
-                <h3>When do you feel most motivated to challenge rules, authority, or established ways of doing things?</h3>
-                <textarea id="south1" placeholder="Think about times when you've pushed back against systems that didn't serve you..."></textarea>
-            </div>
-            <div class="question">
-                <h3>Describe something you've worked hard to achieve or acquire, despite obstacles.</h3>
-                <textarea id="south2" placeholder="What drove you to pursue this goal? How did you overcome resistance?"></textarea>
-            </div>
-            <div class="question">
-                <h3>How important is it for you to make your own mark on the world or leave things better than you found them?</h3>
-                <textarea id="south3" placeholder="What does 'success' or 'achievement' mean to you personally?"></textarea>
-            </div>
-        </div>
-        <!-- West Quadrant -->
-        <div class="question-section" data-quadrant="west">
-            <div class="quadrant-header">
-                <div class="quadrant-icon">🌌</div>
-                <div class="quadrant-title">West Quadrant: The Boundary Story</div>
-                <div class="quadrant-subtitle">Individual vs Cosmos</div>
-            </div>
-            <div class="question">
-                <h3>How do you handle overwhelming sensations, emotions, or situations?</h3>
-                <textarea id="west1" placeholder="Describe your go-to strategies when life feels like 'too much'..."></textarea>
-            </div>
-            <div class="question">
-                <h3>What draws you to explore new, intense, or boundary-pushing experiences?</h3>
-                <textarea id="west2" placeholder="Think about times you've tested limits - physical, emotional, spiritual..."></textarea>
-            </div>
-            <div class="question">
-                <h3>How do you make sense of life's bigger mysteries, uncertainties, or existential questions?</h3>
-                <textarea id="west3" placeholder="What's your relationship with the unknown, the spiritual, or philosophical aspects of existence?"></textarea>
-            </div>
-        </div>
-    </div>
-    <div class="nav-buttons" id="navButtons" style="display:none;">
-        <button class="btn btn-secondary" id="prevBtn" onclick="previousSection()" style="display:none;">Previous</button>
-        <button class="btn btn-primary" id="nextBtn" onclick="nextSection()">Next</button>
-    </div>
-    <!-- Results Section -->
-    <div class="results" id="results">
-        <div class="results-header">
-            <h2 class="results-title">✦ Your Story Profile ✦</h2>
-            <p>Your behavioral narrative patterns revealed</p>
-        </div>
-        <div id="resultsContent"></div>
-        <!-- Email Capture -->
-        <div class="email-capture">
-            <h3>Get Your Assessment Results & Updates</h3>
-            <div id="emailForm" style="display:inline-block;">
-                <input 
-                    type="email" 
-                    id="userEmail" 
-                    placeholder="Enter your email" 
-                    required
-                    oninput="validateEmailInput()"
-                >
-                <button type="button" class="btn btn-primary" onclick="submitEmail()" style="margin-left:10px; padding:10px 18px;">Send Results</button>
-            </div>
-            <p id="emailMsg" style="margin-top:10px; color: #a8edea;"></p>
-        </div>
-        <div class="final-note">
-            <h4>Your Journey Continues</h4>
-            <p>These insights are a starting point for deeper self-understanding. Consider reflecting on these patterns in your daily life and relationships.</p>
-            <button class="btn btn-secondary" onclick="restartAssessment()" style="margin-top: 15px;">Take Assessment Again</button>
-        </div>
-    </div>
-</div>
-<script>
-    // STAR BACKGROUND
-    function createStars() {
-        const starsContainer = document.getElementById('stars');
-        const numStars = 50;
-        for (let i = 0; i < numStars; i++) {
-            const star = document.createElement('div');
-            star.className = 'star';
-            star.style.left = Math.random() * 100 + '%';
-            star.style.top = Math.random() * 100 + '%';
-            star.style.animationDelay = Math.random() * 3 + 's';
-            starsContainer.appendChild(star);
-        }
-    }
-    createStars();
-
-```
-// NAVIGATION AND ASSESSMENT LOGIC
-let currentSection = 0;
-const sections = ['north', 'east', 'south', 'west'];
-let responses = {};
-
-function saveCurrentResponses() {
-    const quadrant = sections[currentSection];
-    responses[quadrant] = {};
-    for (let i = 1; i <= 3; i++) {
-        const element = document.getElementById(quadrant + i);
-        if (element) {
-            responses[quadrant][i] = element.value;
-        }
-    }
-}
-
-function updateProgress() {
-    const progress = ((currentSection + 1) / sections.length) * 100;
-    document.getElementById('progress').style.width = progress + '%';
-}
-
-function updateNavigation() {
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    prevBtn.style.display = currentSection > 0 ? 'block' : 'none';
-    nextBtn.textContent = currentSection === sections.length - 1 ? 'View Results' : 'Next';
-}
-
-function startAssessment() {
-    document.getElementById('intro').classList.add('hidden');
-    document.getElementById('assessment').style.display = 'block';
-    document.getElementById('navButtons').style.display = 'flex';
-    document.getElementById('progressContainer').style.display = 'block';
-    updateProgress();
-    updateNavigation();
-}
-
-function nextSection() {
-    saveCurrentResponses();
-    if (currentSection < sections.length - 1) {
-        document.querySelector(`[data-quadrant="${sections[currentSection]}"]`).classList.remove('active');
-        currentSection++;
-        document.querySelector(`[data-quadrant="${sections[currentSection]}"]`).classList.add('active');
-        updateProgress();
-        updateNavigation();
-    } else {
-        showResults();
-    }
-}
-
-function previousSection() {
-    if (currentSection > 0) {
-        document.querySelector(`[data-quadrant="${sections[currentSection]}"]`).classList.remove('active');
-        currentSection--;
-        document.querySelector(`[data-quadrant="${sections[currentSection]}"]`).classList.add('active');
-        updateProgress();
-        updateNavigation();
-    }
-}
-
-// --- V6 Analysis and Insights Functions ---
-function analyzeText(text) {
-    if (!text || text.trim().length === 0) return null;
-    const words = text.split(/\s+/).filter(word => word.length > 0);
-    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
-    const keywords = {
-        belonging: /\b(belong|accept|include|community|group|team|family|friend|together|connect|fit|welcome)\b/gi,
-        strategy: /\b(careful|safe|protect|avoid|risk|danger|trust|politics|navigate|strategy|plan|cautious)\b/gi,
-        innovation: /\b(change|challenge|create|build|achieve|goal|success|push|break|rebel|innovate|different)\b/gi,
-        boundary: /\b(explore|limit|edge|beyond|unknown|mystery|spiritual|intense|overwhelming|cosmic|transcend)\b/gi,
-        emotional: /\b(feel|emotion|heart|passionate|love|fear|angry|sad|happy|excited|anxious|calm)\b/gi,
-        action: /\b(do|make|create|build|fight|work|try|attempt|struggle|achieve|accomplish)\b/gi,
-        reflection: /\b(think|believe|understand|realize|learn|discover|wonder|question|reflect)\b/gi,
-        confidence: /\b(confident|sure|certain|strong|powerful|capable|able|skilled|expert)\b/gi,
-        uncertainty: /\b(unsure|doubt|maybe|perhaps|confused|lost|uncertain|worried|anxious)\b/gi,
-        individual: /\b(i|me|my|myself|mine|personal|individual|alone|independent|solo)\b/gi,
-        collective: /\b(we|us|our|together|team|group|everyone|community|others)\b/gi
-    };
-    const analysis = {
-        wordCount: words.length,
-        sentences: sentences.length,
-        lexicalDiversity: words.length > 0 ? new Set(words.map(w => w.toLowerCase())).size / words.length : 0,
-        emotionalRichness: 0.5,
-        personalPronouns: (text.match(keywords.individual) || []).length,
-        collectivePronouns: (text.match(keywords.collective) || []).length,
-        keywordMatches: {}
-    };
-    Object.keys(keywords).forEach(category => {
-        analysis.keywordMatches[category] = (text.match(keywords[category]) || []).length;
-    });
-    return analysis;
-}
-
-function generatePersonalizedInsights(quadrant, responses, analysis) {
-    return {
-        archetype: determineArchetype(quadrant, responses, analysis),
-        currentState: analyzeCurrentState(quadrant, responses, analysis),
-        nextMove: suggestNextMove(quadrant, responses, analysis),
-        warning: identifyWarning(quadrant, responses, analysis)
-    };
-}
-
-function determineArchetype(quadrant, responses, analysis) {
-    const archetypes = {
-        north: {
-            high_belonging: "The Connector - You're a natural community builder who thrives on genuine relationships",
-            low_belonging: "The Independent - You value authentic connections over superficial acceptance",
-            seeking_belonging: "The Seeker - You're actively working to find your tribe and place in the world"
-        },
-        east: {
-            high_strategy: "The Navigator - You excel at reading complex social situations and moving wisely",
-            low_strategy: "The Direct - You prefer straightforward interactions over political maneuvering", 
-            avoiding_strategy: "The Withdrawn - You tend to step back when things get socially complicated"
-        },
-        south: {
-            high_innovation: "The Changemaker - You're driven to improve systems and create lasting impact",
-            low_innovation: "The Collaborator - You prefer working within existing structures to create change",
-            frustrated_innovation: "The Restless - You feel the urge to innovate but face barriers to expression"
-        },
-        west: {
-            high_boundary: "The Explorer - You're comfortable pushing limits and venturing into unknown territory",
-            low_boundary: "The Grounded - You find strength in stability and clear boundaries",
-            overwhelmed_boundary: "The Sensitive - You feel deeply but sometimes need protection from intensity"
-        }
-    };
-    
-    if (!analysis || !analysis.keywordMatches) return archetypes[quadrant].seeking_belonging || "Default Archetype";
-    
-    const keywords = analysis.keywordMatches;
-    
-    if (quadrant === 'north') {
-        if (keywords.belonging > 3 && keywords.collective > keywords.individual) return archetypes.north.high_belonging;
-        if (keywords.belonging < 2 && keywords.individual > keywords.collective) return archetypes.north.low_belonging;
-        return archetypes.north.seeking_belonging;
-    }
-    if (quadrant === 'east') {
-        if (keywords.strategy > 2 && keywords.reflection > keywords.action) return archetypes.east.high_strategy;
-        if (keywords.strategy < 2 && keywords.action > keywords.reflection) return archetypes.east.low_strategy;
-        return archetypes.east.avoiding_strategy;
-    }
-    if (quadrant === 'south') {
-        if (keywords.innovation > 2 && keywords.action > 3) return archetypes.south.high_innovation;
-        if (keywords.innovation < 2 && keywords.collective > keywords.individual) return archetypes.south.low_innovation;
-        return archetypes.south.frustrated_innovation;
-    }
-    if (quadrant === 'west') {
-        if (keywords.boundary > 2 && keywords.confidence > keywords.uncertainty) return archetypes.west.high_boundary;
-        if (keywords.boundary < 2 && keywords.uncertainty < keywords.confidence) return archetypes.west.low_boundary;
-        return archetypes.west.overwhelmed_boundary;
-    }
-    
-    return "Default Archetype";
-}
-
-function analyzeCurrentState(quadrant, responses, analysis) {
-    const states = {
-        north: [
-            "You're actively cultivating meaningful connections and seem comfortable with your social identity",
-            "You're questioning traditional belonging structures and seeking more authentic community",
-            "You're in a phase of social transition, exploring where you truly fit"
-        ],
-        east: [
-            "You're skillfully navigating complex social dynamics with wisdom and patience",
-            "You're learning to read between the lines and protect your energy more consciously", 
-            "You're feeling the weight of social complexity and may be withdrawing to regroup"
-        ],
-        south: [
-            "You're actively working to create positive change and leave your mark",
-            "You're building momentum toward meaningful goals despite obstacles",
-            "You're feeling frustrated with current constraints on your creative expression"
-        ],
-        west: [
-            "You're courageously exploring new territories of experience and consciousness",
-            "You're learning to balance intensity with self-care and boundaries",
-            "You're feeling overwhelmed by life's complexity and seeking grounding"
-        ]
-    };
-    return states[quadrant][Math.floor(Math.random() * states[quadrant].length)];
-}
-
-function suggestNextMove(quadrant, responses, analysis) {
-    const moves = {
-        north: {
-            title: "🎯 Your Next Move",
-            actions: [
-                "Start a small gathering or community project that reflects your values. Your natural connector energy is ready to create something meaningful.",
-                "Identify 2-3 people whose authenticity you admire and invest more deeply in those relationships. Quality over quantity.",
-                "Join one new community or activity that aligns with your evolving sense of self. Your tribe is looking for you too."
-            ]
-        },
-        east: {
-            title: "🎯 Your Next Move",
-            actions: [
-                "Mentor someone else in navigating complex social situations. Your strategic wisdom is a gift others need.",
-                "Practice setting clearer boundaries in politically charged situations. Your directness can be your superpower.",
-                "Choose one 'complicated' situation to re-engage with, armed with your new understanding. Avoidance isn't always protection."
-            ]
-        },
-        south: {
-            title: "🎯 Your Next Move",
-            actions: [
-                "Document your impact and share your success strategies with others. Your innovations deserve amplification.",
-                "Find partners who share your vision for change. Collaboration will accelerate your individual efforts.",
-                "Start with one small rebellion against a system that's not serving you. Build momentum through action."
-            ]
-        },
-        west: {
-            title: "🎯 Your Next Move",
-            actions: [
-                "Schedule regular 'edge experiences' - workshops, adventures, or practices that stretch your boundaries safely.",
-                "Create rituals or practices that help you process intensity without getting overwhelmed.",
-                "Find a guide, therapist, or community that can support your sensitive exploration of life's mysteries."
-            ]
-        }
-    };
-    const quadrantMoves = moves[quadrant];
-    const randomAction = quadrantMoves.actions[Math.floor(Math.random() * quadrantMoves.actions.length)];
-    return {
-        title: quadrantMoves.title,
-        action: randomAction
-    };
-}
-
-function identifyWarning(quadrant, responses, analysis) {
-    const warnings = {
-        north: {
-            title: "⚠️ Watch Out For",
-            messages: [
-                "Losing yourself in the pursuit of acceptance. True belonging never requires you to diminish your authentic self.",
-                "Isolating yourself so much that you miss genuine connection opportunities. Some risks are worth taking.",
-                "Settling for surface-level community when your soul craves deeper meaning and purpose."
-            ]
-        },
-        east: {
-            title: "⚠️ Watch Out For",
-            messages: [
-                "Becoming so focused on protection that you miss opportunities for genuine connection and growth.",
-                "Your directness being misinterpreted as insensitivity. Sometimes the political game serves a purpose.",
-                "Chronic avoidance leading to stagnation. Some complexity is necessary for growth."
-            ]
-        },
-        south: {
-            title: "⚠️ Watch Out For",
-            messages: [
-                "Burnout from trying to change everything at once. Sustainable revolution requires strategic pacing.",
-                "Becoming so focused on working within systems that you lose your innovative edge.",
-                "Frustration turning into cynicism. Channel that restless energy into small, consistent actions."
-            ]
-        },
-        west: {
-            title: "⚠️ Watch Out For",
-            messages: [
-                "Pushing boundaries without proper support systems. Even explorers need a base camp.",
-                "Using stability as an excuse to avoid necessary growth and exploration.",
-                "Overwhelm leading to complete withdrawal. Your sensitivity is a strength, not a weakness."
-            ]
-        }
-    };
-    const quadrantWarnings = warnings[quadrant];
-    const randomMessage = quadrantWarnings.messages[Math.floor(Math.random() * quadrantWarnings.messages.length)];
-    return {
-        title: quadrantWarnings.title,
-        message: randomMessage
-    };
-}
-
-function quadrantLabels(quadrant) {
-    switch (quadrant) {
-        case 'north': return { icon: '🛡️', title: 'Belonging', subtitle: 'Institution vs Outsider' };
-        case 'east':  return { icon: '♟', title: 'Strategy', subtitle: 'Internal Politics' };
-        case 'south': return { icon: '🔥', title: 'Innovation', subtitle: 'Individual vs Institution' };
-        case 'west':  return { icon: '🌌', title: 'Boundary', subtitle: 'Individual vs Cosmos' };
-        default: return {};
-    }
-}
-
-// --- V9 Archetype Data and Subsection Function ---
-const archetypeData = {
-    north: {
-        examples: "Think of figures like Martin Luther King Jr. or Malala Yousafzai, whose strength came from building belonging and inspiring communities.",
-        story: "A young leader once struggled with feeling excluded until they grew into a role of weaving community ties that healed divisions.",
-        practices: [
-            "Host small gatherings that honor authentic voices",
-            "Read 'The Art of Gathering' by Priya Parker"
-        ]
-    },
-    east: {
-        examples: "Similar to Sun Tzu or Machiavelli, you thrive in navigating strategy and unseen dynamics.",
-        story: "A tactician avoided conflict until they finally leaned into strategy and turned hidden risks into alliances that served the whole group.",
-        practices: [
-            "Practice journaling social interactions and mapping dynamics",
-            "Read 'The Prince' by Machiavelli for political awareness"
-        ]
-    },
-    south: {
-        examples: "Like Steve Jobs or Rosa Parks, you challenge norms and push innovation even against resistance.",
-        story: "An inventor was rejected repeatedly, but refined their creation until it transformed entire industries.",
-        practices: [
-            "Take one bold but focused creative risk each week",
-            "Read 'Creative Confidence' by Tom Kelley"
-        ]
-    },
-    west: {
-        examples: "Figures like Carl Jung or Joan of Arc embody the exploration of mystery, edge, and transcendence.",
-        story: "A seeker faced overwhelming visions, learned grounding rituals, and then offered wisdom that guided their people through uncertainty.",
-        practices: [
-            "Ground intense experiences with daily reflection or meditation",
-            "Explore 'Man and His Symbols' by Carl Jung"
-        ]
-    }
-};
-
-function addArchetypeSubsection(container, quadrant) {
-    const data = archetypeData[quadrant];
-    const div = document.createElement('div');
-    div.className = 'archetype-extras';
-    div.innerHTML = `
-        <div class="insight-section">
-            <h5>✨ Archetype in Action</h5>
-            <p>${data.examples}</p>
-        </div>
-        <div class="insight-section">
-            <h5>📖 A Story Like Yours</h5>
-            <p>${data.story}</p>
-        </div>
-        <div class="insight-section">
-            <h5>🧭 Practices & Readings</h5>
-            <ul>
-                ${data.practices.map(item => `<li>${item}</li>`).join('')}
-            </ul>
-        </div>
-        <div class="insight-section">
-            <h5>❓ Ask the Archetype</h5>
-            <textarea placeholder="Ask how this archetype might respond to your challenge..." class="archetypeQuestion"></textarea>
-            <button class="btn btn-secondary archetypeAskBtn">Ask</button>
-            <div class="archetypeAnswer" style="margin-top:10px; color:#a8edea;"></div>
-        </div>
-    `;
-    container.appendChild(div);
-
-    const askBtn = div.querySelector('.archetypeAskBtn');
-    const questionBox = div.querySelector('.archetypeQuestion');
-    const answerBox = div.querySelector('.archetypeAnswer');
-
-    askBtn.addEventListener('click', () => {
-        const question = questionBox.value.trim();
-        if (!question) {
-            answerBox.textContent = "Please type a question for the archetype.";
-            return;
-        }
-        const responses = getArchetypeResponse(quadrant, question);
-        answerBox.textContent = responses;
-    });
-}
-
-function getArchetypeResponse(quadrant, question) {
-    const responses = {
-        north: [
-            "Focus on building authentic connections that honor both your needs and others'. True belonging emerges from mutual understanding.",
-            "Consider how this challenge might be an opportunity to create deeper community. What would serving the collective good look like here?",
-            "Trust that your natural ability to connect people can transform this situation. How might you bridge divides?"
-        ],
-        east: [
-            "Step back and observe the hidden dynamics at play. What patterns do you notice that others might miss?",
-            "Consider multiple strategies before acting. What would happen if you waited, what if you moved decisively?",
-            "Trust your instincts about people and situations. Your strategic mind sees what others cannot."
-        ],
-        south: [
-            "Channel your frustration into focused action. What's one concrete step you could take today?",
-            "Remember that sustainable change requires both vision and patience. How can you build momentum gradually?",
-            "Your innovations matter. Don't let resistance dim your creative fire - refine your approach instead."
-        ],
-        west: [
-            "Honor the intensity of your experience while staying grounded. What practices help you remain centered?",
-            "This challenge might be inviting you to explore new territories of growth. What is the unknown teaching you?",
-            "Trust your sensitivity as wisdom. Your ability to feel deeply is a gift, not a burden."
-        ]
-    };
-    const quadrantResponses = responses[quadrant];
-    return quadrantResponses[Math.floor(Math.random() * quadrantResponses.length)];
-}
-
-// --- Combined Results Rendering ---
-function showResults() {
-    saveCurrentResponses();
-    document.getElementById('assessment').style.display = 'none';
-    document.getElementById('navButtons').style.display = 'none';
-    document.getElementById('progressContainer').style.display = 'none';
-    document.getElementById('results').classList.add('active');
-    renderResults();
-}
-
-function renderResults() {
-    const resultsDiv = document.getElementById('resultsContent');
-    resultsDiv.innerHTML = '';
-    
-    sections.forEach(quadrant => {
-        const label = quadrantLabels(quadrant);
-        const answers = responses[quadrant];
-        const allText = Object.values(answers || {}).join(' ');
-        const analysis = analyzeText(allText);
-        const insights = generatePersonalizedInsights(quadrant, answers, analysis);
-
-        // V6 score logic
-        let score = 50;
-        if (analysis && analysis.wordCount > 0) {
-            score = Math.round(50 + 50 * analysis.lexicalDiversity + analysis.emotionalRichness * 35);
-            if (score > 100) score = 100;
-            if (score < 20) score = 20;
-        }
-
-        // Create quadrant result container
-        const quadrantDiv = document.createElement('div');
-        quadrantDiv.className = 'quadrant-result';
-
-        quadrantDiv.innerHTML = `
-            <div class="result-header">
-                <div class="result-icon">${label.icon}</div>
-                <div class="result-info">
-                    <h4>${label.title} Story</h4>
-                    <div class="result-score">Intensity Score: ${score}/100</div>
-                </div>
-            </div>
-            <div class="strength-meter">
-                <div class="strength-fill" style="width: ${score}%"></div>
-            </div>
-            <div class="personalized-insights">
-                <div class="insight-section">
-                    <h5>🎭 Your Archetype</h5>
-                    <p>${insights.archetype}</p>
-                </div>
-                <div class="insight-section">
-                    <h5>📍 Current State</h5>
-                    <p>${insights.currentState}</p>
-                </div>
-                <div class="insight-section">
-                    <h5>${insights.nextMove.title}</h5>
-                    <p>${insights.nextMove.action}</p>
-                </div>
-                <div class="insight-section">
-                    <h5>${insights.warning.title}</h5>
-                    <p>${insights.warning.message}</p>
-                </div>
-            </div>
-        `;
-        
-        addArchetypeSubsection(quadrantDiv, quadrant);
-        resultsDiv.appendChild(quadrantDiv);
-    });
-}
-
-// EMAIL CAPTURE LOGIC - Updated to connect with backend
-function validateEmailInput() {
-    const emailInput = document.getElementById('userEmail');
-    const emailMsg = document.getElementById('emailMsg');
-    const email = emailInput.value;
-    if (email.length === 0) {
-        emailMsg.textContent = '';
-        return false;
-    }
-    const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    emailMsg.textContent = valid ? '' : 'Please enter a valid email address.';
-    return valid;
-}
-
-function submitEmail() {
-    const emailInput = document.getElementById('userEmail');
-    const emailMsg = document.getElementById('emailMsg');
-    const submitBtn = emailInput.nextElementSibling;
-    
-    if (!validateEmailInput()) {
-        emailMsg.textContent = 'Please enter a valid email address.';
-        return;
-    }
-    
-    const email = emailInput.value;
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Sending...';
-    emailMsg.textContent = 'Taking screenshot and sending to your email...';
-    
-    // Send email to backend
-    fetch('/send_results_email', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({email: email})
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            emailMsg.textContent = "Screenshot sent successfully! Check your email for your complete Story Assessment results.";
-            document.getElementById('emailForm').style.display = 'none';
-        } else {
-            emailMsg.textContent = 'Error sending screenshot: ' + (data.message || 'Please try again.');
-        }
-    })
-    .catch(error => {
-        emailMsg.textContent = 'Error sending screenshot. Please try again.';
-        console.error('Error:', error);
-    })
-    .finally(() => {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Send Results';
-    });
-}
-
-function restartAssessment() {
-    document.getElementById('intro').classList.remove('hidden');
-    document.getElementById('assessment').style.display = 'none';
-    document.getElementById('navButtons').style.display = 'none';
-    document.getElementById('progressContainer').style.display = 'none';
-    document.getElementById('results').classList.remove('active');
-    currentSection = 0;
-    responses = {};
-    sections.forEach(quadrant => {
-        for (let i = 1; i <= 3; i++) {
-            const element = document.getElementById(quadrant + i);
-            if (element) element.value = '';
-        }
-    });
-    document.getElementById('emailForm').style.display = 'inline-block';
-    document.getElementById('userEmail').value = '';
-    document.getElementById('emailMsg').textContent = '';
-}
-```
-
-</script>
-</body>
-</html>"""
-
-@app.route(’/’)
+@app.route('/')
 def index():
-return render_template_string(HTML_TEMPLATE)
+    return render_template_string("<h1>Story Assessment Tool</h1>")
 
-@app.route(’/send_results_email’, methods=[‘POST’])
-def send_results_email():
-try:
-data = request.get_json()
-email = data.get(‘email’)
+@app.route('/submit-email', methods=['POST'])
+def submit_email():
+    data = request.json
+    email = data.get("email")
+    if email_system.send_screenshot_email(email):
+        return jsonify({"status": "success"}), 200
+    return jsonify({"status": "failure"}), 500
 
-```
-    if not email:
-        return jsonify({'success': False, 'message': 'Email is required'})
-    
-    # Validate email format
-    import re
-    if not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
-        return jsonify({'success': False, 'message': 'Invalid email format'})
-    
-    success = email_system.send_screenshot_email(email)
-    
-    if success:
-        return jsonify({'success': True, 'message': 'Screenshot sent successfully'})
-    else:
-        return jsonify({'success': False, 'message': 'Failed to send screenshot'})
 
-except Exception as e:
-    print(f"Error in send_results_email: {e}")
-    return jsonify({'success': False, 'message': str(e)})
-```
-
-@app.route(’/admin/send_daily_report’)
-def manual_daily_report():
-“”“Manual trigger for daily report (for testing)”””
-success = email_system.send_daily_report()
-return jsonify({‘success’: success})
-
-@app.route(’/admin/stats’)
-def admin_stats():
-“”“View email collection stats”””
-try:
-total_emails = len(email_system.email_list)
-today = datetime.now().date()
-today_emails = [e for e in email_system.email_list if datetime.fromisoformat(e[‘timestamp’]).date() == today]
-
-```
-    return jsonify({
-        'total_emails': total_emails,
-        'today_emails': len(today_emails),
-        'recent_emails': email_system.email_list[-10:] if email_system.email_list else []
-    })
-except Exception as e:
-    return jsonify({'error': str(e)})
-```
-
-if **name** == ‘**main**’:
-# Start the daily report scheduler
-email_system.schedule_daily_reports()
-
-```
-print("Starting Story Assessment Flask application...")
-print("Visit http://localhost:5000 to access the Story Assessment")
-print(f"Daily reports will be sent to {email_system.admin_email} at 8:00 PM every day")
-print("Admin endpoints:")
-print("  - Manual daily report: http://localhost:5000/admin/send_daily_report")
-print("  - View stats: http://localhost:5000/admin/stats")
-
-app.run(debug=True, host='0.0.0.0', port=5000)
-```
+if __name__ == "__main__":
+    email_system.schedule_daily_reports()
+    app.run(host="0.0.0.0", port=5000)
