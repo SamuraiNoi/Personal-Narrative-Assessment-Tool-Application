@@ -87,8 +87,44 @@
             .quadrant-icon { font-size: 3rem;}
             .mini-quadrant-icon { font-size: 2rem;}
         }
-        ul { margin:0 0 0 20px; padding:0;}
-        .archetype-extras ul {margin-bottom:0;}
+        ul { margin:0 0 15px 20px; padding:0;}
+        .archetype-extras ul {margin-bottom:15px;}
+        .archetypeQuestion {
+            width: 100%;
+            min-height: 60px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            color: #fff;
+            resize: vertical;
+            margin-bottom: 10px;
+        }
+        .archetypeQuestion::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+        .archetypeQuestion:focus {
+            outline: none;
+            border-color: rgba(168,237,234,0.5);
+            background: rgba(255,255,255,0.12);
+        }
+        .archetypeAskBtn {
+            padding: 8px 16px;
+            margin: 0;
+            font-size: 0.9rem;
+        }
+        .archetypeAnswer {
+            margin-top: 10px;
+            color: #a8edea;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            padding: 10px;
+            background: rgba(168,237,234,0.1);
+            border-radius: 8px;
+            min-height: 20px;
+        }
     </style>
 </head>
 <body>
@@ -400,7 +436,11 @@
                 overwhelmed_boundary: "The Sensitive - You feel deeply but sometimes need protection from intensity"
             }
         };
+        
+        if (!analysis || !analysis.keywordMatches) return archetypes[quadrant].seeking_belonging || "Default Archetype";
+        
         const keywords = analysis.keywordMatches;
+        
         if (quadrant === 'north') {
             if (keywords.belonging > 3 && keywords.collective > keywords.individual) return archetypes.north.high_belonging;
             if (keywords.belonging < 2 && keywords.individual > keywords.collective) return archetypes.north.low_belonging;
@@ -421,6 +461,8 @@
             if (keywords.boundary < 2 && keywords.uncertainty < keywords.confidence) return archetypes.west.low_boundary;
             return archetypes.west.overwhelmed_boundary;
         }
+        
+        return "Default Archetype";
     }
 
     function analyzeCurrentState(quadrant, responses, analysis) {
@@ -552,7 +594,7 @@
             story: "A young leader once struggled with feeling excluded until they grew into a role of weaving community ties that healed divisions.",
             practices: [
                 "Host small gatherings that honor authentic voices",
-                "Read “The Art of Gathering” by Priya Parker"
+                "Read 'The Art of Gathering' by Priya Parker"
             ]
         },
         east: {
@@ -560,7 +602,7 @@
             story: "A tactician avoided conflict until they finally leaned into strategy and turned hidden risks into alliances that served the whole group.",
             practices: [
                 "Practice journaling social interactions and mapping dynamics",
-                "Read “The Prince” by Machiavelli for political awareness"
+                "Read 'The Prince' by Machiavelli for political awareness"
             ]
         },
         south: {
@@ -568,7 +610,7 @@
             story: "An inventor was rejected repeatedly, but refined their creation until it transformed entire industries.",
             practices: [
                 "Take one bold but focused creative risk each week",
-                "Read “Creative Confidence” by Tom Kelley"
+                "Read 'Creative Confidence' by Tom Kelley"
             ]
         },
         west: {
@@ -576,7 +618,7 @@
             story: "A seeker faced overwhelming visions, learned grounding rituals, and then offered wisdom that guided their people through uncertainty.",
             practices: [
                 "Ground intense experiences with daily reflection or meditation",
-                "Explore “Man and His Symbols” by Carl Jung"
+                "Explore 'Man and His Symbols' by Carl Jung"
             ]
         }
     };
@@ -619,9 +661,36 @@
                 answerBox.textContent = "Please type a question for the archetype.";
                 return;
             }
-            const response = `If I were in your place, regarding "${question}", I would embrace my core values and act with the courage, wisdom, and patience that befit the ${quadrant} archetype.`;
-            answerBox.textContent = response;
+            const responses = getArchetypeResponse(quadrant, question);
+            answerBox.textContent = responses;
         });
+    }
+
+    function getArchetypeResponse(quadrant, question) {
+        const responses = {
+            north: [
+                "Focus on building authentic connections that honor both your needs and others'. True belonging emerges from mutual understanding.",
+                "Consider how this challenge might be an opportunity to create deeper community. What would serving the collective good look like here?",
+                "Trust that your natural ability to connect people can transform this situation. How might you bridge divides?"
+            ],
+            east: [
+                "Step back and observe the hidden dynamics at play. What patterns do you notice that others might miss?",
+                "Consider multiple strategies before acting. What would happen if you waited, what if you moved decisively?",
+                "Trust your instincts about people and situations. Your strategic mind sees what others cannot."
+            ],
+            south: [
+                "Channel your frustration into focused action. What's one concrete step you could take today?",
+                "Remember that sustainable change requires both vision and patience. How can you build momentum gradually?",
+                "Your innovations matter. Don't let resistance dim your creative fire - refine your approach instead."
+            ],
+            west: [
+                "Honor the intensity of your experience while staying grounded. What practices help you remain centered?",
+                "This challenge might be inviting you to explore new territories of growth. What is the unknown teaching you?",
+                "Trust your sensitivity as wisdom. Your ability to feel deeply is a gift, not a burden."
+            ]
+        };
+        const quadrantResponses = responses[quadrant];
+        return quadrantResponses[Math.floor(Math.random() * quadrantResponses.length)];
     }
 
     // --- Combined Results Rendering ---
@@ -637,25 +706,21 @@
     function renderResults() {
         const resultsDiv = document.getElementById('resultsContent');
         resultsDiv.innerHTML = '';
+        
         sections.forEach(quadrant => {
             const label = quadrantLabels(quadrant);
             const answers = responses[quadrant];
-            const allText = Object.values(answers).join(' ');
+            const allText = Object.values(answers || {}).join(' ');
             const analysis = analyzeText(allText);
             const insights = generatePersonalizedInsights(quadrant, answers, analysis);
 
             // V6 score logic
             let score = 50;
-            if (analysis) {
+            if (analysis && analysis.wordCount > 0) {
                 score = Math.round(50 + 50 * analysis.lexicalDiversity + analysis.emotionalRichness * 35);
                 if (score > 100) score = 100;
                 if (score < 20) score = 20;
             }
-
-            // V9 archetype logic
-            const texts = answers ? Object.values(answers) : [];
-            const v9Analysis = analyzeText(texts.join(' '));
-            const archetype = determineArchetype(quadrant, texts, v9Analysis);
 
             // Create quadrant result container
             const quadrantDiv = document.createElement('div');
@@ -667,7 +732,6 @@
                     <div class="result-info">
                         <h4>${label.title} Story</h4>
                         <div class="result-score">Intensity Score: ${score}/100</div>
-                        <div class="result-score">Archetype: ${archetype}</div>
                     </div>
                 </div>
                 <div class="strength-meter">
@@ -692,6 +756,7 @@
                     </div>
                 </div>
             `;
+            
             addArchetypeSubsection(quadrantDiv, quadrant);
             resultsDiv.appendChild(quadrantDiv);
         });
