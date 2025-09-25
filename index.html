@@ -1,207 +1,448 @@
-import smtplib
-import os
-import json
-import time
-import threading
-from datetime import datetime, timedelta
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.base import MIMEBase
-from email import encoders
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-import schedule
-from flask import Flask, request, jsonify, render_template_string
-
-
-class StoryAssessmentEmailSystem:
-    def __init__(self):
-        # Email configuration - UPDATE THESE WITH YOUR CREDENTIALS
-        self.smtp_server = "smtp.gmail.com"
-        self.smtp_port = 587
-        self.sender_email = "your_email@gmail.com"  # Your email
-        self.sender_password = "your_app_password"  # Your Gmail App Password
-        self.admin_email = "sanphatsamura@gmail.com"
-
-        # File to store email list
-        self.email_list_file = "email_list.json"
-
-        # Website URL
-        self.website_url = "https://samurainoi.github.io/Personal-Narrative-Assessment-Tool-Application/"
-
-        # Load existing email list
-        self.load_email_list()
-
-    def load_email_list(self):
-        """Load email list from JSON"""
-        try:
-            with open(self.email_list_file, 'r') as f:
-                self.email_list = json.load(f)
-        except FileNotFoundError:
-            self.email_list = []
-
-    def save_email_list(self):
-        """Save email list to JSON"""
-        with open(self.email_list_file, 'w') as f:
-            json.dump(self.email_list, f, indent=2)
-
-    def add_email_to_list(self, email):
-        """Add email entry with timestamp"""
-        email_entry = {
-            "email": email,
-            "timestamp": datetime.now().isoformat(),
-            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Story Assessment Combined</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/compromise/14.10.0/compromise.min.js"></script>
+<style>
+    /* --- Combined CSS from your template --- */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    body {
+        font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0c29 100%);
+        min-height: 100vh;
+        color: #fff;
+        overflow-x: hidden;
+    }
+    .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+    .star { position: absolute; width: 2px; height: 2px; background: rgba(255, 255, 255, 0.8); border-radius: 50%; animation: twinkle 3s infinite; }
+    @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+    .container { position: relative; z-index: 10; max-width: 414px; margin: 0 auto; min-height: 100vh; background: rgba(0, 0, 0, 0.3); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    .header { text-align: center; padding: 40px 20px 30px; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%); backdrop-filter: blur(30px); border-bottom: 1px solid rgba(255,255,255,0.1);}
+    .header h1 { font-size: 2.2rem; font-weight: 300; margin-bottom: 8px; background: linear-gradient(135deg, #fff 0%, #a8edea 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;}
+    .header .subtitle { font-size: 0.95rem; opacity: 0.7; font-weight: 300; letter-spacing: 0.5px;}
+    .main-content { padding: 20px;}
+    .question-section { display: none; animation: slideIn 0.8s cubic-bezier(0.25,0.46,0.45,0.94);}
+    .question-section.active { display: block;}
+    @keyframes slideIn { from{opacity:0;transform:translateY(30px);} to{opacity:1;transform:translateY(0);} }
+    .quadrant-header { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 25px 20px; margin-bottom: 25px; text-align: center; backdrop-filter: blur(20px);}
+    .quadrant-icon { font-size: 3.5rem; margin-bottom: 15px; display: block;}
+    .quadrant-title { font-size: 1.4rem; font-weight: 600; margin-bottom: 8px; background: linear-gradient(135deg, #fff 0%, #a8edea 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
+    .quadrant-subtitle { font-size: 0.9rem; opacity: 0.7; font-weight: 300;}
+    .question { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin-bottom: 20px; backdrop-filter: blur(20px);}
+    .question h3 { font-size: 1.1rem; font-weight: 500; margin-bottom: 15px; line-height: 1.4; color: rgba(255,255,255,0.9);}
+    .question textarea { width: 100%; min-height: 100px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 15px; font-size: 0.95rem; font-family: inherit; color: #fff; resize: vertical; transition: all 0.3s ease;}
+    .question textarea::placeholder { color: rgba(255,255,255,0.5);}
+    .question textarea:focus { outline: none; border-color: rgba(168,237,234,0.5); box-shadow: 0 0 20px rgba(168,237,234,0.2); background: rgba(255,255,255,0.12);}
+    .progress-container { padding: 0 20px 20px;}
+    .progress-bar { width: 100%; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;}
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #a8edea, #fed6e3); border-radius: 2px; transition: width 0.6s cubic-bezier(0.25,0.46,0.45,0.94);}
+    .nav-buttons { display: flex; justify-content: space-between; padding: 20px; gap: 15px;}
+    .btn { flex: 1; padding: 16px; border: none; border-radius: 25px; font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(20px); letter-spacing: 0.3px;}
+    .btn-primary { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #1a1a2e; border: none;}
+    .btn-primary:hover, .btn-primary:active { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(168,237,234,0.3);}
+    .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2);}
+    .btn-secondary:hover, .btn-secondary:active { background: rgba(255,255,255,0.15);}
+    .intro-screen { padding: 20px; text-align: center;}
+    .intro-screen.hidden { display: none;}
+    .intro-title { font-size: 1.8rem; font-weight: 300; margin-bottom: 20px; background: linear-gradient(135deg, #fff 0%, #a8edea 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
+    .intro-text { font-size: 0.95rem; line-height: 1.6; opacity: 0.8; margin-bottom: 30px;}
+    .quadrant-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 30px 0;}
+    .mini-quadrant { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; text-align: center; backdrop-filter: blur(20px);}
+    .mini-quadrant-icon { font-size: 2.5rem; margin-bottom: 10px; display: block;}
+    .mini-quadrant h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 5px; color: rgba(255,255,255,0.9);}
+    .mini-quadrant p { font-size: 0.8rem; opacity: 0.6;}
+    .results { display: none; padding: 20px;}
+    .results.active { display: block; animation: slideIn 0.8s ease;}
+    .results-header { text-align: center; margin-bottom: 30px; padding: 25px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; backdrop-filter: blur(20px);}
+    .results-title { font-size: 1.6rem; font-weight: 300; margin-bottom: 10px; background: linear-gradient(135deg, #fff 0%, #a8edea 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
+    .quadrant-result { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin-bottom: 20px; backdrop-filter: blur(20px);}
+    .result-header { display: flex; align-items: center; margin-bottom: 15px;}
+    .result-icon { font-size: 2rem; margin-right: 15px;}
+    .result-info h4 { font-size: 1.1rem; font-weight: 600; margin-bottom: 5px; color: rgba(255,255,255,0.9);}
+    .result-score { font-size: 0.9rem; opacity: 0.7;}
+    .strength-meter { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin: 15px 0;}
+    .strength-fill { height: 100%; background: linear-gradient(90deg, #a8edea, #fed6e3); border-radius: 3px; transition: width 1.5s cubic-bezier(0.25,0.46,0.45,0.94);}
+    .result-description { font-size: 0.95rem; line-height: 1.5; opacity: 0.8; margin-bottom: 15px;}
+    .personalized-insights { background: rgba(168,237,234,0.1); border: 1px solid rgba(168,237,234,0.2); border-radius: 12px; padding: 20px; margin-top: 15px;}
+    .insight-section { margin-bottom: 15px;}
+    .insight-section:last-child { margin-bottom: 0;}
+    .insight-section h5 { font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; color: #a8edea; display: flex; align-items: center; gap: 8px;}
+    .insight-section p { font-size: 0.9rem; line-height: 1.4; opacity: 0.9;}
+    .email-capture { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin: 20px 0; text-align: center; backdrop-filter: blur(20px);}
+    .email-capture h3 { font-size: 1.1rem; margin-bottom: 15px; color: rgba(255,255,255,0.9);}
+    .email-capture input { padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: #fff; font-size: 1rem; margin-right: 10px; width: 200px;}
+    .email-capture input::placeholder { color: rgba(255,255,255,0.5);}
+    .email-capture input:focus { outline: none; border-color: rgba(168,237,234,0.5); box-shadow: 0 0 10px rgba(168,237,234,0.2);}
+    .final-note { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin-top: 20px; text-align: center; backdrop-filter: blur(20px);}
+    .final-note h4 { font-size: 1.1rem; font-weight: 500; margin-bottom: 10px; color: rgba(255,255,255,0.9);}
+    .final-note p { font-size: 0.9rem; line-height: 1.5; opacity: 0.7; margin-bottom: 15px;}
+    @media (max-width: 375px) {
+        .header h1 { font-size: 1.9rem;}
+        .quadrant-icon { font-size: 3rem;}
+        .mini-quadrant-icon { font-size: 2rem;}
+    }
+    ul { margin:0 0 15px 20px; padding:0;}
+    .archetype-extras ul {margin-bottom:15px;}
+    .archetypeQuestion {
+        width: 100%;
+        min-height: 60px;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 0.9rem;
+        font-family: inherit;
+        color: #fff;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .archetypeQuestion::placeholder {
+        color: rgba(255,255,255,0.5);
+    }
+    .archetypeQuestion:focus {
+        outline: none;
+        border-color: rgba(168,237,234,0.5);
+        background: rgba(255,255,255,0.12);
+    }
+    .archetypeAskBtn {
+        padding: 8px 16px;
+        margin: 0;
+        font-size: 0.9rem;
+    }
+    .archetypeAnswer {
+        margin-top: 10px;
+        color: #a8edea;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        padding: 10px;
+        background: rgba(168,237,234,0.1);
+        border-radius: 8px;
+        min-height: 20px;
+    }
+</style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+<div class="container">
+    <div class="header">
+        <h1>✦ Story Assessment ✦</h1>
+        <div class="subtitle">Discover your behavioral narrative patterns</div>
+    </div>
+    <!-- Introduction Screen -->
+    <div class="intro-screen" id="intro">
+        <div class="main-content">
+            <h2 class="intro-title">Welcome to Your Story Assessment</h2>
+            <p class="intro-text">
+                Explore the four fundamental survival stories that drive human behavior. 
+                Discover how you navigate belonging, strategy, innovation, and boundary exploration.
+            </p>
+            <div class="quadrant-grid">
+                <div class="mini-quadrant">
+                    <div class="mini-quadrant-icon">🛡️</div>
+                    <h4>NORTH: BELONGING</h4>
+                    <p>Institution vs Outsider</p>
+                </div>
+                <div class="mini-quadrant">
+                    <div class="mini-quadrant-icon">♟</div>
+                    <h4>EAST: STRATEGY</h4>
+                    <p>Internal Politics</p>
+                </div>
+                <div class="mini-quadrant">
+                    <div class="mini-quadrant-icon">🔥</div>
+                    <h4>SOUTH: INNOVATION</h4>
+                    <p>Individual vs Institution</p>
+                </div>
+                <div class="mini-quadrant">
+                    <div class="mini-quadrant-icon">🌌</div>
+                    <h4>WEST: BOUNDARY</h4>
+                    <p>Individual vs Cosmos</p>
+                </div>
+            </div>
+            <p class="intro-text">
+                Take your time with each question. The more honest and detailed your responses, 
+                the more accurate your results will be.
+            </p>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn btn-primary" onclick="startAssessment()">Begin Your Journey</button>
+        </div>
+    </div>
+    <!-- Progress Bar -->
+    <div class="progress-container" id="progressContainer" style="display:none;">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress" style="width:0%;"></div>
+        </div>
+    </div>
+    <!-- Assessment Sections -->
+    <div class="main-content" id="assessment" style="display:none;">
+        <!-- North Quadrant -->
+        <div class="question-section active" data-quadrant="north">
+            <div class="quadrant-header">
+                <div class="quadrant-icon">🛡️</div>
+                <div class="quadrant-title">North Quadrant: The Belonging Story</div>
+                <div class="quadrant-subtitle">Institution vs Outsider</div>
+            </div>
+            <div class="question">
+                <h3>How important is it for you to feel accepted and appreciated by your group or community?</h3>
+                <textarea id="north1" placeholder="Think about times when you felt included vs excluded..."></textarea>
+            </div>
+            <div class="question">
+                <h3>Describe a situation where you went out of your way to get attention or recognition.</h3>
+                <textarea id="north2" placeholder="What drove you to seek that attention? What would have happened if no one noticed you?"></textarea>
+            </div>
+            <div class="question">
+                <h3>What does 'belonging' mean to you, and how do you know when you truly belong somewhere?</h3>
+                <textarea id="north3" placeholder="Think about the signs that tell you you're 'in' vs 'out' of a group..."></textarea>
+            </div>
+        </div>
+        <!-- East Quadrant -->
+        <div class="question-section" data-quadrant="east">
+            <div class="quadrant-header">
+                <div class="quadrant-icon">♟</div>
+                <div class="quadrant-title">East Quadrant: The Strategy Story</div>
+                <div class="quadrant-subtitle">Internal Politics</div>
+            </div>
+            <div class="question">
+                <h3>How do you handle situations where you sense hidden motives or social politics?</h3>
+                <textarea id="east1" placeholder="Describe your strategies for navigating complex social situations..."></textarea>
+            </div>
+            <div class="question">
+                <h3>Tell me about a time when you avoided a social situation because it felt too risky or complicated.</h3>
+                <textarea id="east2" placeholder="What made it feel dangerous? What were you protecting yourself from?"></textarea>
+            </div>
+            <div class="question">
+                <h3>How do you protect yourself when you're in environments where you can't fully trust everyone?</h3>
+                <textarea id="east3" placeholder="Think about your strategies for staying safe in complex social dynamics..."></textarea>
+            </div>
+        </div>
+        <!-- South Quadrant -->
+        <div class="question-section" data-quadrant="south">
+            <div class="quadrant-header">
+                <div class="quadrant-icon">🔥</div>
+                <div class="quadrant-title">South Quadrant: The Innovation Story</div>
+                <div class="quadrant-subtitle">Individual vs Institution</div>
+            </div>
+            <div class="question">
+                <h3>When do you feel most motivated to challenge rules, authority, or established ways of doing things?</h3>
+                <textarea id="south1" placeholder="Think about times when you've pushed back against systems that didn't serve you..."></textarea>
+            </div>
+            <div class="question">
+                <h3>Describe something you've worked hard to achieve or acquire, despite obstacles.</h3>
+                <textarea id="south2" placeholder="What drove you to pursue this goal? How did you overcome resistance?"></textarea>
+            </div>
+            <div class="question">
+                <h3>How important is it for you to make your own mark on the world or leave things better than you found them?</h3>
+                <textarea id="south3" placeholder="What does 'success' or 'achievement' mean to you personally?"></textarea>
+            </div>
+        </div>
+        <!-- West Quadrant -->
+        <div class="question-section" data-quadrant="west">
+            <div class="quadrant-header">
+                <div class="quadrant-icon">🌌</div>
+                <div class="quadrant-title">West Quadrant: The Boundary Story</div>
+                <div class="quadrant-subtitle">Individual vs Cosmos</div>
+            </div>
+            <div class="question">
+                <h3>How do you handle overwhelming sensations, emotions, or situations?</h3>
+                <textarea id="west1" placeholder="Describe your go-to strategies when life feels like 'too much'..."></textarea>
+            </div>
+            <div class="question">
+                <h3>What draws you to explore new, intense, or boundary-pushing experiences?</h3>
+                <textarea id="west2" placeholder="Think about times you've tested limits - physical, emotional, spiritual..."></textarea>
+            </div>
+            <div class="question">
+                <h3>How do you make sense of life's bigger mysteries, uncertainties, or existential questions?</h3>
+                <textarea id="west3" placeholder="What's your relationship with the unknown, the spiritual, or philosophical aspects of existence?"></textarea>
+            </div>
+        </div>
+    </div>
+    <div class="nav-buttons" id="navButtons" style="display:none;">
+        <button class="btn btn-secondary" id="prevBtn" onclick="previousSection()" style="display:none;">Previous</button>
+        <button class="btn btn-primary" id="nextBtn" onclick="nextSection()">Next</button>
+    </div>
+    <!-- Results Section -->
+    <div class="results" id="results">
+        <div class="results-header">
+            <h2 class="results-title">✦ Your Story Profile ✦</h2>
+            <p>Your behavioral narrative patterns revealed</p>
+        </div>
+        <div id="resultsContent"></div>
+        <!-- Email Capture -->
+        <div class="email-capture">
+            <h3>Get Your Assessment Results & Updates</h3>
+            <div id="emailForm" style="display:inline-block;">
+                <input 
+                    type="email" 
+                    id="userEmail" 
+                    placeholder="Enter your email" 
+                    required
+                    oninput="validateEmailInput()"
+                >
+                <button type="button" class="btn btn-primary" onclick="submitEmail()" style="margin-left:10px; padding:10px 18px;">Send Results</button>
+            </div>
+            <p id="emailMsg" style="margin-top:10px; color: #a8edea;"></p>
+        </div>
+        <div class="final-note">
+            <h4>Your Journey Continues</h4>
+            <p>These insights are a starting point for deeper self-understanding. Consider reflecting on these patterns in your daily life and relationships.</p>
+            <button class="btn btn-secondary" onclick="restartAssessment()" style="margin-top: 15px;">Take Assessment Again</button>
+        </div>
+    </div>
+</div>
+<script>
+    // STAR BACKGROUND
+    function createStars() {
+        const starsContainer = document.getElementById('stars');
+        const numStars = 50;
+        for (let i = 0; i < numStars; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.animationDelay = Math.random() * 3 + 's';
+            starsContainer.appendChild(star);
         }
-        self.email_list.append(email_entry)
-        self.save_email_list()
+    }
+    createStars();
 
-    def setup_chrome_driver(self):
-        """Setup Chrome driver"""
-        chrome_options = Options()
-        chrome_options.add_argument("--headless=new")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.add_argument("--window-size=1920,1080")
-        try:
-            driver = webdriver.Chrome(options=chrome_options)
-            return driver
-        except Exception as e:
-            print(f"Error setting up Chrome driver: {e}")
-            return None
+    // NAVIGATION AND ASSESSMENT LOGIC
+    let currentSection = 0;
+    const sections = ['north', 'east', 'south', 'west'];
+    let responses = {};
 
-    def take_screenshot(self):
-        """Take screenshot of website"""
-        driver = self.setup_chrome_driver()
-        if not driver:
-            return None
-        try:
-            driver.get(self.website_url)
-            time.sleep(5)
-            total_height = driver.execute_script("return document.body.scrollHeight")
-            driver.set_window_size(1920, total_height)
-            screenshot_filename = f"story_assessment_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
-            driver.save_screenshot(screenshot_filename)
-            return screenshot_filename
-        except Exception as e:
-            print(f"Error taking screenshot: {e}")
-            return None
-        finally:
-            driver.quit()
+    function saveCurrentResponses() {
+        const quadrant = sections[currentSection];
+        responses[quadrant] = {};
+        for (let i = 1; i <= 3; i++) {
+            const element = document.getElementById(quadrant + i);
+            if (element) {
+                responses[quadrant][i] = element.value;
+            }
+        }
+    }
 
-    def send_screenshot_email(self, recipient_email):
-        """Send screenshot to user"""
-        try:
-            screenshot_file = self.take_screenshot()
-            if not screenshot_file:
-                return False
+    function updateProgress() {
+        const progress = ((currentSection + 1) / sections.length) * 100;
+        document.getElementById('progress').style.width = progress + '%';
+    }
 
-            self.add_email_to_list(recipient_email)
+    function updateNavigation() {
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        prevBtn.style.display = currentSection > 0 ? 'block' : 'none';
+        nextBtn.textContent = currentSection === sections.length - 1 ? 'View Results' : 'Next';
+    }
 
-            msg = MIMEMultipart()
-            msg['From'] = self.sender_email
-            msg['To'] = recipient_email
-            msg['Subject'] = "Your Story Assessment Results"
+    function startAssessment() {
+        document.getElementById('intro').classList.add('hidden');
+        document.getElementById('assessment').style.display = 'block';
+        document.getElementById('navButtons').style.display = 'flex';
+        document.getElementById('progressContainer').style.display = 'block';
+        updateProgress();
+        updateNavigation();
+    }
 
-            body = f"""
-            Hello,
+    function nextSection() {
+        saveCurrentResponses();
+        if (currentSection < sections.length - 1) {
+            document.querySelector(`[data-quadrant="${sections[currentSection]}"]`).classList.remove('active');
+            currentSection++;
+            document.querySelector(`[data-quadrant="${sections[currentSection]}"]`).classList.add('active');
+            updateProgress();
+            updateNavigation();
+        } else {
+            showResults();
+        }
+    }
 
-            Thank you for completing the Story Assessment.
-            Please find your complete assessment screenshot attached.
+    function previousSection() {
+        if (currentSection > 0) {
+            document.querySelector(`[data-quadrant="${sections[currentSection]}"]`).classList.remove('active');
+            currentSection--;
+            document.querySelector(`[data-quadrant="${sections[currentSection]}"]`).classList.add('active');
+            updateProgress();
+            updateNavigation();
+        }
+    }
 
-            Website: {self.website_url}
-            Completed on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+    // SIMPLE EMAIL VALIDATION
+    function validateEmailInput() {
+        const emailInput = document.getElementById('userEmail');
+        const msg = document.getElementById('emailMsg');
+        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (emailInput.value && !regex.test(emailInput.value)) {
+            msg.textContent = "Please enter a valid email address.";
+        } else {
+            msg.textContent = "";
+        }
+    }
 
-            Regards,  
-            Story Assessment Team
-            """
-            msg.attach(MIMEText(body, 'plain'))
+    // SUBMIT EMAIL TO BACKEND (replace URL with your deployed backend)
+    function submitEmail() {
+        const emailInput = document.getElementById('userEmail');
+        const msg = document.getElementById('emailMsg');
+        if (!emailInput.value) {
+            msg.textContent = "Email cannot be empty.";
+            return;
+        }
+        if (msg.textContent !== "") return;
 
-            with open(screenshot_file, "rb") as attachment:
-                part = MIMEBase('application', 'octet-stream')
-                part.set_payload(attachment.read())
-                encoders.encode_base64(part)
-                part.add_header('Content-Disposition', f'attachment; filename={screenshot_file}')
-                msg.attach(part)
+        // Here you should call your backend API endpoint
+        // Example placeholder using fetch:
+        fetch('/submit-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: emailInput.value })
+        }).then(response => {
+            if (response.ok) {
+                msg.textContent = "Results sent! Check your email.";
+                emailInput.value = "";
+            } else {
+                msg.textContent = "Failed to send email. Try again later.";
+            }
+        }).catch(() => {
+            msg.textContent = "Network error. Try again later.";
+        });
+    }
 
-            server = smtplib.SMTP(self.smtp_server, self.smtp_port)
-            server.starttls()
-            server.login(self.sender_email, self.sender_password)
-            server.sendmail(self.sender_email, recipient_email, msg.as_string())
-            server.quit()
+    // SHOW RESULTS (basic placeholder, you can expand analysis logic)
+    function showResults() {
+        saveCurrentResponses();
+        document.getElementById('assessment').style.display = 'none';
+        document.getElementById('navButtons').style.display = 'none';
+        document.getElementById('progressContainer').style.display = 'none';
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.classList.add('active');
+        const contentDiv = document.getElementById('resultsContent');
 
-            os.remove(screenshot_file)
-            print(f"Sent Story Assessment screenshot to {recipient_email}")
-            return True
+        contentDiv.innerHTML = '';
 
-        except Exception as e:
-            print(f"Error sending email: {e}")
-            return False
+        Object.keys(responses).forEach(quadrant => {
+            const texts = responses[quadrant];
+            const div = document.createElement('div');
+            div.className = 'quadrant-result';
+            let html = `<h3>${quadrant.toUpperCase()} Quadrant Responses:</h3>`;
+            for (const key in texts) {
+                html += `<p><strong>Q${key}:</strong> ${texts[key]}</p>`;
+            }
+            div.innerHTML = html;
+            contentDiv.appendChild(div);
+        });
+    }
 
-    def send_daily_report(self):
-        """Send daily report to admin"""
-        try:
-            day_ago = datetime.now() - timedelta(days=1)
-            recent_emails = [
-                entry for entry in self.email_list
-                if datetime.fromisoformat(entry['timestamp']) >= day_ago
-            ]
-
-            msg = MIMEMultipart()
-            msg['From'] = self.sender_email
-            msg['To'] = self.admin_email
-            msg['Subject'] = f"Daily Story Assessment Report - {datetime.now().strftime('%Y-%m-%d')}"
-
-            body = f"Daily Report\n\nNew emails: {len(recent_emails)}\nTotal: {len(self.email_list)}\n"
-            for e in recent_emails:
-                body += f"\n{e['email']} at {e['date']}"
-
-            msg.attach(MIMEText(body, 'plain'))
-
-            server = smtplib.SMTP(self.smtp_server, self.smtp_port)
-            server.starttls()
-            server.login(self.sender_email, self.sender_password)
-            server.sendmail(self.sender_email, self.admin_email, msg.as_string())
-            server.quit()
-
-            print(f"Daily report sent to {self.admin_email}")
-            return True
-        except Exception as e:
-            print(f"Error sending daily report: {e}")
-            return False
-
-    def schedule_daily_reports(self):
-        """Run scheduler for reports at 8pm daily"""
-        schedule.every().day.at("20:00").do(self.send_daily_report)
-
-        def run_scheduler():
-            while True:
-                schedule.run_pending()
-                time.sleep(60)
-
-        thread = threading.Thread(target=run_scheduler, daemon=True)
-        thread.start()
-        print("Daily scheduler started")
-
-
-# -----------------------------
-# Flask Web App
-# -----------------------------
-app = Flask(__name__)
-email_system = StoryAssessmentEmailSystem()
-
-@app.route('/')
-def index():
-    return render_template_string("<h1>Story Assessment Tool</h1>")
-
-@app.route('/submit-email', methods=['POST'])
-def submit_email():
-    data = request.json
-    email = data.get("email")
-    if email_system.send_screenshot_email(email):
-        return jsonify({"status": "success"}), 200
-    return jsonify({"status": "failure"}), 500
-
-
-if __name__ == "__main__":
-    email_system.schedule_daily_reports()
-    app.run(host="0.0.0.0", port=5000)
+    function restartAssessment() {
+        responses = {};
+        currentSection = 0;
+        document.getElementById('results').classList.remove('active');
+        document.getElementById('intro').classList.remove('hidden');
+        document.querySelector(`[data-quadrant="${sections[0]}"]`).classList.add('active');
+    }
+</script>
+</body>
+</html>
