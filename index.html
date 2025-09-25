@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -684,4 +685,321 @@
             const keywords = analysis.keywordMatches;
             
             if (quadrant === 'north') {
-                if (keywords.belonging > 3 && keywords.
+                if (keywords.belonging > 3 && keywords.collective > keywords.individual) return archetypes.north.high_belonging;
+                if (keywords.belonging < 2 && keywords.individual > keywords.collective) return archetypes.north.low_belonging;
+                return archetypes.north.seeking_belonging;
+            }
+            
+            if (quadrant === 'east') {
+                if (keywords.strategy > 2 && keywords.reflection > keywords.action) return archetypes.east.high_strategy;
+                if (keywords.strategy < 2 && keywords.action > keywords.reflection) return archetypes.east.low_strategy;
+                return archetypes.east.avoiding_strategy;
+            }
+            
+            if (quadrant === 'south') {
+                if (keywords.innovation > 2 && keywords.action > 3) return archetypes.south.high_innovation;
+                if (keywords.innovation < 2 && keywords.collective > keywords.individual) return archetypes.south.low_innovation;
+                return archetypes.south.frustrated_innovation;
+            }
+            
+            if (quadrant === 'west') {
+                if (keywords.boundary > 2 && keywords.confidence > keywords.uncertainty) return archetypes.west.high_boundary;
+                if (keywords.boundary < 2 && keywords.uncertainty < keywords.confidence) return archetypes.west.low_boundary;
+                return archetypes.west.overwhelmed_boundary;
+            }
+        }
+
+        function analyzeCurrentState(quadrant, responses, analysis) {
+            const states = {
+                north: [
+                    "You're actively cultivating meaningful connections and seem comfortable with your social identity",
+                    "You're questioning traditional belonging structures and seeking more authentic community",
+                    "You're in a phase of social transition, exploring where you truly fit"
+                ],
+                east: [
+                    "You're skillfully navigating complex social dynamics with wisdom and patience",
+                    "You're learning to read between the lines and protect your energy more consciously", 
+                    "You're feeling the weight of social complexity and may be withdrawing to regroup"
+                ],
+                south: [
+                    "You're actively working to create positive change and leave your mark",
+                    "You're building momentum toward meaningful goals despite obstacles",
+                    "You're feeling frustrated with current constraints on your creative expression"
+                ],
+                west: [
+                    "You're courageously exploring new territories of experience and consciousness",
+                    "You're learning to balance intensity with self-care and boundaries",
+                    "You're feeling overwhelmed by life's complexity and seeking grounding"
+                ]
+            };
+            
+            return states[quadrant][Math.floor(Math.random() * states[quadrant].length)];
+        }
+
+        function suggestNextMove(quadrant, responses, analysis) {
+            const moves = {
+                north: {
+                    title: "🎯 Your Next Move",
+                    actions: [
+                        "Start a small gathering or community project that reflects your values. Your natural connector energy is ready to create something meaningful.",
+                        "Identify 2-3 people whose authenticity you admire and invest more deeply in those relationships. Quality over quantity.",
+                        "Join one new community or activity that aligns with your evolving sense of self. Your tribe is looking for you too."
+                    ]
+                },
+                east: {
+                    title: "🎯 Your Next Move",
+                    actions: [
+                        "Mentor someone else in navigating complex social situations. Your strategic wisdom is a gift others need.",
+                        "Practice setting clearer boundaries in politically charged situations. Your directness can be your superpower.",
+                        "Choose one 'complicated' situation to re-engage with, armed with your new understanding. Avoidance isn't always protection."
+                    ]
+                },
+                south: {
+                    title: "🎯 Your Next Move",
+                    actions: [
+                        "Document your impact and share your success strategies with others. Your innovations deserve amplification.",
+                        "Find partners who share your vision for change. Collaboration will accelerate your individual efforts.",
+                        "Start with one small rebellion against a system that's not serving you. Build momentum through action."
+                    ]
+                },
+                west: {
+                    title: "🎯 Your Next Move",
+                    actions: [
+                        "Schedule regular 'edge experiences' - workshops, adventures, or practices that stretch your boundaries safely.",
+                        "Create rituals or practices that help you process intensity without getting overwhelmed.",
+                        "Find a guide, therapist, or community that can support your sensitive exploration of life's mysteries."
+                    ]
+                }
+            };
+            
+            const quadrantMoves = moves[quadrant];
+            const randomAction = quadrantMoves.actions[Math.floor(Math.random() * quadrantMoves.actions.length)];
+            
+            return {
+                title: quadrantMoves.title,
+                action: randomAction
+            };
+        }
+
+        function identifyWarning(quadrant, responses, analysis) {
+            const warnings = {
+                north: {
+                    title: "⚠️ Watch Out For",
+                    messages: [
+                        "Losing yourself in the pursuit of acceptance. True belonging never requires you to diminish your authentic self.",
+                        "Isolating yourself so much that you miss genuine connection opportunities. Some risks are worth taking.",
+                        "Settling for surface-level community when your soul craves deeper meaning and purpose."
+                    ]
+                },
+                east: {
+                    title: "⚠️ Watch Out For",
+                    messages: [
+                        "Becoming so focused on protection that you miss opportunities for genuine connection and growth.",
+                        "Your directness being misinterpreted as insensitivity. Sometimes the political game serves a purpose.",
+                        "Chronic avoidance leading to stagnation. Some complexity is necessary for growth."
+                    ]
+                },
+                south: {
+                    title: "⚠️ Watch Out For",
+                    messages: [
+                        "Burnout from trying to change everything at once. Sustainable revolution requires strategic pacing.",
+                        "Becoming so focused on working within systems that you lose your innovative edge.",
+                        "Frustration turning into cynicism. Channel that restless energy into small, consistent actions."
+                    ]
+                },
+                west: {
+                    title: "⚠️ Watch Out For",
+                    messages: [
+                        "Pushing boundaries without proper support systems. Even explorers need a base camp.",
+                        "Using stability as an excuse to avoid necessary growth and exploration.",
+                        "Overwhelm leading to complete withdrawal. Your sensitivity is a strength, not a weakness."
+                    ]
+                }
+            };
+            
+            const quadrantWarnings = warnings[quadrant];
+            const randomMessage = quadrantWarnings.messages[Math.floor(Math.random() * quadrantWarnings.messages.length)];
+            
+            return {
+                title: quadrantWarnings.title,
+                message: randomMessage
+            };
+        }
+
+        // NAVIGATION AND ASSESSMENT LOGIC
+        function startAssessment() {
+            document.getElementById('intro').classList.add('hidden');
+            document.getElementById('assessment').style.display = 'block';
+            document.getElementById('navButtons').style.display = 'flex';
+            document.getElementById('progressContainer').style.display = 'block';
+            updateProgress();
+        }
+
+        function nextSection() {
+            saveCurrentResponses();
+            if (currentSection < sections.length - 1) {
+                document.querySelector(`[data-quadrant="${sections[currentSection]}"]`).classList.remove('active');
+                currentSection++;
+                document.querySelector(`[data-quadrant="${sections[currentSection]}"]`).classList.add('active');
+                updateProgress();
+                updateNavigation();
+            } else {
+                showResults();
+            }
+        }
+
+        function previousSection() {
+            if (currentSection > 0) {
+                document.querySelector(`[data-quadrant="${sections[currentSection]}"]`).classList.remove('active');
+                currentSection--;
+                document.querySelector(`[data-quadrant="${sections[currentSection]}"]`).classList.add('active');
+                updateProgress();
+                updateNavigation();
+            }
+        }
+
+        function updateProgress() {
+            const progress = ((currentSection + 1) / sections.length) * 100;
+            document.getElementById('progress').style.width = progress + '%';
+        }
+
+        function updateNavigation() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            prevBtn.style.display = currentSection > 0 ? 'block' : 'none';
+            nextBtn.textContent = currentSection === sections.length - 1 ? 'View Results' : 'Next';
+        }
+
+        function saveCurrentResponses() {
+            const quadrant = sections[currentSection];
+            responses[quadrant] = {};
+            for (let i = 1; i <= 3; i++) {
+                const element = document.getElementById(quadrant + i);
+                if (element) {
+                    responses[quadrant][i] = element.value;
+                }
+            }
+        }
+
+        function quadrantLabels(quadrant) {
+            switch (quadrant) {
+                case 'north': return { icon: '🛡️', title: 'Belonging', subtitle: 'Institution vs Outsider' };
+                case 'east':  return { icon: '♟', title: 'Strategy', subtitle: 'Internal Politics' };
+                case 'south': return { icon: '🔥', title: 'Innovation', subtitle: 'Individual vs Institution' };
+                case 'west':  return { icon: '🌌', title: 'Boundary', subtitle: 'Individual vs Cosmos' };
+                default: return {};
+            }
+        }
+
+        function showResults() {
+            saveCurrentResponses();
+            document.getElementById('assessment').style.display = 'none';
+            document.getElementById('navButtons').style.display = 'none';
+            document.getElementById('progressContainer').style.display = 'none';
+            document.getElementById('results').classList.add('active');
+            renderResults();
+        }
+
+        function renderResults() {
+            const resultsDiv = document.getElementById('resultsContent');
+            resultsDiv.innerHTML = '';
+            
+            sections.forEach(quadrant => {
+                const label = quadrantLabels(quadrant);
+                const answers = responses[quadrant];
+                const allText = Object.values(answers).join(' ');
+                const analysis = analyzeText(allText);
+                const insights = generatePersonalizedInsights(quadrant, answers, analysis);
+
+                let score = 50;
+                if (analysis) {
+                    score = Math.round(50 + 50 * analysis.lexicalDiversity + analysis.emotionalRichness * 35);
+                    if (score > 100) score = 100;
+                    if (score < 20) score = 20;
+                }
+
+                resultsDiv.innerHTML += `
+                    <div class="quadrant-result">
+                        <div class="result-header">
+                            <div class="result-icon">${label.icon}</div>
+                            <div class="result-info">
+                                <h4>${label.title} Story</h4>
+                                <div class="result-score">Intensity Score: ${score}/100</div>
+                            </div>
+                        </div>
+                        <div class="strength-meter">
+                            <div class="strength-fill" style="width: ${score}%"></div>
+                        </div>
+                        
+                        <div class="personalized-insights">
+                            <div class="insight-section">
+                                <h5>🎭 Your Archetype</h5>
+                                <p>${insights.archetype}</p>
+                            </div>
+                            
+                            <div class="insight-section">
+                                <h5>📍 Current State</h5>
+                                <p>${insights.currentState}</p>
+                            </div>
+                            
+                            <div class="insight-section">
+                                <h5>${insights.nextMove.title}</h5>
+                                <p>${insights.nextMove.action}</p>
+                            </div>
+                            
+                            <div class="insight-section">
+                                <h5>${insights.warning.title}</h5>
+                                <p>${insights.warning.message}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // EMAIL CAPTURE LOGIC
+        function validateEmailInput() {
+            const emailInput = document.getElementById('userEmail');
+            const emailMsg = document.getElementById('emailMsg');
+            const email = emailInput.value;
+            if (email.length === 0) {
+                emailMsg.textContent = '';
+                return false;
+            }
+            const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+            emailMsg.textContent = valid ? '' : 'Please enter a valid email address.';
+            return valid;
+        }
+
+        function submitEmail() {
+            const emailInput = document.getElementById('userEmail');
+            const emailMsg = document.getElementById('emailMsg');
+            if (!validateEmailInput()) {
+                emailMsg.textContent = 'Please enter a valid email address.';
+                return;
+            }
+            emailMsg.textContent = "Thank you! We'll notify you with results and updates.";
+            document.getElementById('emailForm').style.display = 'none';
+        }
+
+        function restartAssessment() {
+            document.getElementById('intro').classList.remove('hidden');
+            document.getElementById('assessment').style.display = 'none';
+            document.getElementById('navButtons').style.display = 'none';
+            document.getElementById('progressContainer').style.display = 'none';
+            document.getElementById('results').classList.remove('active');
+            currentSection = 0;
+            Object.keys(responses).forEach(q => { delete responses[q]; });
+            sections.forEach(quadrant => {
+                for (let i = 1; i <= 3; i++) {
+                    const element = document.getElementById(quadrant + i);
+                    if (element) element.value = '';
+                }
+            });
+            document.getElementById('emailForm').style.display = 'inline-block';
+            document.getElementById('userEmail').value = '';
+            document.getElementById('emailMsg').textContent = '';
+        }
+    </script>
+</body>
+</html>
