@@ -1,131 +1,130 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Story Assessment Combined</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/compromise/14.10.0/compromise.min.js"></script>
-<style>
-    /* --- Combined CSS from your template --- */
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-    body {
-        font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0c29 100%);
-        min-height: 100vh;
-        color: #fff;
-        overflow-x: hidden;
-    }
-    .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
-    .star { position: absolute; width: 2px; height: 2px; background: rgba(255, 255, 255, 0.8); border-radius: 50%; animation: twinkle 3s infinite; }
-    @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
-    .container { position: relative; z-index: 10; max-width: 414px; margin: 0 auto; min-height: 100vh; background: rgba(0, 0, 0, 0.3); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
-    .header { text-align: center; padding: 40px 20px 30px; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%); backdrop-filter: blur(30px); border-bottom: 1px solid rgba(255,255,255,0.1);}
-    .header h1 { font-size: 2.2rem; font-weight: 300; margin-bottom: 8px; background: linear-gradient(135deg, #fff 0%, #a8edea 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;}
-    .header .subtitle { font-size: 0.95rem; opacity: 0.7; font-weight: 300; letter-spacing: 0.5px;}
-    .main-content { padding: 20px;}
-    .question-section { display: none; animation: slideIn 0.8s cubic-bezier(0.25,0.46,0.45,0.94);}
-    .question-section.active { display: block;}
-    @keyframes slideIn { from{opacity:0;transform:translateY(30px);} to{opacity:1;transform:translateY(0);} }
-    .quadrant-header { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 25px 20px; margin-bottom: 25px; text-align: center; backdrop-filter: blur(20px);}
-    .quadrant-icon { font-size: 3.5rem; margin-bottom: 15px; display: block;}
-    .quadrant-title { font-size: 1.4rem; font-weight: 600; margin-bottom: 8px; background: linear-gradient(135deg, #fff 0%, #a8edea 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
-    .quadrant-subtitle { font-size: 0.9rem; opacity: 0.7; font-weight: 300;}
-    .question { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin-bottom: 20px; backdrop-filter: blur(20px);}
-    .question h3 { font-size: 1.1rem; font-weight: 500; margin-bottom: 15px; line-height: 1.4; color: rgba(255,255,255,0.9);}
-    .question textarea { width: 100%; min-height: 100px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 15px; font-size: 0.95rem; font-family: inherit; color: #fff; resize: vertical; transition: all 0.3s ease;}
-    .question textarea::placeholder { color: rgba(255,255,255,0.5);}
-    .question textarea:focus { outline: none; border-color: rgba(168,237,234,0.5); box-shadow: 0 0 20px rgba(168,237,234,0.2); background: rgba(255,255,255,0.12);}
-    .progress-container { padding: 0 20px 20px;}
-    .progress-bar { width: 100%; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;}
-    .progress-fill { height: 100%; background: linear-gradient(90deg, #a8edea, #fed6e3); border-radius: 2px; transition: width 0.6s cubic-bezier(0.25,0.46,0.45,0.94);}
-    .nav-buttons { display: flex; justify-content: space-between; padding: 20px; gap: 15px;}
-    .btn { flex: 1; padding: 16px; border: none; border-radius: 25px; font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(20px); letter-spacing: 0.3px;}
-    .btn-primary { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #1a1a2e; border: none;}
-    .btn-primary:hover, .btn-primary:active { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(168,237,234,0.3);}
-    .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2);}
-    .btn-secondary:hover, .btn-secondary:active { background: rgba(255,255,255,0.15);}
-    .intro-screen { padding: 20px; text-align: center;}
-    .intro-screen.hidden { display: none;}
-    .intro-title { font-size: 1.8rem; font-weight: 300; margin-bottom: 20px; background: linear-gradient(135deg, #fff 0%, #a8edea 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
-    .intro-text { font-size: 0.95rem; line-height: 1.6; opacity: 0.8; margin-bottom: 30px;}
-    .quadrant-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 30px 0;}
-    .mini-quadrant { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; text-align: center; backdrop-filter: blur(20px);}
-    .mini-quadrant-icon { font-size: 2.5rem; margin-bottom: 10px; display: block;}
-    .mini-quadrant h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 5px; color: rgba(255,255,255,0.9);}
-    .mini-quadrant p { font-size: 0.8rem; opacity: 0.6;}
-    .results { display: none; padding: 20px;}
-    .results.active { display: block; animation: slideIn 0.8s ease;}
-    .results-header { text-align: center; margin-bottom: 30px; padding: 25px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; backdrop-filter: blur(20px);}
-    .results-title { font-size: 1.6rem; font-weight: 300; margin-bottom: 10px; background: linear-gradient(135deg, #fff 0%, #a8edea 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
-    .quadrant-result { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin-bottom: 20px; backdrop-filter: blur(20px);}
-    .result-header { display: flex; align-items: center; margin-bottom: 15px;}
-    .result-icon { font-size: 2rem; margin-right: 15px;}
-    .result-info h4 { font-size: 1.1rem; font-weight: 600; margin-bottom: 5px; color: rgba(255,255,255,0.9);}
-    .result-score { font-size: 0.9rem; opacity: 0.7;}
-    .strength-meter { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin: 15px 0;}
-    .strength-fill { height: 100%; background: linear-gradient(90deg, #a8edea, #fed6e3); border-radius: 3px; transition: width 1.5s cubic-bezier(0.25,0.46,0.45,0.94);}
-    .result-description { font-size: 0.95rem; line-height: 1.5; opacity: 0.8; margin-bottom: 15px;}
-    .personalized-insights { background: rgba(168,237,234,0.1); border: 1px solid rgba(168,237,234,0.2); border-radius: 12px; padding: 20px; margin-top: 15px;}
-    .insight-section { margin-bottom: 15px;}
-    .insight-section:last-child { margin-bottom: 0;}
-    .insight-section h5 { font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; color: #a8edea; display: flex; align-items: center; gap: 8px;}
-    .insight-section p { font-size: 0.9rem; line-height: 1.4; opacity: 0.9;}
-    .email-capture { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin: 20px 0; text-align: center; backdrop-filter: blur(20px);}
-    .email-capture h3 { font-size: 1.1rem; margin-bottom: 15px; color: rgba(255,255,255,0.9);}
-    .email-capture input { padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: #fff; font-size: 1rem; margin-right: 10px; width: 200px;}
-    .email-capture input::placeholder { color: rgba(255,255,255,0.5);}
-    .email-capture input:focus { outline: none; border-color: rgba(168,237,234,0.5); box-shadow: 0 0 10px rgba(168,237,234,0.2);}
-    .final-note { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin-top: 20px; text-align: center; backdrop-filter: blur(20px);}
-    .final-note h4 { font-size: 1.1rem; font-weight: 500; margin-bottom: 10px; color: rgba(255,255,255,0.9);}
-    .final-note p { font-size: 0.9rem; line-height: 1.5; opacity: 0.7; margin-bottom: 15px;}
-    @media (max-width: 375px) {
-        .header h1 { font-size: 1.9rem;}
-        .quadrant-icon { font-size: 3rem;}
-        .mini-quadrant-icon { font-size: 2rem;}
-    }
-    ul { margin:0 0 15px 20px; padding:0;}
-    .archetype-extras ul {margin-bottom:15px;}
-    .archetypeQuestion {
-        width: 100%;
-        min-height: 60px;
-        background: rgba(255,255,255,0.08);
-        border: 1px solid rgba(255,255,255,0.15);
-        border-radius: 8px;
-        padding: 10px;
-        font-size: 0.9rem;
-        font-family: inherit;
-        color: #fff;
-        resize: vertical;
-        margin-bottom: 10px;
-    }
-    .archetypeQuestion::placeholder {
-        color: rgba(255,255,255,0.5);
-    }
-    .archetypeQuestion:focus {
-        outline: none;
-        border-color: rgba(168,237,234,0.5);
-        background: rgba(255,255,255,0.12);
-    }
-    .archetypeAskBtn {
-        padding: 8px 16px;
-        margin: 0;
-        font-size: 0.9rem;
-    }
-    .archetypeAnswer {
-        margin-top: 10px;
-        color: #a8edea;
-        font-size: 0.9rem;
-        line-height: 1.4;
-        padding: 10px;
-        background: rgba(168,237,234,0.1);
-        border-radius: 8px;
-        min-height: 20px;
-    }
-</style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Story Assessment</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/compromise/14.10.0/compromise.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0c29 100%);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+        .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+        .star { position: absolute; width: 2px; height: 2px; background: rgba(255, 255, 255, 0.8); border-radius: 50%; animation: twinkle 3s infinite; }
+        @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+        .container { position: relative; z-index: 10; max-width: 414px; margin: 0 auto; min-height: 100vh; background: rgba(0, 0, 0, 0.3); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .header { text-align: center; padding: 40px 20px 30px; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%); backdrop-filter: blur(30px); border-bottom: 1px solid rgba(255,255,255,0.1);}
+        .header h1 { font-size: 2.2rem; font-weight: 300; margin-bottom: 8px; background: linear-gradient(135deg, #fff 0%, #a8edea 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;}
+        .header .subtitle { font-size: 0.95rem; opacity: 0.7; font-weight: 300; letter-spacing: 0.5px;}
+        .main-content { padding: 20px;}
+        .question-section { display: none; animation: slideIn 0.8s cubic-bezier(0.25,0.46,0.45,0.94);}
+        .question-section.active { display: block;}
+        @keyframes slideIn { from{opacity:0;transform:translateY(30px);} to{opacity:1;transform:translateY(0);} }
+        .quadrant-header { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 25px 20px; margin-bottom: 25px; text-align: center; backdrop-filter: blur(20px);}
+        .quadrant-icon { font-size: 3.5rem; margin-bottom: 15px; display: block;}
+        .quadrant-title { font-size: 1.4rem; font-weight: 600; margin-bottom: 8px; background: linear-gradient(135deg, #fff 0%, #a8edea 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
+        .quadrant-subtitle { font-size: 0.9rem; opacity: 0.7; font-weight: 300;}
+        .question { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin-bottom: 20px; backdrop-filter: blur(20px);}
+        .question h3 { font-size: 1.1rem; font-weight: 500; margin-bottom: 15px; line-height: 1.4; color: rgba(255,255,255,0.9);}
+        .question textarea { width: 100%; min-height: 100px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 15px; font-size: 0.95rem; font-family: inherit; color: #fff; resize: vertical; transition: all 0.3s ease;}
+        .question textarea::placeholder { color: rgba(255,255,255,0.5);}
+        .question textarea:focus { outline: none; border-color: rgba(168,237,234,0.5); box-shadow: 0 0 20px rgba(168,237,234,0.2); background: rgba(255,255,255,0.12);}
+        .progress-container { padding: 0 20px 20px;}
+        .progress-bar { width: 100%; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;}
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #a8edea, #fed6e3); border-radius: 2px; transition: width 0.6s cubic-bezier(0.25,0.46,0.45,0.94);}
+        .nav-buttons { display: flex; justify-content: space-between; padding: 20px; gap: 15px;}
+        .btn { flex: 1; padding: 16px; border: none; border-radius: 25px; font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(20px); letter-spacing: 0.3px;}
+        .btn-primary { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #1a1a2e; border: none;}
+        .btn-primary:hover, .btn-primary:active { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(168,237,234,0.3);}
+        .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2);}
+        .btn-secondary:hover, .btn-secondary:active { background: rgba(255,255,255,0.15);}
+        .intro-screen { padding: 20px; text-align: center;}
+        .intro-screen.hidden { display: none;}
+        .intro-title { font-size: 1.8rem; font-weight: 300; margin-bottom: 20px; background: linear-gradient(135deg, #fff 0%, #a8edea 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
+        .intro-text { font-size: 0.95rem; line-height: 1.6; opacity: 0.8; margin-bottom: 30px;}
+        .quadrant-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 30px 0;}
+        .mini-quadrant { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; text-align: center; backdrop-filter: blur(20px);}
+        .mini-quadrant-icon { font-size: 2.5rem; margin-bottom: 10px; display: block;}
+        .mini-quadrant h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 5px; color: rgba(255,255,255,0.9);}
+        .mini-quadrant p { font-size: 0.8rem; opacity: 0.6;}
+        .results { display: none; padding: 20px;}
+        .results.active { display: block; animation: slideIn 0.8s ease;}
+        .results-header { text-align: center; margin-bottom: 30px; padding: 25px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; backdrop-filter: blur(20px);}
+        .results-title { font-size: 1.6rem; font-weight: 300; margin-bottom: 10px; background: linear-gradient(135deg, #fff 0%, #a8edea 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
+        .quadrant-result { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin-bottom: 20px; backdrop-filter: blur(20px);}
+        .result-header { display: flex; align-items: center; margin-bottom: 15px;}
+        .result-icon { font-size: 2rem; margin-right: 15px;}
+        .result-info h4 { font-size: 1.1rem; font-weight: 600; margin-bottom: 5px; color: rgba(255,255,255,0.9);}
+        .result-score { font-size: 0.9rem; opacity: 0.7;}
+        .strength-meter { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin: 15px 0;}
+        .strength-fill { height: 100%; background: linear-gradient(90deg, #a8edea, #fed6e3); border-radius: 3px; transition: width 1.5s cubic-bezier(0.25,0.46,0.45,0.94);}
+        .personalized-insights { background: rgba(168,237,234,0.1); border: 1px solid rgba(168,237,234,0.2); border-radius: 12px; padding: 20px; margin-top: 15px;}
+        .insight-section { margin-bottom: 15px;}
+        .insight-section:last-child { margin-bottom: 0;}
+        .insight-section h5 { font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; color: #a8edea; display: flex; align-items: center; gap: 8px;}
+        .insight-section p { font-size: 0.9rem; line-height: 1.4; opacity: 0.9;}
+        .email-capture { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin: 20px 0; text-align: center; backdrop-filter: blur(20px);}
+        .email-capture h3 { font-size: 1.1rem; margin-bottom: 15px; color: rgba(255,255,255,0.9);}
+        .email-capture input { padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: #fff; font-size: 1rem; margin-right: 10px; width: 200px;}
+        .email-capture input::placeholder { color: rgba(255,255,255,0.5);}
+        .email-capture input:focus { outline: none; border-color: rgba(168,237,234,0.5); box-shadow: 0 0 10px rgba(168,237,234,0.2);}
+        .final-note { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin-top: 20px; text-align: center; backdrop-filter: blur(20px);}
+        .final-note h4 { font-size: 1.1rem; font-weight: 500; margin-bottom: 10px; color: rgba(255,255,255,0.9);}
+        .final-note p { font-size: 0.9rem; line-height: 1.5; opacity: 0.7; margin-bottom: 15px;}
+        @media (max-width: 375px) {
+            .header h1 { font-size: 1.9rem;}
+            .quadrant-icon { font-size: 3rem;}
+            .mini-quadrant-icon { font-size: 2rem;}
+        }
+        ul { margin:0 0 15px 20px; padding:0;}
+        .archetype-extras ul {margin-bottom:15px;}
+        .archetypeQuestion {
+            width: 100%;
+            min-height: 60px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            color: #fff;
+            resize: vertical;
+            margin-bottom: 10px;
+        }
+        .archetypeQuestion::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+        .archetypeQuestion:focus {
+            outline: none;
+            border-color: rgba(168,237,234,0.5);
+            background: rgba(255,255,255,0.12);
+        }
+        .archetypeAskBtn {
+            padding: 8px 16px;
+            margin: 0;
+            font-size: 0.9rem;
+        }
+        .archetypeAnswer {
+            margin-top: 10px;
+            color: #a8edea;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            padding: 10px;
+            background: rgba(168,237,234,0.1);
+            border-radius: 8px;
+            min-height: 20px;
+        }
+    </style>
 </head>
 <body>
 <div class="stars" id="stars"></div>
@@ -295,7 +294,11 @@
         </div>
     </div>
 </div>
+
 <script>
+    // Configuration - Update this with your backend URL
+    const BACKEND_URL = 'https://your-backend-domain.com/api'; // Replace with your actual backend URL
+
     // STAR BACKGROUND
     function createStars() {
         const starsContainer = document.getElementById('stars');
@@ -371,78 +374,80 @@
         }
     }
 
-    // SIMPLE EMAIL VALIDATION
-    function validateEmailInput() {
-        const emailInput = document.getElementById('userEmail');
-        const msg = document.getElementById('emailMsg');
-        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (emailInput.value && !regex.test(emailInput.value)) {
-            msg.textContent = "Please enter a valid email address.";
-        } else {
-            msg.textContent = "";
-        }
-    }
-
-    // SUBMIT EMAIL TO BACKEND (replace URL with your deployed backend)
-    function submitEmail() {
-        const emailInput = document.getElementById('userEmail');
-        const msg = document.getElementById('emailMsg');
-        if (!emailInput.value) {
-            msg.textContent = "Email cannot be empty.";
-            return;
-        }
-        if (msg.textContent !== "") return;
-
-        // Here you should call your backend API endpoint
-        // Example placeholder using fetch:
-        fetch('/submit-email', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: emailInput.value })
-        }).then(response => {
-            if (response.ok) {
-                msg.textContent = "Results sent! Check your email.";
-                emailInput.value = "";
-            } else {
-                msg.textContent = "Failed to send email. Try again later.";
-            }
-        }).catch(() => {
-            msg.textContent = "Network error. Try again later.";
+    // TEXT ANALYSIS FUNCTIONS
+    function analyzeText(text) {
+        if (!text || text.trim().length === 0) return null;
+        const words = text.split(/\s+/).filter(word => word.length > 0);
+        const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+        const keywords = {
+            belonging: /\b(belong|accept|include|community|group|team|family|friend|together|connect|fit|welcome)\b/gi,
+            strategy: /\b(careful|safe|protect|avoid|risk|danger|trust|politics|navigate|strategy|plan|cautious)\b/gi,
+            innovation: /\b(change|challenge|create|build|achieve|goal|success|push|break|rebel|innovate|different)\b/gi,
+            boundary: /\b(explore|limit|edge|beyond|unknown|mystery|spiritual|intense|overwhelming|cosmic|transcend)\b/gi,
+            emotional: /\b(feel|emotion|heart|passionate|love|fear|angry|sad|happy|excited|anxious|calm)\b/gi,
+            action: /\b(do|make|create|build|fight|work|try|attempt|struggle|achieve|accomplish)\b/gi,
+            reflection: /\b(think|believe|understand|realize|learn|discover|wonder|question|reflect)\b/gi,
+            confidence: /\b(confident|sure|certain|strong|powerful|capable|able|skilled|expert)\b/gi,
+            uncertainty: /\b(unsure|doubt|maybe|perhaps|confused|lost|uncertain|worried|anxious)\b/gi,
+            individual: /\b(i|me|my|myself|mine|personal|individual|alone|independent|solo)\b/gi,
+            collective: /\b(we|us|our|together|team|group|everyone|community|others)\b/gi
+        };
+        const analysis = {
+            wordCount: words.length,
+            sentences: sentences.length,
+            lexicalDiversity: words.length > 0 ? new Set(words.map(w => w.toLowerCase())).size / words.length : 0,
+            emotionalRichness: 0.5,
+            personalPronouns: (text.match(keywords.individual) || []).length,
+            collectivePronouns: (text.match(keywords.collective) || []).length,
+            keywordMatches: {}
+        };
+        Object.keys(keywords).forEach(category => {
+            analysis.keywordMatches[category] = (text.match(keywords[category]) || []).length;
         });
+        return analysis;
     }
 
-    // SHOW RESULTS (basic placeholder, you can expand analysis logic)
-    function showResults() {
-        saveCurrentResponses();
-        document.getElementById('assessment').style.display = 'none';
-        document.getElementById('navButtons').style.display = 'none';
-        document.getElementById('progressContainer').style.display = 'none';
-        const resultsDiv = document.getElementById('results');
-        resultsDiv.classList.add('active');
-        const contentDiv = document.getElementById('resultsContent');
+    function generatePersonalizedInsights(quadrant, responses, analysis) {
+        return {
+            archetype: determineArchetype(quadrant, responses, analysis),
+            currentState: analyzeCurrentState(quadrant, responses, analysis),
+            nextMove: suggestNextMove(quadrant, responses, analysis),
+            warning: identifyWarning(quadrant, responses, analysis)
+        };
+    }
 
-        contentDiv.innerHTML = '';
-
-        Object.keys(responses).forEach(quadrant => {
-            const texts = responses[quadrant];
-            const div = document.createElement('div');
-            div.className = 'quadrant-result';
-            let html = `<h3>${quadrant.toUpperCase()} Quadrant Responses:</h3>`;
-            for (const key in texts) {
-                html += `<p><strong>Q${key}:</strong> ${texts[key]}</p>`;
+    function determineArchetype(quadrant, responses, analysis) {
+        const archetypes = {
+            north: {
+                high_belonging: "The Connector - You're a natural community builder who thrives on genuine relationships",
+                low_belonging: "The Independent - You value authentic connections over superficial acceptance",
+                seeking_belonging: "The Seeker - You're actively working to find your tribe and place in the world"
+            },
+            east: {
+                high_strategy: "The Navigator - You excel at reading complex social situations and moving wisely",
+                low_strategy: "The Direct - You prefer straightforward interactions over political maneuvering", 
+                avoiding_strategy: "The Withdrawn - You tend to step back when things get socially complicated"
+            },
+            south: {
+                high_innovation: "The Changemaker - You're driven to improve systems and create lasting impact",
+                low_innovation: "The Collaborator - You prefer working within existing structures to create change",
+                frustrated_innovation: "The Restless - You feel the urge to innovate but face barriers to expression"
+            },
+            west: {
+                high_boundary: "The Explorer - You're comfortable pushing limits and venturing into unknown territory",
+                low_boundary: "The Grounded - You find strength in stability and clear boundaries",
+                overwhelmed_boundary: "The Sensitive - You feel deeply but sometimes need protection from intensity"
             }
-            div.innerHTML = html;
-            contentDiv.appendChild(div);
-        });
-    }
-
-    function restartAssessment() {
-        responses = {};
-        currentSection = 0;
-        document.getElementById('results').classList.remove('active');
-        document.getElementById('intro').classList.remove('hidden');
-        document.querySelector(`[data-quadrant="${sections[0]}"]`).classList.add('active');
-    }
-</script>
-</body>
-</html>
+        };
+        
+        if (!analysis || !analysis.keywordMatches) return archetypes[quadrant].seeking_belonging || "Default Archetype";
+        
+        const keywords = analysis.keywordMatches;
+        
+        if (quadrant === 'north') {
+            if (keywords.belonging > 3 && keywords.collective > keywords.individual) return archetypes.north.high_belonging;
+            if (keywords.belonging < 2 && keywords.individual > keywords.collective) return archetypes.north.low_belonging;
+            return archetypes.north.seeking_belonging;
+        }
+        if (quadrant === 'east') {
+            if (keywords.strategy > 2 && keywords.reflection > keywords.action) return archetypes.east.
