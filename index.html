@@ -69,235 +69,309 @@
         .strength-meter { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin: 15px 0;}
         .strength-fill { height: 100%; background: linear-gradient(90deg, #a8edea, #fed6e3); border-radius: 3px; transition: width 1.5s cubic-bezier(0.25,0.46,0.45,0.94);}
         .personalized-insights { background: rgba(168,237,234,0.1); border: 1px solid rgba(168,237,234,0.2); border-radius: 12px; padding: 20px; margin-top: 15px;}
-        .insight-section { margin-bottom: 15px;}
-        .insight-section:last-child { margin-bottom: 0;}
-        .insight-section h5 { font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; color: #a8edea; display: flex; align-items: center; gap: 8px;}
+        .insight-section h5 { font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; color: #a8edea;}
         .insight-section p { font-size: 0.9rem; line-height: 1.4; opacity: 0.9;}
-        .email-capture { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin: 20px 0; text-align: center; backdrop-filter: blur(20px);}
-        .email-capture h3 { font-size: 1.1rem; margin-bottom: 15px; color: rgba(255,255,255,0.9);}
-        .email-capture input { padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: #fff; font-size: 1rem; margin-right: 10px; width: 200px;}
-        .email-capture input::placeholder { color: rgba(255,255,255,0.5);}
-        .email-capture input:focus { outline: none; border-color: rgba(168,237,234,0.5); box-shadow: 0 0 10px rgba(168,237,234,0.2);}
+        .share-section { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin: 20px 0; text-align: center; backdrop-filter: blur(20px);}
+        .share-section h3 { font-size: 1.1rem; margin-bottom: 15px; color: rgba(255,255,255,0.9);}
         .final-note { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin-top: 20px; text-align: center; backdrop-filter: blur(20px);}
         .final-note h4 { font-size: 1.1rem; font-weight: 500; margin-bottom: 10px; color: rgba(255,255,255,0.9);}
         .final-note p { font-size: 0.9rem; line-height: 1.5; opacity: 0.7; margin-bottom: 15px;}
-        @media (max-width: 375px) {
-            .header h1 { font-size: 1.9rem;}
-            .quadrant-icon { font-size: 3rem;}
-            .mini-quadrant-icon { font-size: 2rem;}
-        }
-        ul { margin:0 0 15px 20px; padding:0;}
-        .archetype-extras ul {margin-bottom:15px;}
-        .archetypeQuestion {
-            width: 100%;
-            min-height: 60px;
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 8px;
-            padding: 10px;
-            font-size: 0.9rem;
-            font-family: inherit;
-            color: #fff;
-            resize: vertical;
-            margin-bottom: 10px;
-        }
-        .archetypeQuestion::placeholder {
-            color: rgba(255,255,255,0.5);
-        }
-        .archetypeQuestion:focus {
-            outline: none;
-            border-color: rgba(168,237,234,0.5);
-            background: rgba(255,255,255,0.12);
-        }
-        .archetypeAskBtn {
-            padding: 8px 16px;
-            margin: 0;
-            font-size: 0.9rem;
-        }
-        .archetypeAnswer {
-            margin-top: 10px;
-            color: #a8edea;
-            font-size: 0.9rem;
-            line-height: 1.4;
-            padding: 10px;
-            background: rgba(168,237,234,0.1);
-            border-radius: 8px;
-            min-height: 20px;
-        }
-    </style>
+
+```
+    /* Paywall styles */
+    .paywall-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.95);
+        z-index: 1000;
+        backdrop-filter: blur(10px);
+    }
+    .paywall-overlay.active { display: flex; align-items: center; justify-content: center; animation: fadeIn 0.3s ease;}
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .paywall-content {
+        background: rgba(26, 26, 46, 0.95);
+        border: 1px solid rgba(168, 237, 234, 0.3);
+        border-radius: 20px;
+        padding: 40px 30px;
+        max-width: 380px;
+        margin: 20px;
+        text-align: center;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+    .paywall-content h2 {
+        font-size: 1.8rem;
+        margin-bottom: 15px;
+        background: linear-gradient(135deg, #fff 0%, #a8edea 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .paywall-content p {
+        font-size: 0.95rem;
+        line-height: 1.6;
+        opacity: 0.8;
+        margin-bottom: 25px;
+    }
+    .paywall-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    .code-input-section {
+        display: none;
+        margin-top: 25px;
+        padding-top: 25px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .code-input-section.active { display: block; }
+    .code-input-section input {
+        width: 100%;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        color: #fff;
+        font-size: 1rem;
+        text-align: center;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+    .code-input-section input::placeholder { color: rgba(255, 255, 255, 0.5); }
+    .code-input-section input:focus {
+        outline: none;
+        border-color: rgba(168, 237, 234, 0.5);
+        box-shadow: 0 0 20px rgba(168, 237, 234, 0.2);
+    }
+    .error-message {
+        color: #ff6b6b;
+        font-size: 0.85rem;
+        margin-top: 10px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .error-message.active { opacity: 1; }
+    
+    @media (max-width: 375px) {
+        .header h1 { font-size: 1.9rem;}
+        .quadrant-icon { font-size: 3rem;}
+        .mini-quadrant-icon { font-size: 2rem;}
+    }
+</style>
+```
+
 </head>
 <body>
 <div class="stars" id="stars"></div>
+
+<!-- Paywall Overlay -->
+
+<div class="paywall-overlay" id="paywallOverlay">
+    <div class="paywall-content">
+        <h2>🔒 Unlock Your Results</h2>
+        <p>You've completed the assessment! To view your personalized Story Profile, please choose an option below.</p>
+
+```
+    <div class="paywall-buttons">
+        <button class="btn btn-primary" onclick="subscribe()">Subscribe ($9.99/mo)</button>
+        <button class="btn btn-secondary" onclick="showCodeInput()">I Have an Access Code</button>
+    </div>
+    
+    <div class="code-input-section" id="codeInputSection">
+        <input 
+            type="text" 
+            id="accessCodeInput" 
+            placeholder="Enter your access code"
+            maxlength="20"
+        >
+        <button class="btn btn-primary" onclick="verifyCode()">Verify Code</button>
+        <p class="error-message" id="codeError">Invalid code. Please try again.</p>
+    </div>
+</div>
+```
+
+</div>
+
 <div class="container">
     <div class="header">
         <h1>✦ Story Assessment ✦</h1>
         <div class="subtitle">Discover your behavioral narrative patterns</div>
     </div>
-    <!-- Introduction Screen -->
-    <div class="intro-screen" id="intro">
-        <div class="main-content">
-            <h2 class="intro-title">Welcome to Your Story Assessment</h2>
-            <p class="intro-text">
-                Explore the four fundamental survival stories that drive human behavior. 
-                Discover how you navigate belonging, strategy, innovation, and boundary exploration.
-            </p>
-            <div class="quadrant-grid">
-                <div class="mini-quadrant">
-                    <div class="mini-quadrant-icon">🛡️</div>
-                    <h4>NORTH: BELONGING</h4>
-                    <p>Institution vs Outsider</p>
-                </div>
-                <div class="mini-quadrant">
-                    <div class="mini-quadrant-icon">♟</div>
-                    <h4>EAST: STRATEGY</h4>
-                    <p>Internal Politics</p>
-                </div>
-                <div class="mini-quadrant">
-                    <div class="mini-quadrant-icon">🔥</div>
-                    <h4>SOUTH: INNOVATION</h4>
-                    <p>Individual vs Institution</p>
-                </div>
-                <div class="mini-quadrant">
-                    <div class="mini-quadrant-icon">🌌</div>
-                    <h4>WEST: BOUNDARY</h4>
-                    <p>Individual vs Cosmos</p>
-                </div>
+
+```
+<!-- Introduction Screen -->
+<div class="intro-screen" id="intro">
+    <div class="main-content">
+        <h2 class="intro-title">Welcome to Your Story Assessment</h2>
+        <p class="intro-text">
+            Explore the four fundamental survival stories that drive human behavior. 
+            Discover how you navigate belonging, strategy, innovation, and boundary exploration.
+        </p>
+        <div class="quadrant-grid">
+            <div class="mini-quadrant">
+                <div class="mini-quadrant-icon">🛡️</div>
+                <h4>NORTH: BELONGING</h4>
+                <p>Institution vs Outsider</p>
             </div>
-            <p class="intro-text">
-                Take your time with each question. The more honest and detailed your responses, 
-                the more accurate your results will be.
-            </p>
+            <div class="mini-quadrant">
+                <div class="mini-quadrant-icon">♟</div>
+                <h4>EAST: STRATEGY</h4>
+                <p>Internal Politics</p>
+            </div>
+            <div class="mini-quadrant">
+                <div class="mini-quadrant-icon">🔥</div>
+                <h4>SOUTH: INNOVATION</h4>
+                <p>Individual vs Institution</p>
+            </div>
+            <div class="mini-quadrant">
+                <div class="mini-quadrant-icon">🌌</div>
+                <h4>WEST: BOUNDARY</h4>
+                <p>Individual vs Cosmos</p>
+            </div>
         </div>
-        <div class="nav-buttons">
-            <button class="btn btn-primary" onclick="startAssessment()">Begin Your Journey</button>
+        <p class="intro-text">
+            Take your time with each question. The more honest and detailed your responses, 
+            the more accurate your results will be.
+        </p>
+    </div>
+    <div class="nav-buttons">
+        <button class="btn btn-primary" onclick="startAssessment()">Begin Your Journey</button>
+    </div>
+</div>
+
+<!-- Progress Bar -->
+<div class="progress-container" id="progressContainer" style="display:none;">
+    <div class="progress-bar">
+        <div class="progress-fill" id="progress" style="width:0%;"></div>
+    </div>
+</div>
+
+<!-- Assessment Sections -->
+<div class="main-content" id="assessment" style="display:none;">
+    <!-- North Quadrant -->
+    <div class="question-section active" data-quadrant="north">
+        <div class="quadrant-header">
+            <div class="quadrant-icon">🛡️</div>
+            <div class="quadrant-title">North Quadrant: The Belonging Story</div>
+            <div class="quadrant-subtitle">Institution vs Outsider</div>
+        </div>
+        <div class="question">
+            <h3>How important is it for you to feel accepted and appreciated by your group or community?</h3>
+            <textarea id="north1" placeholder="Think about times when you felt included vs excluded..."></textarea>
+        </div>
+        <div class="question">
+            <h3>Describe a situation where you went out of your way to get attention or recognition.</h3>
+            <textarea id="north2" placeholder="What drove you to seek that attention? What would have happened if no one noticed you?"></textarea>
+        </div>
+        <div class="question">
+            <h3>What does 'belonging' mean to you, and how do you know when you truly belong somewhere?</h3>
+            <textarea id="north3" placeholder="Think about the signs that tell you you're 'in' vs 'out' of a group..."></textarea>
         </div>
     </div>
-    <!-- Progress Bar -->
-    <div class="progress-container" id="progressContainer" style="display:none;">
-        <div class="progress-bar">
-            <div class="progress-fill" id="progress" style="width:0%;"></div>
+    
+    <!-- East Quadrant -->
+    <div class="question-section" data-quadrant="east">
+        <div class="quadrant-header">
+            <div class="quadrant-icon">♟</div>
+            <div class="quadrant-title">East Quadrant: The Strategy Story</div>
+            <div class="quadrant-subtitle">Internal Politics</div>
+        </div>
+        <div class="question">
+            <h3>How do you handle situations where you sense hidden motives or social politics?</h3>
+            <textarea id="east1" placeholder="Describe your strategies for navigating complex social situations..."></textarea>
+        </div>
+        <div class="question">
+            <h3>Tell me about a time when you avoided a social situation because it felt too risky or complicated.</h3>
+            <textarea id="east2" placeholder="What made it feel dangerous? What were you protecting yourself from?"></textarea>
+        </div>
+        <div class="question">
+            <h3>How do you protect yourself when you're in environments where you can't fully trust everyone?</h3>
+            <textarea id="east3" placeholder="Think about your strategies for staying safe in complex social dynamics..."></textarea>
         </div>
     </div>
-    <!-- Assessment Sections -->
-    <div class="main-content" id="assessment" style="display:none;">
-        <!-- North Quadrant -->
-        <div class="question-section active" data-quadrant="north">
-            <div class="quadrant-header">
-                <div class="quadrant-icon">🛡️</div>
-                <div class="quadrant-title">North Quadrant: The Belonging Story</div>
-                <div class="quadrant-subtitle">Institution vs Outsider</div>
-            </div>
-            <div class="question">
-                <h3>How important is it for you to feel accepted and appreciated by your group or community?</h3>
-                <textarea id="north1" placeholder="Think about times when you felt included vs excluded..."></textarea>
-            </div>
-            <div class="question">
-                <h3>Describe a situation where you went out of your way to get attention or recognition.</h3>
-                <textarea id="north2" placeholder="What drove you to seek that attention? What would have happened if no one noticed you?"></textarea>
-            </div>
-            <div class="question">
-                <h3>What does 'belonging' mean to you, and how do you know when you truly belong somewhere?</h3>
-                <textarea id="north3" placeholder="Think about the signs that tell you you're 'in' vs 'out' of a group..."></textarea>
-            </div>
+    
+    <!-- South Quadrant -->
+    <div class="question-section" data-quadrant="south">
+        <div class="quadrant-header">
+            <div class="quadrant-icon">🔥</div>
+            <div class="quadrant-title">South Quadrant: The Innovation Story</div>
+            <div class="quadrant-subtitle">Individual vs Institution</div>
         </div>
-        <!-- East Quadrant -->
-        <div class="question-section" data-quadrant="east">
-            <div class="quadrant-header">
-                <div class="quadrant-icon">♟</div>
-                <div class="quadrant-title">East Quadrant: The Strategy Story</div>
-                <div class="quadrant-subtitle">Internal Politics</div>
-            </div>
-            <div class="question">
-                <h3>How do you handle situations where you sense hidden motives or social politics?</h3>
-                <textarea id="east1" placeholder="Describe your strategies for navigating complex social situations..."></textarea>
-            </div>
-            <div class="question">
-                <h3>Tell me about a time when you avoided a social situation because it felt too risky or complicated.</h3>
-                <textarea id="east2" placeholder="What made it feel dangerous? What were you protecting yourself from?"></textarea>
-            </div>
-            <div class="question">
-                <h3>How do you protect yourself when you're in environments where you can't fully trust everyone?</h3>
-                <textarea id="east3" placeholder="Think about your strategies for staying safe in complex social dynamics..."></textarea>
-            </div>
+        <div class="question">
+            <h3>When do you feel most motivated to challenge rules, authority, or established ways of doing things?</h3>
+            <textarea id="south1" placeholder="Think about times when you've pushed back against systems that didn't serve you..."></textarea>
         </div>
-        <!-- South Quadrant -->
-        <div class="question-section" data-quadrant="south">
-            <div class="quadrant-header">
-                <div class="quadrant-icon">🔥</div>
-                <div class="quadrant-title">South Quadrant: The Innovation Story</div>
-                <div class="quadrant-subtitle">Individual vs Institution</div>
-            </div>
-            <div class="question">
-                <h3>When do you feel most motivated to challenge rules, authority, or established ways of doing things?</h3>
-                <textarea id="south1" placeholder="Think about times when you've pushed back against systems that didn't serve you..."></textarea>
-            </div>
-            <div class="question">
-                <h3>Describe something you've worked hard to achieve or acquire, despite obstacles.</h3>
-                <textarea id="south2" placeholder="What drove you to pursue this goal? How did you overcome resistance?"></textarea>
-            </div>
-            <div class="question">
-                <h3>How important is it for you to make your own mark on the world or leave things better than you found them?</h3>
-                <textarea id="south3" placeholder="What does 'success' or 'achievement' mean to you personally?"></textarea>
-            </div>
+        <div class="question">
+            <h3>Describe something you've worked hard to achieve or acquire, despite obstacles.</h3>
+            <textarea id="south2" placeholder="What drove you to pursue this goal? How did you overcome resistance?"></textarea>
         </div>
-        <!-- West Quadrant -->
-        <div class="question-section" data-quadrant="west">
-            <div class="quadrant-header">
-                <div class="quadrant-icon">🌌</div>
-                <div class="quadrant-title">West Quadrant: The Boundary Story</div>
-                <div class="quadrant-subtitle">Individual vs Cosmos</div>
-            </div>
-            <div class="question">
-                <h3>How do you handle overwhelming sensations, emotions, or situations?</h3>
-                <textarea id="west1" placeholder="Describe your go-to strategies when life feels like 'too much'..."></textarea>
-            </div>
-            <div class="question">
-                <h3>What draws you to explore new, intense, or boundary-pushing experiences?</h3>
-                <textarea id="west2" placeholder="Think about times you've tested limits - physical, emotional, spiritual..."></textarea>
-            </div>
-            <div class="question">
-                <h3>How do you make sense of life's bigger mysteries, uncertainties, or existential questions?</h3>
-                <textarea id="west3" placeholder="What's your relationship with the unknown, the spiritual, or philosophical aspects of existence?"></textarea>
-            </div>
+        <div class="question">
+            <h3>How important is it for you to make your own mark on the world or leave things better than you found them?</h3>
+            <textarea id="south3" placeholder="What does 'success' or 'achievement' mean to you personally?"></textarea>
         </div>
     </div>
-    <div class="nav-buttons" id="navButtons" style="display:none;">
-        <button class="btn btn-secondary" id="prevBtn" onclick="previousSection()" style="display:none;">Previous</button>
-        <button class="btn btn-primary" id="nextBtn" onclick="nextSection()">Next</button>
-    </div>
-    <!-- Results Section -->
-    <div class="results" id="results">
-        <div class="results-header">
-            <h2 class="results-title">✦ Your Story Profile ✦</h2>
-            <p>Your behavioral narrative patterns revealed</p>
+    
+    <!-- West Quadrant -->
+    <div class="question-section" data-quadrant="west">
+        <div class="quadrant-header">
+            <div class="quadrant-icon">🌌</div>
+            <div class="quadrant-title">West Quadrant: The Boundary Story</div>
+            <div class="quadrant-subtitle">Individual vs Cosmos</div>
         </div>
-        <div id="resultsContent"></div>
-        <!-- Email Capture -->
-        <div class="email-capture">
-            <h3>Get Your Assessment Results & Updates</h3>
-            <div id="emailForm" style="display:inline-block;">
-                <input 
-                    type="email" 
-                    id="userEmail" 
-                    placeholder="Enter your email" 
-                    required
-                    oninput="validateEmailInput()"
-                >
-                <button type="button" class="btn btn-primary" onclick="submitEmail()" style="margin-left:10px; padding:10px 18px;">Send Results</button>
-            </div>
-            <p id="emailMsg" style="margin-top:10px; color: #a8edea;"></p>
+        <div class="question">
+            <h3>How do you handle overwhelming sensations, emotions, or situations?</h3>
+            <textarea id="west1" placeholder="Describe your go-to strategies when life feels like 'too much'..."></textarea>
         </div>
-        <div class="final-note">
-            <h4>Your Journey Continues</h4>
-            <p>These insights are a starting point for deeper self-understanding. Consider reflecting on these patterns in your daily life and relationships.</p>
-            <button class="btn btn-secondary" onclick="restartAssessment()" style="margin-top: 15px;">Take Assessment Again</button>
+        <div class="question">
+            <h3>What draws you to explore new, intense, or boundary-pushing experiences?</h3>
+            <textarea id="west2" placeholder="Think about times you've tested limits - physical, emotional, spiritual..."></textarea>
+        </div>
+        <div class="question">
+            <h3>How do you make sense of life's bigger mysteries, uncertainties, or existential questions?</h3>
+            <textarea id="west3" placeholder="What's your relationship with the unknown, the spiritual, or philosophical aspects of existence?"></textarea>
         </div>
     </div>
 </div>
 
+<div class="nav-buttons" id="navButtons" style="display:none;">
+    <button class="btn btn-secondary" id="prevBtn" onclick="previousSection()" style="display:none;">Previous</button>
+    <button class="btn btn-primary" id="nextBtn" onclick="nextSection()">Next</button>
+</div>
+
+<!-- Results Section -->
+<div class="results" id="results">
+    <div class="results-header">
+        <h2 class="results-title">✦ Your Story Profile ✦</h2>
+        <p>Your behavioral narrative patterns revealed</p>
+    </div>
+    <div id="resultsContent"></div>
+    
+    <!-- Share Section -->
+    <div class="share-section">
+        <h3>Share Your Results</h3>
+        <button class="btn btn-primary" onclick="generateShareLink()">Generate Share Link</button>
+        <button class="btn btn-secondary" onclick="emailResults()" style="margin-top: 10px;">Email Results</button>
+        <p id="shareMsg" style="margin-top:10px; color: #a8edea; font-size: 0.9rem;"></p>
+    </div>
+    
+    <div class="final-note">
+        <h4>Your Journey Continues</h4>
+        <p>These insights are a starting point for deeper self-understanding. Consider reflecting on these patterns in your daily life and relationships.</p>
+        <button class="btn btn-secondary" onclick="restartAssessment()" style="margin-top: 15px;">Take Assessment Again</button>
+    </div>
+</div>
+```
+
+</div>
+
 <script>
-    // Configuration - Update this with your backend URL
-    const BACKEND_URL = 'https://your-backend-domain.com/api'; // Replace with your actual backend URL
+    // Global variables
+    let currentSection = 0;
+    const sections = ['north', 'east', 'south', 'west'];
+    let responses = {};
+    let assessmentResults = null;
 
     // STAR BACKGROUND
     function createStars() {
@@ -315,10 +389,6 @@
     createStars();
 
     // NAVIGATION AND ASSESSMENT LOGIC
-    let currentSection = 0;
-    const sections = ['north', 'east', 'south', 'west'];
-    let responses = {};
-
     function saveCurrentResponses() {
         const quadrant = sections[currentSection];
         responses[quadrant] = {};
@@ -360,7 +430,7 @@
             updateProgress();
             updateNavigation();
         } else {
-            showResults();
+            checkAccessAndShowResults();
         }
     }
 
@@ -374,11 +444,67 @@
         }
     }
 
+    // PAYWALL LOGIC
+    function checkAccessAndShowResults() {
+        const hasAccess = localStorage.getItem('assessmentUnlocked') === 'true';
+        if (hasAccess) {
+            showResults();
+        } else {
+            document.getElementById('paywallOverlay').classList.add('active');
+        }
+    }
+
+    function showCodeInput() {
+        document.getElementById('codeInputSection').classList.add('active');
+    }
+
+    function verifyCode() {
+        const input = document.getElementById('accessCodeInput');
+        const errorMsg = document.getElementById('codeError');
+        const code = input.value.trim().toUpperCase();
+        
+        // Demo code - replace with your actual verification logic
+        if (code === 'STORY2025' || code === 'DEMO') {
+            localStorage.setItem('assessmentUnlocked', 'true');
+            closePaywall();
+            showResults();
+        } else {
+            errorMsg.classList.add('active');
+            input.value = '';
+            input.style.borderColor = '#ff6b6b';
+            setTimeout(() => {
+                errorMsg.classList.remove('active');
+                input.style.borderColor = '';
+            }, 2000);
+        }
+    }
+
+    function closePaywall() {
+        document.getElementById('paywallOverlay').classList.remove('active');
+        document.getElementById('codeInputSection').classList.remove('active');
+        document.getElementById('accessCodeInput').value = '';
+    }
+
+    function subscribe() {
+        // Demo: Opens mailto for subscription inquiry
+        const subject = encodeURIComponent('Story Assessment Subscription Interest');
+        const body = encodeURIComponent('I am interested in subscribing to the Story Assessment tool.\n\nPlease send me payment information.');
+        window.location.href = `mailto:your-email@example.com?subject=${subject}&body=${body}`;
+        
+        // For demo, also unlock
+        alert('For demo purposes, access has been unlocked!\n\nIn production, replace your-email@example.com with your actual email.');
+        localStorage.setItem('assessmentUnlocked', 'true');
+        closePaywall();
+        showResults();
+    }
+
     // TEXT ANALYSIS FUNCTIONS
     function analyzeText(text) {
         if (!text || text.trim().length === 0) return null;
+        
         const words = text.split(/\s+/).filter(word => word.length > 0);
         const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+        
         const keywords = {
             belonging: /\b(belong|accept|include|community|group|team|family|friend|together|connect|fit|welcome)\b/gi,
             strategy: /\b(careful|safe|protect|avoid|risk|danger|trust|politics|navigate|strategy|plan|cautious)\b/gi,
@@ -392,6 +518,7 @@
             individual: /\b(i|me|my|myself|mine|personal|individual|alone|independent|solo)\b/gi,
             collective: /\b(we|us|our|together|team|group|everyone|community|others)\b/gi
         };
+        
         const analysis = {
             wordCount: words.length,
             sentences: sentences.length,
@@ -401,53 +528,300 @@
             collectivePronouns: (text.match(keywords.collective) || []).length,
             keywordMatches: {}
         };
+        
         Object.keys(keywords).forEach(category => {
             analysis.keywordMatches[category] = (text.match(keywords[category]) || []).length;
         });
+        
         return analysis;
     }
 
-    function generatePersonalizedInsights(quadrant, responses, analysis) {
+    function calculateQuadrantScore(quadrant) {
+        let totalScore = 0;
+        let analysisData = [];
+        
+        for (let i = 1; i <= 3; i++) {
+            const text = responses[quadrant][i] || '';
+            const analysis = analyzeText(text);
+            
+            if (analysis) {
+                const wordScore = Math.min(analysis.wordCount / 50, 1) * 30;
+                const keywordScore = Math.min(analysis.keywordMatches[quadrant] || 0, 5) * 10;
+                const diversityScore = analysis.lexicalDiversity * 20;
+                const emotionalScore = analysis.keywordMatches.emotional * 5;
+                
+                totalScore += wordScore + keywordScore + diversityScore + emotionalScore;
+                analysisData.push(analysis);
+            }
+        }
+        
         return {
-            archetype: determineArchetype(quadrant, responses, analysis),
-            currentState: analyzeCurrentState(quadrant, responses, analysis),
-            nextMove: suggestNextMove(quadrant, responses, analysis),
-            warning: identifyWarning(quadrant, responses, analysis)
+            score: Math.min(Math.round(totalScore), 100),
+            analyses: analysisData
         };
     }
 
-    function determineArchetype(quadrant, responses, analysis) {
+    function determineArchetype(quadrant, score, analyses) {
         const archetypes = {
             north: {
-                high_belonging: "The Connector - You're a natural community builder who thrives on genuine relationships",
-                low_belonging: "The Independent - You value authentic connections over superficial acceptance",
-                seeking_belonging: "The Seeker - You're actively working to find your tribe and place in the world"
+                high: "The Connector - You're a natural community builder who thrives on genuine relationships",
+                medium: "The Seeker - You're actively working to find your tribe and place in the world",
+                low: "The Independent - You value authentic connections over superficial acceptance"
             },
             east: {
-                high_strategy: "The Navigator - You excel at reading complex social situations and moving wisely",
-                low_strategy: "The Direct - You prefer straightforward interactions over political maneuvering", 
-                avoiding_strategy: "The Withdrawn - You tend to step back when things get socially complicated"
+                high: "The Navigator - You excel at reading complex social situations and moving wisely",
+                medium: "The Cautious - You carefully assess social dynamics before engaging",
+                low: "The Direct - You prefer straightforward interactions over political maneuvering"
             },
             south: {
-                high_innovation: "The Changemaker - You're driven to improve systems and create lasting impact",
-                low_innovation: "The Collaborator - You prefer working within existing structures to create change",
-                frustrated_innovation: "The Restless - You feel the urge to innovate but face barriers to expression"
+                high: "The Changemaker - You're driven to improve systems and create lasting impact",
+                medium: "The Innovator - You balance working within and challenging existing structures",
+                low: "The Collaborator - You prefer working within existing structures to create change"
             },
             west: {
-                high_boundary: "The Explorer - You're comfortable pushing limits and venturing into unknown territory",
-                low_boundary: "The Grounded - You find strength in stability and clear boundaries",
-                overwhelmed_boundary: "The Sensitive - You feel deeply but sometimes need protection from intensity"
+                high: "The Explorer - You're comfortable pushing limits and venturing into unknown territory",
+                medium: "The Curious - You're drawn to new experiences while maintaining healthy boundaries",
+                low: "The Grounded - You find strength in stability and clear boundaries"
             }
         };
         
-        if (!analysis || !analysis.keywordMatches) return archetypes[quadrant].seeking_belonging || "Default Archetype";
+        const level = score >= 70 ? 'high' : score >= 40 ? 'medium' : 'low';
+        return archetypes[quadrant][level];
+    }
+
+    function showResults() {
+        document.getElementById('assessment').style.display = 'none';
+        document.getElementById('navButtons').style.display = 'none';
+        document.getElementById('progressContainer').style.display = 'none';
         
-        const keywords = analysis.keywordMatches;
+        const quadrantData = {};
+        sections.forEach(quadrant => {
+            const result = calculateQuadrantScore(quadrant);
+            quadrantData[quadrant] = {
+                score: result.score,
+                archetype: determineArchetype(quadrant, result.score, result.analyses)
+            };
+        });
         
-        if (quadrant === 'north') {
-            if (keywords.belonging > 3 && keywords.collective > keywords.individual) return archetypes.north.high_belonging;
-            if (keywords.belonging < 2 && keywords.individual > keywords.collective) return archetypes.north.low_belonging;
-            return archetypes.north.seeking_belonging;
+        assessmentResults = quadrantData;
+        localStorage.setItem('lastAssessmentResults', JSON.stringify(assessmentResults));
+        localStorage.setItem('lastAssessmentDate', new Date().toISOString());
+        
+        const quadrantIcons = {
+            north: '🛡️',
+            east: '♟',
+            south: '🔥',
+            west: '🌌'
+        };
+        
+        const quadrantTitles = {
+            north: 'North: Belonging',
+            east: 'East: Strategy',
+            south: 'South: Innovation',
+            west: 'West: Boundary'
+        };
+        
+        let resultsHTML = '';
+        sections.forEach(quadrant => {
+            const data = quadrantData[quadrant];
+            resultsHTML += `
+                <div class="quadrant-result">
+                    <div class="result-header">
+                        <div class="result-icon">${quadrantIcons[quadrant]}</div>
+                        <div class="result-info">
+                            <h4>${quadrantTitles[quadrant]}</h4>
+                            <div class="result-score">Score: ${data.score}/100</div>
+                        </div>
+                    </div>
+                    <div class="strength-meter">
+                        <div class="strength-fill" style="width: ${data.score}%;"></div>
+                    </div>
+                    <div class="personalized-insights">
+                        <div class="insight-section">
+                            <h5>Your Archetype</h5>
+                            <p>${data.archetype}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        document.getElementById('resultsContent').innerHTML = resultsHTML;
+        document.getElementById('results').classList.add('active');
+    }
+
+    function generateShareLink() {
+        if (!assessmentResults) {
+            document.getElementById('shareMsg').textContent = 'Please complete the assessment first.';
+            return;
         }
-        if (quadrant === 'east') {
-            if (keywords.strategy > 2 && keywords.reflection > keywords.action) return archetypes.east.
+        
+        const encodedResults = btoa(JSON.stringify(assessmentResults));
+        const shareUrl = `${window.location.origin}${window.location.pathname}?results=${encodedResults}`;
+        
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            document.getElementById('shareMsg').textContent = '✅ Shareable link copied! Send it via email.';
+            setTimeout(() => {
+                document.getElementById('shareMsg').textContent = '';
+            }, 3000);
+        }).catch(() => {
+            const textArea = document.createElement('textarea');
+            textArea.value = shareUrl;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                document.getElementById('shareMsg').textContent = '✅ Shareable link copied!';
+            } catch (err) {
+                document.getElementById('shareMsg').textContent = '❌ Could not copy link.';
+            }
+            document.body.removeChild(textArea);
+        });
+    }
+
+    function emailResults() {
+        if (!assessmentResults) {
+            document.getElementById('shareMsg').textContent = '❌ No results to send.';
+            return;
+        }
+        
+        let emailBody = 'YOUR STORY ASSESSMENT RESULTS\n\n';
+        emailBody += '═══════════════════════════════\n\n';
+        
+        const quadrantTitles = {
+            north: 'NORTH: BELONGING',
+            east: 'EAST: STRATEGY',
+            south: 'SOUTH: INNOVATION',
+            west: 'WEST: BOUNDARY'
+        };
+        
+        sections.forEach(quadrant => {
+            const data = assessmentResults[quadrant];
+            emailBody += `${quadrantTitles[quadrant]}\n`;
+            emailBody += `Score: ${data.score}/100\n`;
+            emailBody += `Archetype: ${data.archetype}\n\n`;
+        });
+        
+        emailBody += '═══════════════════════════════\n\n';
+        emailBody += 'Take your assessment at: ' + window.location.origin + window.location.pathname;
+        
+        const subject = encodeURIComponent('My Story Assessment Results');
+        const body = encodeURIComponent(emailBody);
+        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        
+        document.getElementById('shareMsg').textContent = '✅ Opening your email client...';
+        setTimeout(() => {
+            document.getElementById('shareMsg').textContent = '';
+        }, 3000);
+    }
+
+    function displaySharedResults(results) {
+        assessmentResults = results;
+        localStorage.setItem('assessmentUnlocked', 'true');
+        
+        document.getElementById('intro').classList.add('hidden');
+        document.getElementById('assessment').style.display = 'none';
+        document.getElementById('navButtons').style.display = 'none';
+        document.getElementById('progressContainer').style.display = 'none';
+        
+        const quadrantIcons = {
+            north: '🛡️',
+            east: '♟',
+            south: '🔥',
+            west: '🌌'
+        };
+        
+        const quadrantTitles = {
+            north: 'North: Belonging',
+            east: 'East: Strategy',
+            south: 'South: Innovation',
+            west: 'West: Boundary'
+        };
+        
+        let resultsHTML = '';
+        sections.forEach(quadrant => {
+            const data = results[quadrant];
+            resultsHTML += `
+                <div class="quadrant-result">
+                    <div class="result-header">
+                        <div class="result-icon">${quadrantIcons[quadrant]}</div>
+                        <div class="result-info">
+                            <h4>${quadrantTitles[quadrant]}</h4>
+                            <div class="result-score">Score: ${data.score}/100</div>
+                        </div>
+                    </div>
+                    <div class="strength-meter">
+                        <div class="strength-fill" style="width: ${data.score}%;"></div>
+                    </div>
+                    <div class="personalized-insights">
+                        <div class="insight-section">
+                            <h5>Archetype</h5>
+                            <p>${data.archetype}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        document.getElementById('resultsContent').innerHTML = resultsHTML;
+        document.getElementById('results').classList.add('active');
+    }
+
+    function restartAssessment() {
+        currentSection = 0;
+        responses = {};
+        assessmentResults = null;
+        
+        sections.forEach(quadrant => {
+            for (let i = 1; i <= 3; i++) {
+                const element = document.getElementById(quadrant + i);
+                if (element) element.value = '';
+            }
+        });
+        
+        document.getElementById('results').classList.remove('active');
+        document.getElementById('intro').classList.remove('hidden');
+        document.getElementById('assessment').style.display = 'none';
+        document.getElementById('navButtons').style.display = 'none';
+        document.getElementById('progressContainer').style.display = 'none';
+        document.getElementById('progress').style.width = '0%';
+        document.getElementById('shareMsg').textContent = '';
+        
+        document.querySelectorAll('.question-section').forEach(section => {
+            section.classList.remove('active');
+        });
+        document.querySelector('[data-quadrant="north"]').classList.add('active');
+    }
+
+    // Check for shared results on page load
+    window.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const encodedResults = urlParams.get('results');
+        
+        if (encodedResults) {
+            try {
+                const results = JSON.parse(atob(encodedResults));
+                displaySharedResults(results);
+            } catch (e) {
+                console.error('Invalid shared results URL');
+            }
+        }
+    });
+
+    // Allow Enter key in paywall code input
+    document.addEventListener('DOMContentLoaded', function() {
+        const input = document.getElementById('accessCodeInput');
+        if (input) {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    verifyCode();
+                }
+            });
+        }
+    });
+</script>
+
+</body>
+</html>
