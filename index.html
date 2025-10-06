@@ -5,226 +5,264 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Comprehensive Career Readiness Assessment</title>
 <style>
+/* --- Global Styles --- */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-min-height: 100vh;
-color: #333;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #333;
 }
 
 .container {
-max-width: 1000px;
-margin: 0 auto;
-padding: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
 }
 
+/* --- Header & Warning --- */
 header {
-background: white;
-padding: 30px;
-border-radius: 12px;
-box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-margin-bottom: 20px;
-text-align: center;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    text-align: center;
 }
 
 header h1 {
-font-size: 2rem;
-color: #667eea;
-margin-bottom: 10px;
+    font-size: 2rem;
+    color: #667eea;
+    margin-bottom: 10px;
 }
 
 .safety-warning {
-background: #fff3cd;
-border: 2px solid #ffc107;
-border-radius: 8px;
-padding: 20px;
-margin-bottom: 20px;
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
 }
 
 .safety-warning h3 {
-color: #856404;
-margin-bottom: 10px;
+    color: #856404;
+    margin-bottom: 10px;
 }
 
+/* --- Section & Progress --- */
 .section {
-background: white;
-padding: 30px;
-border-radius: 12px;
-box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-margin-bottom: 20px;
-display: none;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    display: none;
 }
 
 .section.active { display: block; }
 
 .section h2 {
-color: #667eea;
-margin-bottom: 20px;
-font-size: 1.5rem;
-}
-
-.quadrant-intro {
-background: #f8f9fa;
-padding: 20px;
-border-radius: 8px;
-margin-bottom: 20px;
-}
-
-.question-block {
-margin-bottom: 25px;
-padding: 20px;
-background: #f8f9fa;
-border-radius: 8px;
-}
-
-.question-block h3 {
-font-size: 1.1rem;
-margin-bottom: 15px;
-color: #333;
-}
-
-.question-block textarea {
-width: 100%;
-min-height: 120px;
-padding: 12px;
-border: 2px solid #e0e0e0;
-border-radius: 6px;
-font-family: inherit;
-font-size: 0.95rem;
-resize: vertical;
-}
-
-.skill-category {
-margin-bottom: 20px;
-padding: 18px;
-background: #f8f9fa;
-border-radius: 8px;
-border-left: 4px solid #667eea;
-}
-
-.skill-category h3 {
-font-size: 1.05rem;
-margin-bottom: 12px;
-color: #667eea;
-cursor: pointer;
-user-select: none;
-display: flex;
-justify-content: space-between;
-align-items: center;
-}
-
-.skill-category h3:hover {
-color: #5568d3;
-}
-
-.skill-item {
-display: flex;
-justify-content: space-between;
-align-items: center;
-margin-bottom: 10px;
-padding: 8px 12px;
-background: white;
-border-radius: 6px;
-}
-
-.skill-item label {
-flex: 1;
-font-weight: 500;
-font-size: 0.95rem;
-}
-
-.skill-item select {
-padding: 6px 12px;
-border: 2px solid #e0e0e0;
-border-radius: 4px;
-font-size: 0.9rem;
-}
-
-.nav-buttons {
-display: flex;
-gap: 15px;
-justify-content: space-between;
-margin-top: 30px;
-}
-
-.btn {
-padding: 12px 30px;
-border: none;
-border-radius: 6px;
-font-size: 1rem;
-font-weight: 600;
-cursor: pointer;
-transition: all 0.3s;
-}
-
-.btn-primary {
-background: #667eea;
-color: white;
-}
-
-.btn-primary:hover {
-background: #5568d3;
-transform: translateY(-2px);
-}
-
-.btn-secondary {
-background: #e0e0e0;
-color: #333;
-}
-
-.btn-special {
-background: #28a745;
-color: white;
-margin-top: 20px;
-}
-
-.btn-special:hover {
-background: #218838;
-transform: translateY(-2px);
+    color: #667eea;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
 }
 
 .progress-bar {
-height: 4px;
-background: #e0e0e0;
-border-radius: 2px;
-margin-bottom: 20px;
-overflow: hidden;
+    height: 4px;
+    background: #e0e0e0;
+    border-radius: 2px;
+    margin-bottom: 20px;
+    overflow: hidden;
 }
 
 .progress-fill {
-height: 100%;
-background: linear-gradient(90deg, #667eea, #764ba2);
-transition: width 0.3s;
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    transition: width 0.3s;
 }
 
+/* --- Quadrant/Question Styles --- */
+.quadrant-intro {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.question-block {
+    margin-bottom: 25px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.question-block h3 {
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.question-block textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    resize: vertical;
+}
+
+.info-box {
+    background: #d4edda;
+    border: 2px solid #28a745;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+/* --- Cluster & Skill Styles --- */
+.cluster-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.cluster-card {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    border: 2px solid #e0e0e0;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.cluster-card:hover {
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(102,126,234,0.2);
+}
+
+.cluster-card.selected {
+    border-color: #667eea;
+    background: #f0f4ff;
+}
+
+.skill-category {
+    margin-bottom: 20px;
+    padding: 18px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+}
+
+.skill-category h3 {
+    font-size: 1.05rem;
+    margin-bottom: 12px;
+    color: #667eea;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.skill-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    background: white;
+    border-radius: 6px;
+}
+
+.skill-item label {
+    flex: 1;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.skill-item select {
+    padding: 6px 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+/* --- Navigation & Buttons --- */
+.nav-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: space-between;
+    margin-top: 30px;
+}
+
+.btn {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #5568d3;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.btn-special {
+    background: #28a745;
+    color: white;
+    margin-top: 20px;
+}
+
+.btn-special:hover {
+    background: #218838;
+    transform: translateY(-2px);
+}
+
+/* --- Results Styles --- */
 .results-section {
-display: none;
+    display: none;
 }
 
 .results-section.active {
-display: block;
+    display: block;
 }
 
 .score-card {
-background: white;
-padding: 25px;
-border-radius: 12px;
-box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-margin-bottom: 20px;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
 }
 
 .score-header {
-display: flex;
-justify-content: space-between;
-align-items: center;
-margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
 }
 
 .score-value {
-font-size: 2rem;
-font-weight: bold;
+    font-size: 2rem;
+    font-weight: bold;
 }
 
 .score-value.high { color: #28a745; }
@@ -232,91 +270,48 @@ font-weight: bold;
 .score-value.low { color: #dc3545; }
 
 .score-bar {
-height: 8px;
-background: #e0e0e0;
-border-radius: 4px;
-overflow: hidden;
-margin-bottom: 15px;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 15px;
 }
 
 .score-bar-fill {
-height: 100%;
-transition: width 1s;
+    height: 100%;
+    transition: width 1s;
 }
 
 .score-bar-fill.high { background: #28a745; }
 .score-bar-fill.medium { background: #ffc107; }
 .score-bar-fill.low { background: #dc3545; }
 
-.info-box {
-background: #d4edda;
-border: 2px solid #28a745;
-border-radius: 8px;
-padding: 15px;
-margin: 15px 0;
-}
-
-.warning-box {
-background: #f8d7da;
-border: 2px solid #dc3545;
-border-radius: 8px;
-padding: 15px;
-margin: 15px 0;
-}
-
-.cluster-grid {
-display: grid;
-grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-gap: 15px;
-margin: 20px 0;
-}
-
-.cluster-card {
-background: white;
-padding: 15px;
-border-radius: 8px;
-border: 2px solid #e0e0e0;
-cursor: pointer;
-transition: all 0.3s;
-}
-
-.cluster-card:hover {
-border-color: #667eea;
-transform: translateY(-2px);
-box-shadow: 0 4px 8px rgba(102,126,234,0.2);
-}
-
-.cluster-card.selected {
-border-color: #667eea;
-background: #f0f4ff;
-}
-
 .pathway-card {
-background: #f8f9fa;
-border: 2px solid #e0e0e0;
-border-radius: 8px;
-padding: 20px;
-margin-bottom: 15px;
+    background: #f8f9fa;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
 }
 
 .pathway-header {
-display: flex;
-justify-content: space-between;
-align-items: center;
-margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
 }
 
 .pathway-steps {
-display: grid;
-gap: 10px;
-margin-top: 15px;
+    display: grid;
+    gap: 10px;
+    margin-top: 15px;
 }
 
 .pathway-step {
-background: white;
-padding: 12px;
-border-radius: 6px;
-border-left: 4px solid #667eea;
+    background: white;
+    padding: 12px;
+    border-radius: 6px;
+    border-left: 4px solid #667eea;
 }
 </style>
 </head>
@@ -501,7 +496,7 @@ border-left: 4px solid #667eea;
 
     <div class="nav-buttons">
         <button class="btn btn-secondary" onclick="previousSection()">Previous</button>
-        <button class="btn btn-primary" onclick="nextSection()">Continue to Results</button>
+        <button class="btn btn-primary" onclick="generateResults()">Continue to Results</button>
     </div>
 </div>
 
@@ -836,6 +831,7 @@ let userState = {
 };
 
 let currentSectionIndex = 0;
+// Note: 'skillsDetailed' is the last section before results
 const sections = ['introSection', 'psychNorth', 'psychEast', 'psychSouth', 'psychWest', 'clusterSelection', 'skillsDetailed'];
 const psychResponses = {north: {}, east: {}, south: {}, west: {}};
 const skillLevels = {};
@@ -932,19 +928,20 @@ function toggleCategory(categoryId) {
 
 function nextSection() {
     const currentSection = sections[currentSectionIndex];
-    document.getElementById(currentSection).classList.remove('active');
-    
-    saveCurrentSection();
+    const currentElement = document.getElementById(currentSection);
+
+    if (currentElement) {
+        currentElement.classList.remove('active');
+        saveCurrentSection();
+    }
     
     currentSectionIndex++;
     
     if (currentSectionIndex < sections.length) {
         document.getElementById(sections[currentSectionIndex]).classList.add('active');
         updateProgress();
-</script>
-</body>
-</html>
     } else {
+        // Last section passed, generate results
         generateResults();
     }
 }
@@ -1047,64 +1044,6 @@ function getArchetype(quadrant, score) {
     return archetypes[quadrant][level];
 }
 
-function generateResults() {
-    sections.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.remove('active');
-    });
-    
-    const psychScores = {
-        north: calculateQuadrantScore('north'),
-        east: calculateQuadrantScore('east'),
-        south: calculateQuadrantScore('south'),
-        west: calculateQuadrantScore('west')
-    };
-    
-    userState.psychologicalScores = psychScores;
-    
-    for (let quadrant in psychScores) {
-        const score = psychScores[quadrant];
-        document.getElementById(quadrant + 'Score').textContent = score;
-        document.getElementById(quadrant + 'Score').className = 'score-value ' + (score >= 70 ? 'high' : score >= 40 ? 'medium' : 'low');
-        setTimeout(() => {
-            const barEl = document.getElementById(quadrant + 'Bar');
-            barEl.style.width = score + '%';
-            barEl.className = 'score-bar-fill ' + (score >= 70 ? 'high' : score >= 40 ? 'medium' : 'low');
-        }, 100);
-        document.getElementById(quadrant + 'Archetype').textContent = getArchetype(quadrant, score);
-    }
-    
-    for (let skillId in skillLevels) {
-        const level = skillLevels[skillId];
-        if (level > 0) userState.skillLevels[skillId] = level;
-    }
-    
-    generateSkillsSummary();
-    generateDegreePathways();
-    
-    document.getElementById('resultsSection').classList.add('active');
-    
-    const finalDisplay = document.getElementById('finalGamificationDisplay');
-    finalDisplay.innerHTML = `
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: center;">
-            <div>
-                <div style="font-size: 3rem; font-weight: bold;">${userState.careerReadinessLevel}</div>
-                <div>Career Readiness Level</div>
-            </div>
-            <div>
-                <div style="font-size: 3rem; font-weight: bold;">${Object.keys(userState.skillLevels).length}</div>
-                <div>Skills Assessed</div>
-            </div>
-            <div>
-                <div style="font-size: 3rem; font-weight: bold;">${selectedClusters.length}</div>
-                <div>Career Clusters</div>
-            </div>
-        </div>
-    `;
-    
-    updateProgress();
-}
-
 function generateSkillsSummary() {
     const skillsSummary = document.getElementById('skillsSummary');
     
@@ -1183,22 +1122,71 @@ function generateDegreePathways() {
     
     html += '</div>';
     pathwaysContent.innerHTML = html;
-} 'low');
+}
+
+function generateMajorRecommendations() {
+    const majorRecommendations = document.getElementById('majorRecommendations');
+    
+    // Placeholder logic: This should be based on a mapping of high psych scores and top skills
+    // For cleanup, we'll just provide sample text.
+    majorRecommendations.innerHTML = `
+        <div class="info-box">
+            <p><strong>Recommendation 1:</strong> Engineering Technology</p>
+            <p><strong>Recommendation 2:</strong> Health Sciences (Clinical Track)</p>
+            <p><strong>Recommendation 3:</strong> Computer Science with a focus on Cybersecurity</p>
+        </div>
+    `;
+}
+
+function generateResults() {
+    // 1. Remove all active sections
+    sections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+    });
+    
+    // 2. Calculate Psychological Scores
+    const psychScores = {
+        north: calculateQuadrantScore('north'),
+        east: calculateQuadrantScore('east'),
+        south: calculateQuadrantScore('south'),
+        west: calculateQuadrantScore('west')
+    };
+    
+    userState.psychologicalScores = psychScores;
+    
+    // 3. Render Psychological Scores
+    for (let quadrant in psychScores) {
+        const score = psychScores[quadrant];
+        const levelClass = score >= 70 ? 'high' : score >= 40 ? 'medium' : 'low';
+        
+        document.getElementById(quadrant + 'Score').textContent = score;
+        document.getElementById(quadrant + 'Score').className = 'score-value ' + levelClass;
+        
+        // Use a timeout for a smooth visual transition of the progress bar
+        setTimeout(() => {
+            const barEl = document.getElementById(quadrant + 'Bar');
+            barEl.style.width = score + '%';
+            barEl.className = 'score-bar-fill ' + levelClass;
         }, 100);
         document.getElementById(quadrant + 'Archetype').textContent = getArchetype(quadrant, score);
     }
     
+    // 4. Save Technical Skill Scores
     for (let skillId in skillLevels) {
         const level = skillLevels[skillId];
         if (level > 0) userState.skillLevels[skillId] = level;
     }
     
+    // 5. Generate Skill and Pathway Summaries
     generateSkillsSummary();
     generateDegreePathways();
     generateMajorRecommendations();
     
+    // 6. Display Results Section
     document.getElementById('resultsSection').classList.add('active');
     
+    // 7. Render Final Gamification/Summary
     const finalDisplay = document.getElementById('finalGamificationDisplay');
     finalDisplay.innerHTML = `
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: center;">
@@ -1219,60 +1207,15 @@ function generateDegreePathways() {
     
     updateProgress();
 }
-    }
-    
-    const allSkillNames = {};
-    Object.values(CAREER_CLUSTERS).forEach(cluster => {
-        Object.assign(allSkillNames, cluster.skills);
-    });
-    
-    let html = '<div style="display: grid; gap: 20px;">';
-    
-    topSkills.forEach(([skillId, level]) => {
-        const skillName = allSkillNames[skillId] || skillId;
-        const levelName = ['None', 'Beginner', 'Intermediate', 'Advanced'][level];
-        
-        html += `
-            <div class="pathway-card">
-                <div class="pathway-header">
-                    <h4 style="color: #667eea; margin: 0;">${skillName}</h4>
-                    <span style="font-weight: 600; color: #666;">Current: ${levelName}</span>
-                </div>
-                
-                <div style="background: #d4edda; padding: 12px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #28a745;">
-                    <strong style="color: #155724;">Next Steps:</strong>
-                    <p style="margin: 5px 0 0 0; color: #155724;">
-                        ${level === 0 ? 'Research entry-level certificate programs or apprenticeships in this field' : 
-                          level === 1 ? 'Consider associate degree or professional certification to advance' :
-                          level === 2 ? 'Pursue professional licensure or specialized certifications' :
-                          'Consider teaching credentials or advanced specializations'}
-                    </p>
-                </div>
-                
-                <div class="pathway-steps">
-                    <div class="pathway-step">
-                        <strong>Certificate (6-12 months)</strong> - Entry-level skills, industry-recognized
-                    </div>
-                    <div class="pathway-step">
-                        <strong>Associate Degree (2 years)</strong> - Technical depth, transfer pathway
-                    </div>
-                    <div class="pathway-step">
-                        <strong>Bachelor's Degree (4 years)</strong> - Advanced practice, leadership roles
-                    </div>
-                    <div class="pathway-step">
-                        <strong>Master's/Doctorate</strong> - Specialization, research, teaching
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-    
-    html += '</div>';
-    pathwaysContent.innerHTML = html;
-}
 
 function openMajorSelector() {
-    window.open('major-selector.html', '_blank');
+    // This function assumes an external page 'major-selector.html' exists.
+    // In a final deployed app, this would be a real link or modal.
+    alert('Opening Major Selector (Placeholder)');
+    // window.open('major-selector.html', '_blank');
 }
 
 updateProgress();
+</script>
+</body>
+</html>
