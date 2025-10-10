@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Comprehensive Career Readiness Assessment (Monetized)</title>
+<title>Comprehensive Career Readiness Assessment</title>
 <style>
 /* --- Global Styles --- */
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -313,31 +313,6 @@ header h1 {
     border-radius: 6px;
     border-left: 4px solid #667eea;
 }
-
-/* --- Paywall/Locked Content Styles --- */
-.paywall-overlay {
-    background: rgba(255, 255, 255, 0.95);
-    border: 2px dashed #ffc107;
-    border-radius: 10px;
-    padding: 40px;
-    text-align: center;
-    margin-top: 30px;
-}
-
-.paywall-overlay h3 {
-    color: #764ba2;
-}
-
-.affiliate-disclosure {
-    font-size: 0.75rem;
-    color: #666;
-    margin-top: 5px;
-    font-style: italic;
-    padding: 5px;
-    background: #f0f0f0;
-    border-radius: 4px;
-    display: block;
-}
 </style>
 </head>
 <body>
@@ -348,19 +323,23 @@ header h1 {
     </header>
 
 <div class="safety-warning">
-    <h3>Assessment & Verification Requirements (B2B Paywall)</h3>
-    <p>This assessment is currently in **Self-Assessment Mode**. Access to **Verification** (re-assessment for progress tracking) is locked for this user profile.</p>
-    <button class="btn btn-secondary" onclick="showB2BUpgrade()">Unlock Client Verification (Pro Tier Feature)</button>
+    <h3>Assessment & Verification Requirements</h3>
+    <ul style="margin-left: 20px;">
+        <li><strong>CR-Level 1-20:</strong> Self-assessment, foundational knowledge</li>
+        <li><strong>CR-Level 21-50:</strong> Certification upload or instructor verification required</li>
+        <li><strong>CR-Level 51-80:</strong> Professional certification ID + documented experience</li>
+        <li><strong>CR-Level 81-100:</strong> Teaching credentials + proof of mentoring others</li>
+    </ul>
 </div>
 
 <div id="gamificationBar" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <span id="crLevelDisplay"><strong>CR-Level 1</strong></span>
+        <span><strong>CR-Level 1</strong></span>
         <span>0 / 100 XP</span>
         <span>Status: Self-Assessment</span>
     </div>
     <div style="height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden;">
-        <div style="height: 100%; width: 0%; background: linear-gradient(90deg, #28a745, #20c997); transition: width 0.3s;" id="xpBar"></div>
+        <div style="height: 100%; width: 0%; background: linear-gradient(90deg, #28a745, #20c997); transition: width 0.3s;"></div>
     </div>
 </div>
 
@@ -370,15 +349,16 @@ header h1 {
 
 <div class="section active" id="introSection">
     <h2>Welcome to Your Career Development Journey</h2>
-    <p style="margin-bottom: 20px; line-height: 1.6;">This comprehensive assessment evaluates workplace readiness and technical competencies across 15 major career clusters. Finish the free assessment to see your **CR-Level Summary**.</p>
+    <p style="margin-bottom: 20px; line-height: 1.6;">This comprehensive assessment evaluates workplace readiness and technical competencies across 15 major career clusters with 250+ specific pathways.</p>
     
     <div class="info-box">
-        <h4>What You'll Receive (Premium D2C Content):</h4>
+        <h4>What You'll Receive:</h4>
         <ul style="margin-left: 20px; margin-top: 10px;">
             <li>Workplace aptitude profile across 4 behavioral dimensions</li>
             <li>Technical skills inventory with honest capability assessment</li>
-            <li>**LOCKED:** Personalized, Scaled Mastery Roadmap and $\text{P-Level}$ Analysis</li>
-            <li>**LOCKED:** Access to the Full Task Library ($\mathbf{\$ 5 / \text{month}}$)</li>
+            <li>Degree pathway mapping (certificates, associates, bachelors, apprenticeships)</li>
+            <li>Personalized career development roadmap with verification requirements</li>
+            <li>Required licenses, certifications, and educational credentials by field</li>
         </ul>
     </div>
 
@@ -495,6 +475,7 @@ header h1 {
         <button class="btn btn-primary" onclick="nextSection()">Next</button>
     </div>
 </div>
+
 <div class="section" id="clusterSelection">
     <h2>Select Your Career Interest Areas</h2>
     <p style="margin-bottom: 20px;">Choose 1-5 career clusters that interest you most. You'll assess specific skills within these areas.</p>
@@ -525,57 +506,76 @@ header h1 {
     </div>
 
     <div class="score-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-        <h3 style="color: white; margin-bottom: 20px;">Career Readiness Progress (CR-Level Summary - FREE)</h3>
+        <h3 style="color: white; margin-bottom: 20px;">Career Readiness Progress</h3>
         <div id="finalGamificationDisplay"></div>
-        <div id="d2cPaywallContainer">
-            </div>
     </div>
 
-    <div id="premiumContent">
-        <div class="score-card">
-            <h3 style="margin-bottom: 20px;">Workplace Aptitude Profile</h3>
-            
-            <div style="margin-bottom: 20px;">
-                <div class="score-header">
-                    <span><strong>Team Dynamics & Culture Fit</strong></span>
-                    <span class="score-value" id="northScore">0</span>
-                </div>
-                <div class="score-bar">
-                    <div class="score-bar-fill" id="northBar"></div>
-                </div>
-                <p id="northArchetype" style="font-style: italic; color: #666;"></p>
+    <div class="score-card">
+        <h3 style="margin-bottom: 20px;">Workplace Aptitude Profile</h3>
+        
+        <div style="margin-bottom: 20px;">
+            <div class="score-header">
+                <span><strong>Team Dynamics & Culture Fit</strong></span>
+                <span class="score-value" id="northScore">0</span>
             </div>
-
-            <div style="margin-bottom: 20px;">
-                <div class="score-header">
-                    <span><strong>Risk Assessment & Safety</strong></span>
-                    <span class="score-value" id="eastScore">0</span>
-                </div>
-                <div class="score-bar">
-                    <div class="score-bar-fill" id="eastBar"></div>
-                </div>
-                <p id="eastArchetype" style="font-style: italic; color: #666;"></p>
+            <div class="score-bar">
+                <div class="score-bar-fill" id="northBar"></div>
             </div>
-            
-            </div>
-
-        <div class="score-card">
-            <h3 style="margin-bottom: 20px;">Technical Competencies Profile</h3>
-            <div id="skillsSummary"></div>
+            <p id="northArchetype" style="font-style: italic; color: #666;"></p>
         </div>
 
-        <div class="score-card">
-            <h3 style="margin-bottom: 20px;">Recommended Education Pathways (Includes Affiliate Links)</h3>
-            <div id="degreePathways"></div>
+        <div style="margin-bottom: 20px;">
+            <div class="score-header">
+                <span><strong>Risk Assessment & Safety</strong></span>
+                <span class="score-value" id="eastScore">0</span>
+            </div>
+            <div class="score-bar">
+                <div class="score-bar-fill" id="eastBar"></div>
+            </div>
+            <p id="eastArchetype" style="font-style: italic; color: #666;"></p>
         </div>
 
-        <div class="score-card">
-            <h3 style="margin-bottom: 20px;">🎯 Your Top 3 Personalized College Major Recommendations</h3>
-            <p style="color: #666; margin-bottom: 20px;">Based on your skills assessment and workplace aptitude profile, here are three majors that align with your strengths:</p>
-            <div id="majorRecommendations"></div>
+        <div style="margin-bottom: 20px;">
+            <div class="score-header">
+                <span><strong>Problem-Solving & Technical Creativity</strong></span>
+                <span class="score-value" id="southScore">0</span>
+            </div>
+            <div class="score-bar">
+                <div class="score-bar-fill" id="southBar"></div>
+            </div>
+            <p id="southArchetype" style="font-style: italic; color: #666;"></p>
         </div>
-    </div> <div style="text-align: center;">
-        <button class="btn btn-special" onclick="checkFullTaskLibraryAccess()">🎓 Explore All 250+ Pathways ($\mathbf{\$ 5 / \text{month}}$)</button>
+
+        <div style="margin-bottom: 20px;">
+            <div class="score-header">
+                <span><strong>Workplace Pressure & Learning Agility</strong></span>
+                <span class="score-value" id="westScore">0</span>
+            </div>
+            <div class="score-bar">
+                <div class="score-bar-fill" id="westBar"></div>
+            </div>
+            <p id="westArchetype" style="font-style: italic; color: #666;"></p>
+        </div>
+    </div>
+
+    <div class="score-card">
+        <h3 style="margin-bottom: 20px;">Technical Competencies Profile</h3>
+        <div id="skillsSummary"></div>
+    </div>
+
+    <div class="score-card">
+        <h3 style="margin-bottom: 20px;">Recommended Education Pathways</h3>
+        <div id="degreePathways"></div>
+    </div>
+
+    <div class="score-card">
+        <h3 style="margin-bottom: 20px;">🎯 Your Top 3 Personalized College Major Recommendations</h3>
+        <p style="color: #666; margin-bottom: 20px;">Based on your skills assessment and workplace aptitude profile, here are three majors that align with your strengths:</p>
+        <div id="majorRecommendations"></div>
+    </div>
+
+    <div style="text-align: center;">
+        <button class="btn btn-special" onclick="openMajorSelector()">🎓 Explore All College Majors & Transfer Pathways</button>
     </div>
 
     <div class="nav-buttons" style="justify-content: center; margin-top: 20px;">
@@ -586,44 +586,7 @@ header h1 {
 </div>
 
 <script>
-// --- CORE DATA / MONETIZATION CONFIGURATION ---
-
-// Simulate user data. In a real application, this is loaded securely from a database.
-const USER_PROFILE = {
-    user_role: 'DirectConsumer', // 'DirectConsumer' (D2C), 'Professional' (B2B)
-    is_premium_assessment_paid: false, // D2C: One-time $19.99 payment
-    is_full_task_library_paid: false,  // D2C: $5/month subscription
-    b2b_verify_access: false           // B2B: Locked unless 'Pro' or 'Enterprise'
-};
-
-// Simplified Affiliate Link Database
-// Key: Skill ID (e.g., 'python')
-const MONETIZATION_CONFIG = {
-    'programming': {
-        affiliate_url: 'https://udemy.com/python-bootcamp/?ref=YOUR_ID_1',
-        display_text: 'Start the Python Bootcamp (Udemy Partner Course)',
-        default_url: 'https://www.python.org/doc/',
-        pathway_name: 'Python Programming'
-    },
-    'cybersecurity': {
-        affiliate_url: 'https://coursera.org/security-cert/?cid=YOUR_ID_2',
-        display_text: 'Enroll in the CompTIA Security+ Prep Course',
-        default_url: 'https://www.comptia.org/certifications/security',
-        pathway_name: 'Cybersecurity Analyst'
-    },
-    'cna': {
-        affiliate_url: null, // No current affiliate deal
-        display_text: 'Find a Local Certified Nursing Assistant (CNA) Program',
-        default_url: 'https://www.redcross.org/take-a-class/cna',
-        pathway_name: 'CNA Certification'
-    }
-    // ... many more pathways
-};
-
-// --- REST OF THE APPLICATION LOGIC ---
-
 const CAREER_CLUSTERS = {
-    // ... (Your original CAREER_CLUSTERS object remains the same) ...
     construction: {
         name: "Construction & Building Trades",
         icon: "🏗️",
@@ -873,48 +836,6 @@ const sections = ['introSection', 'psychNorth', 'psychEast', 'psychSouth', 'psyc
 const psychResponses = {north: {}, east: {}, south: {}, west: {}};
 const skillLevels = {};
 
-
-// --- MONETIZATION FUNCTIONS ---
-
-function showB2BUpgrade() {
-    alert("B2B Paywall Activated:\n\nTo unlock Client Verification, you must upgrade to the Pro Tier ($149/month).\n\nCurrent Role: " + USER_PROFILE.user_role + "\nVerify Access: " + USER_PROFILE.b2b_verify_access);
-}
-
-function checkFullTaskLibraryAccess() {
-    if (USER_PROFILE.user_role === 'DirectConsumer' && !USER_PROFILE.is_full_task_library_paid) {
-        alert("D2C Paywall Activated:\n\nThe Full Task Library requires a subscription of $5/month. Please subscribe to explore all 250+ pathways.");
-    } else {
-        alert("Full Task Library Unlocked! (Displaying full list of 250+ pathways now - conceptual)");
-    }
-}
-
-function getPathwayLinkData(skillId) {
-    const config = MONETIZATION_CONFIG[skillId];
-    
-    if (config && config.affiliate_url) {
-        return { 
-            url: config.affiliate_url, 
-            text: config.display_text, 
-            is_affiliate: true 
-        };
-    } else if (config && config.default_url) {
-        return { 
-            url: config.default_url, 
-            text: `Explore Recommended Resources for ${config.pathway_name}`, 
-            is_affiliate: false 
-        };
-    }
-    // Fallback if not configured (e.g., official college search)
-    return {
-        url: '#',
-        text: 'Search for official educational programs related to this skill',
-        is_affiliate: false
-    };
-}
-
-
-// --- ORIGINAL APPLICATION FLOW (UPDATED FOR MONETIZATION) ---
-
 function updateProgress() {
     const progress = (currentSectionIndex / sections.length) * 100;
     document.getElementById('progressBar').style.width = progress + '%';
@@ -925,7 +846,19 @@ function startAssessment() {
     nextSection();
 }
 
-// ... (toggleCluster, proceedToSkills, renderSelectedSkills, toggleCategory, nextSection, previousSection, saveCurrentSection, analyzeText, calculateQuadrantScore, getArchetype remain the same) ...
+function renderClusterSelection() {
+    const grid = document.getElementById('clusterGrid');
+    grid.innerHTML = Object.keys(CAREER_CLUSTERS).map(id => {
+        const cluster = CAREER_CLUSTERS[id];
+        return `
+            <div class="cluster-card" onclick="toggleCluster('${id}')" id="cluster-${id}">
+                <div style="font-size: 2rem; margin-bottom: 10px;">${cluster.icon}</div>
+                <h4 style="color: #667eea; margin-bottom: 5px; font-size: 0.95rem;">${cluster.name}</h4>
+                <p style="font-size: 0.85rem; color: #666;">${Object.keys(cluster.skills).length} skills</p>
+            </div>
+        `;
+    }).join('');
+}
 
 function toggleCluster(clusterId) {
     const card = document.getElementById('cluster-' + clusterId);
@@ -1152,14 +1085,6 @@ function generateDegreePathways() {
         const skillName = allSkillNames[skillId] || skillId;
         const levelName = ['None', 'Beginner', 'Intermediate', 'Advanced'][level];
         
-        // --- AFFILIATE LINK INTEGRATION ---
-        const linkData = getPathwayLinkData(skillId);
-        let linkHTML = `<a href="${linkData.url}" target="_blank" class="btn btn-primary" style="margin-top: 10px; display: inline-block; text-decoration: none;">${linkData.text}</a>`;
-        if (linkData.is_affiliate) {
-            linkHTML += `<span class="affiliate-disclosure">Disclosure: We may earn a commission if you enroll via this partner link.</span>`;
-        }
-        
-        // --- Pathway Steps HTML (Remains mostly the same) ---
         html += `
             <div class="pathway-card">
                 <div class="pathway-header">
@@ -1175,7 +1100,7 @@ function generateDegreePathways() {
                           level === 2 ? 'Pursue professional licensure or specialized certifications' :
                           'Consider teaching credentials or advanced specializations'}
                     </p>
-                    ${linkHTML} </div>
+                </div>
                 
                 <div class="pathway-steps">
                     <div class="pathway-step">
@@ -1203,6 +1128,7 @@ function generateMajorRecommendations() {
     const majorRecommendations = document.getElementById('majorRecommendations');
     
     // Placeholder logic: This should be based on a mapping of high psych scores and top skills
+    // For cleanup, we'll just provide sample text.
     majorRecommendations.innerHTML = `
         <div class="info-box">
             <p><strong>Recommendation 1:</strong> Engineering Technology</p>
@@ -1219,20 +1145,48 @@ function generateResults() {
         if (el) el.classList.remove('active');
     });
     
-    // 2. Calculate Scores and Save Technical Skill Scores
+    // 2. Calculate Psychological Scores
     const psychScores = {
         north: calculateQuadrantScore('north'),
         east: calculateQuadrantScore('east'),
         south: calculateQuadrantScore('south'),
         west: calculateQuadrantScore('west')
     };
+    
     userState.psychologicalScores = psychScores;
+    
+    // 3. Render Psychological Scores
+    for (let quadrant in psychScores) {
+        const score = psychScores[quadrant];
+        const levelClass = score >= 70 ? 'high' : score >= 40 ? 'medium' : 'low';
+        
+        document.getElementById(quadrant + 'Score').textContent = score;
+        document.getElementById(quadrant + 'Score').className = 'score-value ' + levelClass;
+        
+        // Use a timeout for a smooth visual transition of the progress bar
+        setTimeout(() => {
+            const barEl = document.getElementById(quadrant + 'Bar');
+            barEl.style.width = score + '%';
+            barEl.className = 'score-bar-fill ' + levelClass;
+        }, 100);
+        document.getElementById(quadrant + 'Archetype').textContent = getArchetype(quadrant, score);
+    }
+    
+    // 4. Save Technical Skill Scores
     for (let skillId in skillLevels) {
         const level = skillLevels[skillId];
         if (level > 0) userState.skillLevels[skillId] = level;
     }
     
-    // 3. Render Final Gamification/Summary (The Free Hook)
+    // 5. Generate Skill and Pathway Summaries
+    generateSkillsSummary();
+    generateDegreePathways();
+    generateMajorRecommendations();
+    
+    // 6. Display Results Section
+    document.getElementById('resultsSection').classList.add('active');
+    
+    // 7. Render Final Gamification/Summary
     const finalDisplay = document.getElementById('finalGamificationDisplay');
     finalDisplay.innerHTML = `
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: center;">
@@ -1250,59 +1204,17 @@ function generateResults() {
             </div>
         </div>
     `;
-
-    // 4. Implement D2C Paywall for Premium Content (Aptitude Scores, Pathways, Recommendations)
-    const premiumContent = document.getElementById('premiumContent');
-    const d2cPaywallContainer = document.getElementById('d2cPaywallContainer');
     
-    if (USER_PROFILE.user_role === 'DirectConsumer' && !USER_PROFILE.is_premium_assessment_paid) {
-        // LOCK PREMIUM CONTENT
-        premiumContent.style.filter = 'blur(4px)';
-        premiumContent.style.pointerEvents = 'none';
-
-        d2cPaywallContainer.innerHTML = `
-            <div class="paywall-overlay">
-                <h3>Unlock Your Full Report: Personalized $\text{P-Level}$ Analysis & Roadmap</h3>
-                <p>See your detailed aptitude scores, skill breakdowns, and affiliate-powered education pathways.</p>
-                <button class="btn btn-special" onclick="alert('Proceed to Checkout for $19.99 (One-Time Fee)')">
-                    UNLOCK PREMIUM ASSESSMENT ($\mathbf{\$ 19.99}$)
-                </button>
-            </div>
-        `;
-    } else {
-        // UNLOCK PREMIUM CONTENT (Simulate payment/B2B access)
-        premiumContent.style.filter = 'none';
-        premiumContent.style.pointerEvents = 'auto';
-        d2cPaywallContainer.innerHTML = '';
-        
-        // Render psychological scores and pathway data ONLY if unlocked
-        for (let quadrant in psychScores) {
-            const score = psychScores[quadrant];
-            const levelClass = score >= 70 ? 'high' : score >= 40 ? 'medium' : 'low';
-            document.getElementById(quadrant + 'Score').textContent = score;
-            document.getElementById(quadrant + 'Score').className = 'score-value ' + levelClass;
-            setTimeout(() => {
-                const barEl = document.getElementById(quadrant + 'Bar');
-                barEl.style.width = score + '%';
-                barEl.className = 'score-bar-fill ' + levelClass;
-            }, 100);
-            document.getElementById(quadrant + 'Archetype').textContent = getArchetype(quadrant, score);
-        }
-        generateSkillsSummary();
-        generateDegreePathways();
-        generateMajorRecommendations();
-    }
-    
-    // 5. Display Results Section
-    document.getElementById('resultsSection').classList.add('active');
     updateProgress();
 }
 
 function openMajorSelector() {
-    alert('Opening Major Selector (Placeholder - Would be a premium/D2C feature)');
+    // This function assumes an external page 'major-selector.html' exists.
+    // In a final deployed app, this would be a real link or modal.
+    alert('Opening Major Selector (Placeholder)');
+    // window.open('major-selector.html', '_blank');
 }
 
-renderClusterSelection(); // Initial rendering of clusters
 updateProgress();
 </script>
 </body>
