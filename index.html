@@ -7,48 +7,131 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
-
-```
-    * { font-family: 'Space Grotesk', -apple-system, sans-serif; }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    @keyframes float {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-10px); }
-    }
-    
-    .animate-fadeIn { animation: fadeIn 0.8s ease-out; }
-    .animate-float { animation: float 3s ease-in-out infinite; }
-    
-    .glass-card {
-        background: rgba(255, 255, 255, 0.03);
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    
-    .cosmic-gradient {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-    }
-    
-    .text-cosmic {
-        background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    
-    .icon-glow {
-        filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.6));
-    }
-</style>
-```
-
+        
+        * {
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @keyframes orbit {
+            from { transform: rotate(0deg) translateX(60px) rotate(0deg); }
+            to { transform: rotate(360deg) translateX(60px) rotate(-360deg); }
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .animate-fadeIn { animation: fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        .animate-slideIn { animation: slideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .cosmic-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        }
+        
+        .shimmer {
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+        
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(40px);
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.4), transparent);
+            top: -100px;
+            right: -100px;
+        }
+        
+        .orb-2 {
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(240, 147, 251, 0.3), transparent);
+            bottom: -50px;
+            left: -50px;
+        }
+        
+        .orb-3 {
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, rgba(118, 75, 162, 0.3), transparent);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        ::-webkit-scrollbar-thumb { background: rgba(102, 126, 234, 0.5); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(102, 126, 234, 0.7); }
+        
+        .constellation {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: pulse 3s ease-in-out infinite;
+        }
+        
+        .icon-glow {
+            filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.6));
+        }
+        
+        .neon-border {
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3), inset 0 0 20px rgba(102, 126, 234, 0.1);
+        }
+        
+        .text-cosmic {
+            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
 </head>
-<body class="bg-black text-white min-h-screen">
-    <div id="app"></div>
+<body class="bg-black text-white min-h-screen overflow-x-hidden relative">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    
+    <div id="app" class="relative z-10"></div>
 
 <script>
 const state = {
@@ -57,7 +140,71 @@ const state = {
     responses: {},
     selectedClusters: [],
     skillLevels: {},
-    results: null
+    results: null,
+    showPaywall: false
+};
+
+const CAREER_CLUSTERS = {
+    construction: {
+        name: "Construction & Building",
+        icon: "🏗️",
+        skills: {
+            carpentry: 'Carpentry',
+            electrical: 'Electrical Systems',
+            plumbing: 'Plumbing',
+            hvac: 'HVAC'
+        }
+    },
+    healthcare: {
+        name: "Healthcare - Clinical",
+        icon: "🏥",
+        skills: {
+            cna: 'Certified Nursing Assistant',
+            lpn: 'Licensed Practical Nurse',
+            rn: 'Registered Nurse',
+            respiratory: 'Respiratory Therapy'
+        }
+    },
+    it: {
+        name: "Information Technology",
+        icon: "💻",
+        skills: {
+            helpdesk: 'Help Desk Support',
+            network: 'Network Administration',
+            cybersecurity: 'Cybersecurity',
+            programming: 'Programming/Development'
+        }
+    },
+    manufacturing: {
+        name: "Manufacturing & Industrial",
+        icon: "⚙️",
+        skills: {
+            cnc: 'CNC Machining',
+            welding: 'Welding',
+            qc: 'Quality Control',
+            maintenance: 'Industrial Maintenance'
+        }
+    },
+    education: {
+        name: "Education & Teaching",
+        icon: "📚",
+        skills: {
+            earlyChildhood: 'Early Childhood Education',
+            elementary: 'Elementary Education',
+            specialEd: 'Special Education',
+            esl: 'ESL/TESOL'
+        }
+    },
+    business: {
+        name: "Business & Management",
+        icon: "💼",
+        skills: {
+            projectMgmt: 'Project Management',
+            sales: 'Sales & BD',
+            marketing: 'Marketing',
+            finance: 'Finance/Accounting'
+        }
+    }
 };
 
 const SECTIONS = [
@@ -65,10 +212,11 @@ const SECTIONS = [
         id: 'north',
         icon: '🛡️',
         title: 'North: Belonging',
-        subtitle: 'Team Dynamics',
+        subtitle: 'Team Dynamics & Workplace Culture',
+        color: 'from-blue-400 to-cyan-300',
         questions: [
-            'How important is it for you to feel valued and recognized by your team?',
-            'Describe a work situation where you sought feedback from colleagues.',
+            'How important is it for you to feel valued and recognized by your team or organization?',
+            'Describe a work situation where you sought feedback or recognition from colleagues.',
             'What does being part of a strong team mean to you?'
         ]
     },
@@ -76,309 +224,907 @@ const SECTIONS = [
         id: 'east',
         icon: '♟️',
         title: 'East: Strategy',
-        subtitle: 'Risk Assessment',
+        subtitle: 'Risk Assessment & Safety Protocols',
+        color: 'from-emerald-400 to-green-300',
         questions: [
-            'How do you handle situations with potential safety risks?',
-            'Tell me about a time you avoided a task because it felt unsafe.',
-            'How do you protect yourself and coworkers in risky environments?'
+            'How do you handle situations with potential safety risks or workplace hazards?',
+            'Tell me about a time you avoided a task because it felt unsafe or you lacked training.',
+            'How do you protect yourself and coworkers in environments with hazards?'
         ]
     },
     {
         id: 'south',
         icon: '🔥',
         title: 'South: Innovation',
-        subtitle: 'Problem-Solving',
+        subtitle: 'Problem-Solving & Technical Creativity',
+        color: 'from-orange-400 to-red-400',
         questions: [
-            'When do you feel motivated to improve processes?',
-            'Describe a technical problem you worked hard to solve.',
-            'How important is it to develop new skills?'
+            'When do you feel motivated to improve processes or challenge inefficient procedures?',
+            'Describe a technical problem you worked hard to solve despite obstacles.',
+            'How important is it to develop new skills and advance technically?'
         ]
     },
     {
         id: 'west',
         icon: '🌌',
         title: 'West: Boundary',
-        subtitle: 'Learning Agility',
+        subtitle: 'Workplace Pressure & Learning Agility',
+        color: 'from-purple-400 to-pink-400',
         questions: [
-            'How do you handle high-pressure situations?',
-            'What draws you to learn new technical skills?',
-            'How do you approach learning on the job?'
+            'How do you handle high-pressure situations or tight deadlines?',
+            'What draws you to learn new technical skills or take on unfamiliar tasks?',
+            'How do you approach situations where you need to learn on the job?'
         ]
     }
 ];
 
-const CAREER_CLUSTERS = {
-    it: { name: "Information Technology", icon: "💻" },
-    healthcare: { name: "Healthcare", icon: "🏥" },
-    construction: { name: "Construction", icon: "🏗️" }
-};
+function calculateQuadrantScore(quadrantId) {
+    const section = SECTIONS.find(s => s.id === quadrantId);
+    if (!section) return 5;
+
+    let totalWords = 0;
+    let sentimentNet = 0;
+    let responseCount = 0;
+
+    section.questions.forEach((_, idx) => {
+        const response = state.responses[`${quadrantId}_${idx}`] || '';
+        const words = response.trim().split(/\s+/).filter(w => w.length > 0).length;
+        totalWords += words;
+        if (words > 0) responseCount++;
+
+        const lowerResponse = response.toLowerCase();
+        
+        const positive = ['love', 'enjoy', 'excited', 'great', 'excellent', 'strong', 'confident', 'motivated', 'passionate', 'value', 'commit'];
+        positive.forEach(word => {
+            if (lowerResponse.includes(word)) sentimentNet += 0.2;
+        });
+        
+        const negative = ['hate', 'dislike', 'avoid', 'fear', 'worried', 'anxious', 'unsure', 'difficult', 'struggle', 'never', 'risk'];
+        negative.forEach(word => {
+            if (lowerResponse.includes(word)) sentimentNet -= 0.2;
+        });
+        
+        if (words >= 20 && words < 40) sentimentNet -= 0.1; 
+    });
+
+    const lengthFactor = Math.log1p(totalWords / 20) * 0.5;
+    let finalScore = 5.5 + sentimentNet + lengthFactor; 
+    
+    return Math.max(1, Math.min(10, Math.round(finalScore)));
+}
+
+function calculateRubricScores() {
+    const quadrantScores = {
+        north: calculateQuadrantScore('north'),
+        east: calculateQuadrantScore('east'),
+        south: calculateQuadrantScore('south'),
+        west: calculateQuadrantScore('west')
+    };
+
+    return {
+        Vision: Math.round(quadrantScores.south * 0.7 + quadrantScores.west * 0.3),
+        Integrity: Math.round(quadrantScores.north * 0.6 + quadrantScores.east * 0.4),
+        SocialStability: Math.round(quadrantScores.north * 0.8 + quadrantScores.east * 0.2),
+        LongTermFocus: Math.round(quadrantScores.south * 0.5 + quadrantScores.east * 0.5),
+        RiskTolerance: Math.round(quadrantScores.west * 0.7 + quadrantScores.south * 0.3),
+        FinancialDiscipline: Math.round(quadrantScores.east * 0.6 + quadrantScores.north * 0.4),
+        Communication: Math.round(quadrantScores.north * 0.7 + quadrantScores.south * 0.3),
+        Adaptability: Math.round(quadrantScores.west * 0.6 + quadrantScores.south * 0.4),
+        EthicalStance: Math.round(quadrantScores.north * 0.5 + quadrantScores.east * 0.5),
+        InternalCulture: Math.round(quadrantScores.north * 0.8 + quadrantScores.west * 0.2),
+        CompetitiveStrategy: Math.round(quadrantScores.south * 0.7 + quadrantScores.east * 0.3),
+        PublicTrust: Math.round(quadrantScores.east * 0.5 + quadrantScores.north * 0.5)
+    };
+}
+
+function determineArchetype(scores) {
+    const archetypes = [
+        {
+            name: 'Visionary Maverick',
+            icon: '🚀',
+            description: 'You think big and take bold risks. Natural entrepreneur or change leader.',
+            traits: ['High Vision', 'High Risk Tolerance', 'Innovation-Driven'],
+            condition: scores.Vision >= 8 && scores.RiskTolerance >= 8
+        },
+        {
+            name: 'Strategic Builder',
+            icon: '🎯',
+            description: 'You create defensible value through systematic adaptation.',
+            traits: ['Strategic Thinking', 'Market Awareness', 'Execution Focus'],
+            condition: scores.Adaptability >= 8 && scores.CompetitiveStrategy >= 7
+        },
+        {
+            name: 'Culture Architect',
+            icon: '🤝',
+            description: 'You excel at building strong, cohesive teams and organizations.',
+            traits: ['Team Building', 'Relationship Focus', 'Stability Creator'],
+            condition: scores.SocialStability >= 8 && scores.InternalCulture >= 8
+        },
+        {
+            name: 'Principled Guardian',
+            icon: '⚖️',
+            description: 'You lead with integrity and build lasting trust.',
+            traits: ['Ethical Leadership', 'Trustworthy', 'Long-term Thinking'],
+            condition: scores.EthicalStance >= 7 && scores.PublicTrust >= 7
+        },
+        {
+            name: 'Adaptive Innovator',
+            icon: '💡',
+            description: 'You thrive on change and continuous improvement.',
+            traits: ['Learning Agility', 'Problem Solver', 'Change Champion'],
+            condition: scores.Adaptability >= 8 && scores.Vision >= 7
+        }
+    ];
+
+    const matched = archetypes.find(a => a.condition);
+    return matched || {
+        name: 'Balanced Professional',
+        icon: '⭐',
+        description: 'You bring well-rounded capabilities across multiple dimensions.',
+        traits: ['Versatile', 'Reliable', 'Steady Growth'],
+        condition: true
+    };
+}
+
+function matchCareers(scores) {
+    const matches = [];
+    const salaryBase = {
+        programming: 70000, helpdesk: 45000, network: 60000, cybersecurity: 80000,
+        rn: 73000, lpn: 50000, cna: 32000, respiratory: 62000,
+        welding: 47000, cnc: 54000, qc: 52000, maintenance: 56000,
+        carpentry: 48000, electrical: 58000, plumbing: 56000, hvac: 51000,
+        earlyChildhood: 30000, elementary: 42000, specialEd: 48000, esl: 45000,
+        projectMgmt: 75000, sales: 60000, marketing: 58000, finance: 65000
+    };
+
+    state.selectedClusters.forEach(clusterId => {
+        const cluster = CAREER_CLUSTERS[clusterId];
+        if (!cluster) return;
+
+        Object.keys(cluster.skills).forEach(skillId => {
+            const skillLevel = state.skillLevels[skillId] || 0;
+            const skillName = cluster.skills[skillId];
+            
+            let matchScore = 50;
+            
+            if (clusterId === 'it') {
+                matchScore += scores.Adaptability * 2.5;
+                matchScore += scores.Vision * 1.5;
+                matchScore += scores.RiskTolerance * 1;
+            } else if (clusterId === 'healthcare') {
+                matchScore += scores.SocialStability * 2;
+                matchScore += scores.EthicalStance * 2;
+                matchScore += scores.Communication * 1.5;
+            } else if (clusterId === 'construction') {
+                matchScore += scores.RiskTolerance * 1.5;
+                matchScore += scores.FinancialDiscipline * 1.5;
+                matchScore += scores.Adaptability * 1;
+            } else if (clusterId === 'manufacturing') {
+                matchScore += scores.FinancialDiscipline * 2;
+                matchScore += scores.LongTermFocus * 1.5;
+                matchScore += scores.Adaptability * 1;
+            } else if (clusterId === 'education') {
+                matchScore += scores.Communication * 2.5;
+                matchScore += scores.SocialStability * 2;
+                matchScore += scores.EthicalStance * 1.5;
+            } else if (clusterId === 'business') {
+                matchScore += scores.CompetitiveStrategy * 2;
+                matchScore += scores.Communication * 2;
+                matchScore += scores.Vision * 1.5;
+            }
+            
+            matchScore += skillLevel * 6;
+            matchScore = Math.min(99, Math.max(40, Math.round(matchScore)));
+
+            const baseSalary = salaryBase[skillId] || 45000;
+            const skillBonus = [0, 5000, 9000, 12000, 14000, 15000][skillLevel];
+            const estimatedSalary = baseSalary + skillBonus;
+
+            matches.push({
+                title: skillName,
+                cluster: cluster.name,
+                clusterIcon: cluster.icon,
+                matchScore,
+                skillLevel,
+                gap: 5 - skillLevel,
+                timeline: skillLevel >= 4 ? '3-6 months' : skillLevel >= 2 ? '6-12 months' : '12-18 months',
+                salary: estimatedSalary
+            });
+        });
+    });
+
+    return matches.sort((a, b) => b.matchScore - a.matchScore).slice(0, 6);
+}
+
+function generatePredictions(scores) {
+    const highRisk = scores.RiskTolerance >= 8;
+    const highVision = scores.Vision >= 8;
+    const highAdapt = scores.Adaptability >= 8;
+    const lowStability = scores.SocialStability < 6;
+
+    const steps = [];
+    const triggers = [];
+    const risks = [];
+    let confidence = 'Moderate';
+    let confidenceScore = 65;
+
+    if (highRisk && highVision) {
+        steps.push('Launch entrepreneurial venture or seek early-stage startup role within 6 months');
+        steps.push('Take on high-visibility, transformational project to prove capabilities');
+        steps.push('Pursue aggressive skill development in 2-3 emerging technologies');
+        steps.push('Build strategic network with industry leaders and investors');
+        confidence = 'High';
+        confidenceScore = 85;
+        triggers.push('Market opportunity emerges in chosen field');
+        triggers.push('Financial runway of 6-12 months secured');
+        triggers.push('Key partnership or co-founder identified');
+    } else if (highAdapt) {
+        steps.push('Transition to adjacent role with 20-30% more responsibility');
+        steps.push('Build cross-functional expertise through stretch assignments');
+        steps.push('Position for team lead or technical leadership role');
+        steps.push('Obtain 1-2 key certifications to close skill gaps');
+        confidenceScore = 75;
+        triggers.push('Internal promotion opportunity opens');
+        triggers.push('Certification completion unlocks new doors');
+        triggers.push('Mentor advocates for advancement');
+    } else {
+        steps.push('Deepen specialization in current role for 12-18 months');
+        steps.push('Complete structured training program in core competency');
+        steps.push('Seek mentorship from senior professional in field');
+        steps.push('Build reputation through consistent, high-quality delivery');
+        confidenceScore = 60;
+        triggers.push('Completion of targeted training program');
+        triggers.push('Team expansion creates growth opportunity');
+        triggers.push('Performance review highlights advancement potential');
+    }
+
+    if (lowStability) {
+        risks.push('Potential for team conflict due to low social stability score');
+        risks.push('May struggle with organizational politics');
+    }
+    if (scores.FinancialDiscipline < 6) {
+        risks.push('Watch financial decision-making in high-stakes situations');
+    }
+    if (scores.LongTermFocus < 6) {
+        risks.push('Risk of job-hopping before building deep expertise');
+    }
+
+    return {
+        steps,
+        triggers,
+        risks,
+        confidence,
+        confidenceScore,
+        timeline: highRisk && highVision ? '6-12 months' : '12-18 months'
+    };
+}
+
+function analyzeResponses() {
+    state.stage = 'analysis';
+    render();
+    
+    setTimeout(() => {
+        const rubricScores = calculateRubricScores();
+        const archetype = determineArchetype(rubricScores);
+        const careerMatches = matchCareers(rubricScores);
+        const predictions = generatePredictions(rubricScores);
+        
+        state.results = {
+            rubricScores,
+            archetype,
+            careerMatches,
+            predictions
+        };
+        
+        state.stage = 'results';
+        render();
+    }, 3500);
+}
 
 function render() {
     const app = document.getElementById('app');
     
     if (state.stage === 'intro') {
-        app.innerHTML = `
-            <div class="max-w-lg mx-auto p-6 pt-20 animate-fadeIn">
-                <div class="text-center mb-16">
-                    <div class="text-8xl mb-6 animate-float icon-glow">✦</div>
-                    <h1 class="text-6xl font-light mb-3 text-cosmic">The Mirror</h1>
-                    <p class="text-gray-400 text-sm uppercase tracking-widest">Career Intelligence</p>
-                </div>
-                
-                <div class="glass-card rounded-3xl p-8 mb-8">
-                    <p class="text-gray-300 text-center mb-6">
-                        Discover your behavioral archetype through comprehensive assessment.
-                    </p>
-                    <div class="grid grid-cols-2 gap-4">
-                        ${SECTIONS.map(s => `
-                            <div class="glass-card rounded-2xl p-6 text-center">
-                                <div class="text-4xl mb-2">${s.icon}</div>
-                                <h4 class="text-xs uppercase text-gray-400">${s.title.split(':')[1]}</h4>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                
-                <button onclick="startAssessment()" class="w-full cosmic-gradient text-white py-5 rounded-full font-light text-lg">
-                    Begin Journey
-                </button>
-            </div>
-        `;
+        app.innerHTML = renderIntro();
     } else if (state.stage === 'assessment') {
-        const progress = ((state.currentSection + 1) / (SECTIONS.length + 1)) * 100;
-        
-        app.innerHTML = `
-            <div class="max-w-2xl mx-auto p-6 pt-12">
-                <div class="mb-12">
-                    <div class="w-full h-1 bg-white/5 rounded-full">
-                        <div class="h-full cosmic-gradient transition-all duration-700" style="width: ${progress}%"></div>
-                    </div>
-                    <div class="text-center mt-2 text-sm text-gray-400">${Math.round(progress)}% Complete</div>
-                </div>
-                
-                ${state.currentSection < SECTIONS.length ? renderQuestions() : renderClusters()}
-                
-                <div class="flex gap-4 mt-8">
-                    ${state.currentSection > 0 ? `
-                        <button onclick="previousSection()" class="flex-1 glass-card text-white py-4 rounded-full">
-                            ← Previous
-                        </button>
-                    ` : ''}
-                    <button onclick="nextSection()" id="nextBtn" class="flex-1 cosmic-gradient text-white py-4 rounded-full disabled:opacity-30">
-                        ${state.currentSection === SECTIONS.length ? 'Complete' : 'Next →'}
-                    </button>
-                </div>
-            </div>
-        `;
-        
-        checkCanProceed();
+        app.innerHTML = renderAssessment();
+        updateNextButton();
+    } else if (state.stage === 'analysis') {
+        app.innerHTML = renderAnalysis();
     } else if (state.stage === 'results') {
-        app.innerHTML = `
-            <div class="max-w-4xl mx-auto p-6 pt-12 animate-fadeIn">
-                <div class="text-center mb-12">
-                    <div class="text-8xl mb-6 icon-glow animate-float">${state.results.archetype.icon}</div>
-                    <h1 class="text-5xl font-light text-cosmic mb-3">${state.results.archetype.name}</h1>
-                    <p class="text-gray-400 text-lg mb-6">${state.results.archetype.description}</p>
-                    <div class="glass-card inline-block rounded-2xl p-6">
-                        <div class="text-xs text-gray-500 mb-2">Profile Score</div>
-                        <div class="text-5xl font-light text-cosmic">${state.results.avgScore.toFixed(1)}</div>
-                    </div>
-                </div>
-                
-                <div class="glass-card rounded-3xl p-8 mb-8">
-                    <h3 class="text-2xl font-light text-center text-cosmic mb-8">Behavioral DNA</h3>
-                    <div class="grid grid-cols-2 gap-4">
-                        ${Object.entries(state.results.scores).map(([dim, score]) => `
-                            <div class="glass-card rounded-xl p-4">
-                                <div class="flex justify-between mb-2">
-                                    <span class="text-sm">${dim}</span>
-                                    <span class="text-cosmic font-semibold">${score}</span>
-                                </div>
-                                <div class="w-full h-1.5 bg-black/40 rounded-full">
-                                    <div class="h-full cosmic-gradient rounded-full" style="width: ${score * 10}%"></div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                
-                <div class="text-center">
-                    <button onclick="restartAssessment()" class="glass-card px-8 py-3 rounded-full">
-                        Retake Assessment
-                    </button>
-                </div>
-            </div>
-        `;
+        app.innerHTML = renderResults();
     }
 }
 
-function renderQuestions() {
+function renderIntro() {
+    return `
+        <div class="max-w-lg mx-auto p-6 pt-20 pb-20 animate-fadeIn">
+            <div class="text-center mb-16">
+                <div class="text-8xl mb-6 animate-float icon-glow">✦</div>
+                <h1 class="text-6xl font-light mb-3 text-cosmic tracking-tight">
+                    The Mirror
+                </h1>
+                <div class="h-px w-32 mx-auto bg-gradient-to-r from-transparent via-purple-400 to-transparent mb-4"></div>
+                <p class="text-gray-400 text-sm uppercase tracking-widest">Career Intelligence</p>
+            </div>
+
+            <div class="glass-card rounded-3xl p-8 mb-8 neon-border">
+                <p class="text-gray-300 leading-relaxed text-center mb-8">
+                    Discover your behavioral archetype through a comprehensive assessment combining 
+                    four fundamental patterns with career readiness analysis.
+                </p>
+
+                <div class="grid grid-cols-2 gap-4 mb-8">
+                    ${SECTIONS.map((section, idx) => `
+                        <div class="glass-card rounded-2xl p-6 text-center neon-border hover:scale-105 transition-transform duration-300" style="animation-delay: ${idx * 0.1}s">
+                            <div class="text-5xl mb-3 icon-glow">${section.icon}</div>
+                            <h4 class="font-light text-xs uppercase tracking-widest text-gray-400 mb-1">${section.title.split(':')[1]}</h4>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border border-purple-500/30">
+                    <p class="text-gray-300 text-sm leading-relaxed text-center">
+                        <span class="text-cosmic font-semibold">What awaits:</span> Behavioral archetype · 12-dimensional 
+                        profile · Career pathways · Predictive modeling
+                    </p>
+                </div>
+            </div>
+
+            <button onclick="startAssessment()" class="w-full cosmic-gradient text-white py-5 px-8 rounded-full font-light text-lg tracking-wide transition-all transform hover:scale-105 hover:shadow-2xl neon-border">
+                Begin Journey
+            </button>
+        </div>
+    `;
+}
+
+function renderAssessment() {
+    const sectionIndex = state.currentSection;
+    const totalSections = SECTIONS.length + 2; // 4 questions + 1 cluster + 1 skills
+    const progress = ((sectionIndex) / totalSections) * 100; // Adjusted for correct progress display
+    
+    return `
+        <div class="max-w-2xl mx-auto p-6 pt-12">
+            <div class="mb-12">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs uppercase tracking-widest text-gray-500">Progress</span>
+                    <span class="text-xs uppercase tracking-widest text-cosmic font-semibold">${Math.round(progress)}%</span>
+                </div>
+                <div class="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                    <div class="h-full cosmic-gradient shimmer transition-all duration-700" style="width: ${progress}%"></div>
+                </div>
+            </div>
+
+            ${sectionIndex < SECTIONS.length ? renderQuestionSection() : 
+              sectionIndex === SECTIONS.length ? renderClusterSection() : 
+              renderSkillsSection()}
+
+            <div class="flex gap-4 mt-12">
+                ${sectionIndex > 0 ? `
+                    <button onclick="previousSection()" class="flex-1 glass-card neon-border text-white py-4 px-6 rounded-full font-light tracking-wide transition-all hover:scale-105">
+                        ← Previous
+                    </button>
+                ` : ''}
+                <button onclick="nextSection()" id="nextBtn" class="flex-1 cosmic-gradient disabled:opacity-30 disabled:cursor-not-allowed text-white py-4 px-6 rounded-full font-light tracking-wide transition-all hover:scale-105 neon-border">
+                    ${sectionIndex === SECTIONS.length + 1 ? 'Complete' : 'Next →'}
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function renderQuestionSection() {
     const section = SECTIONS[state.currentSection];
     return `
         <div class="animate-fadeIn">
-            <div class="glass-card rounded-3xl p-10 mb-8 text-center">
-                <div class="text-7xl mb-6 icon-glow animate-float">${section.icon}</div>
-                <h2 class="text-3xl font-light text-cosmic mb-2">${section.title}</h2>
-                <p class="text-gray-400 text-sm uppercase">${section.subtitle}</p>
+            <div class="glass-card rounded-3xl p-10 mb-8 neon-border">
+                <div class="text-center">
+                    <div class="text-7xl mb-6 icon-glow animate-float">${section.icon}</div>
+                    <h2 class="text-3xl font-light mb-2 text-cosmic">${section.title}</h2>
+                    <div class="h-px w-24 mx-auto bg-gradient-to-r from-transparent via-purple-400 to-transparent mb-3"></div>
+                    <p class="text-gray-400 text-sm uppercase tracking-widest">${section.subtitle}</p>
+                </div>
             </div>
-            
+
             <div class="space-y-6">
-                ${section.questions.map((q, idx) => `
-                    <div class="glass-card rounded-2xl p-6">
-                        <h3 class="text-base mb-4 text-gray-300">${q}</h3>
+                ${section.questions.map((question, idx) => `
+                    <div class="glass-card rounded-2xl p-6 neon-border animate-slideIn" style="animation-delay: ${idx * 0.1}s">
+                        <h3 class="text-base mb-4 text-gray-300 font-light">${question}</h3>
                         <textarea 
                             id="${section.id}_${idx}"
-                            class="w-full min-h-[120px] bg-black/40 border border-white/10 rounded-xl p-4 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 resize-none"
-                            placeholder="Share your reflection (minimum 20 characters)..."
-                            oninput="handleInput('${section.id}_${idx}')"
+                            class="w-full min-h-[140px] bg-black/40 border border-white/10 rounded-xl p-4 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500/50 transition-all resize-none font-light"
+                            placeholder="Share your reflection..."
+                            oninput="handleResponseChange('${section.id}_${idx}')"
                         >${state.responses[`${section.id}_${idx}`] || ''}</textarea>
-
-```
-                    <div class="text-xs text-gray-600 mt-2" id="count_${section.id}_${idx}">
-                        ${(state.responses[`${section.id}_${idx}`] || '').length} characters
-                    </div>
-                </div>
-            `).join('')}
-        </div>
-    </div>
-`;
-```
-
-}
-
-function renderClusters() {
-return `
-<div class="animate-fadeIn">
-<div class="glass-card rounded-3xl p-10 mb-8 text-center">
-<div class="text-6xl mb-4 icon-glow">💼</div>
-<h2 class="text-3xl font-light text-cosmic mb-2">Career Interests</h2>
-<p class="text-gray-400 text-sm uppercase">Select 1-2 fields</p>
-</div>
-
-```
-        <div class="space-y-4">
-            ${Object.entries(CAREER_CLUSTERS).map(([id, cluster]) => {
-                const selected = state.selectedClusters.includes(id);
-                return `
-                    <div onclick="toggleCluster('${id}')" 
-                         class="glass-card rounded-2xl p-6 cursor-pointer ${selected ? 'border-2 border-purple-500' : ''}">
-                        <div class="flex items-center gap-4">
-                            <div class="text-4xl">${cluster.icon}</div>
-                            <div class="flex-1">
-                                <h4 class="text-lg font-light">${cluster.name}</h4>
-                            </div>
-                            ${selected ? '<div class="text-2xl">✓</div>' : ''}
+                        <div class="text-xs text-gray-600 mt-2 text-right" id="count_${section.id}_${idx}">
+                            ${(state.responses[`${section.id}_${idx}`] || '').length} characters
                         </div>
                     </div>
-                `;
-            }).join('')}
+                `).join('')}
+            </div>
         </div>
-    </div>
-`;
-```
+    `;
+}
 
+function renderClusterSection() {
+    return `
+        <div class="animate-fadeIn">
+            <div class="glass-card rounded-3xl p-10 mb-8 neon-border text-center">
+                <div class="text-6xl mb-6 icon-glow animate-float">💼</div>
+                <h2 class="text-3xl font-light mb-2 text-cosmic">Career Interests</h2>
+                <div class="h-px w-24 mx-auto bg-gradient-to-r from-transparent via-purple-400 to-transparent mb-3"></div>
+                <p class="text-gray-400 text-sm uppercase tracking-widest">Select 1-3 fields</p>
+            </div>
+
+            <div class="space-y-4">
+                ${Object.entries(CAREER_CLUSTERS).map(([id, cluster], idx) => {
+                    const isSelected = state.selectedClusters.includes(id);
+                    return `
+                        <div onclick="toggleCluster('${id}')" 
+                             class="glass-card rounded-2xl p-6 transition-all cursor-pointer animate-slideIn ${
+                                 isSelected ? 'neon-border scale-105' : 'border border-white/5 hover:border-white/20'
+                             }" style="animation-delay: ${idx * 0.05}s">
+                            <div class="flex items-center gap-4">
+                                <div class="text-5xl icon-glow">${cluster.icon}</div>
+                                <div class="flex-1">
+                                    <h4 class="text-lg font-light mb-1">${cluster.name}</h4>
+                                    <p class="text-xs text-gray-500 uppercase tracking-wider">${Object.keys(cluster.skills).length} skills</p>
+                                </div>
+                                ${isSelected ? `
+                                    <div class="w-10 h-10 rounded-full cosmic-gradient flex items-center justify-center icon-glow">
+                                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                        </svg>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function renderSkillsSection() {
+    return `
+        <div class="animate-fadeIn">
+            <div class="glass-card rounded-3xl p-10 mb-8 neon-border text-center">
+                <div class="text-6xl mb-6 icon-glow animate-float">🎯</div>
+                <h2 class="text-3xl font-light mb-2 text-cosmic">Technical Profile</h2>
+                <div class="h-px w-24 mx-auto bg-gradient-to-r from-transparent via-purple-400 to-transparent mb-3"></div>
+                <p class="text-gray-400 text-sm uppercase tracking-widest">Rate your capabilities</p>
+            </div>
+
+            <div class="space-y-6">
+                ${state.selectedClusters.map((clusterId, idx) => {
+                    const cluster = CAREER_CLUSTERS[clusterId];
+                    return `
+                        <div class="glass-card rounded-2xl p-6 neon-border animate-slideIn" style="animation-delay: ${idx * 0.1}s">
+                            <h3 class="text-xl font-light mb-6 flex items-center gap-3">
+                                <span class="text-4xl icon-glow">${cluster.icon}</span>
+                                <span class="text-cosmic">${cluster.name}</span>
+                            </h3>
+                            <div class="space-y-4">
+                                ${Object.entries(cluster.skills).map(([skillId, skillName]) => `
+                                    <div class="flex items-center justify-between gap-4 glass-card rounded-xl p-4">
+                                        <label class="flex-1 text-gray-300 font-light">${skillName}</label>
+                                        <select 
+                                            onchange="handleSkillChange('${skillId}', this.value)"
+                                            class="bg-black/60 border border-purple-500/30 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-purple-500 cursor-pointer font-light">
+                                            <option value="0" ${(state.skillLevels[skillId] || 0) === 0 ? 'selected' : ''}>No experience</option>
+                                            <option value="1" ${state.skillLevels[skillId] === 1 ? 'selected' : ''}>Beginner</option>
+                                            <option value="2" ${state.skillLevels[skillId] === 2 ? 'selected' : ''}>Some experience</option>
+                                            <option value="3" ${state.skillLevels[skillId] === 3 ? 'selected' : ''}>Competent</option>
+                                            <option value="4" ${state.skillLevels[skillId] === 4 ? 'selected' : ''}>Proficient</option>
+                                            <option value="5" ${state.skillLevels[skillId] === 5 ? 'selected' : ''}>Expert</option>
+                                        </select>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function renderAnalysis() {
+    return `
+        <div class="min-h-screen flex items-center justify-center p-6">
+            <div class="text-center animate-fadeIn">
+                <div class="relative w-40 h-40 mx-auto mb-12">
+                    <div class="absolute inset-0 rounded-full border-2 border-purple-500/20"></div>
+                    <div class="absolute inset-4 rounded-full border-2 border-purple-500/30"></div>
+                    <div class="absolute inset-8 rounded-full border-2 border-purple-500/40"></div>
+                    <div class="absolute inset-0 rounded-full border-t-2 border-purple-500 animate-spin" style="animation-duration: 3s;"></div>
+                    <div class="absolute inset-4 rounded-full border-t-2 border-pink-500 animate-spin" style="animation-duration: 2s; animation-direction: reverse;"></div>
+                    <div class="absolute inset-0 flex items-center justify-center text-6xl icon-glow animate-pulse">✦</div>
+                </div>
+                <h2 class="text-4xl font-light mb-4 text-cosmic">
+                    Analyzing
+                </h2>
+                <div class="h-px w-32 mx-auto bg-gradient-to-r from-transparent via-purple-400 to-transparent mb-6"></div>
+                <p class="text-gray-400 mb-8 text-sm uppercase tracking-widest">Processing patterns</p>
+                <div class="space-y-3 text-sm text-gray-500">
+                    <p class="animate-pulse">⟡ Mapping behavioral patterns</p>
+                    <p class="animate-pulse" style="animation-delay: 0.2s;">⟡ Calculating archetype</p>
+                    <p class="animate-pulse" style="animation-delay: 0.4s;">⟡ Matching pathways</p>
+                    <p class="animate-pulse" style="animation-delay: 0.6s;">⟡ Generating predictions</p>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderResults() {
+    const { rubricScores, archetype, careerMatches, predictions } = state.results;
+    const avgScore = Object.values(rubricScores).reduce((a, b) => a + b, 0) / Object.keys(rubricScores).length;
+
+    return `
+        <div class="max-w-4xl mx-auto p-6 pt-12 pb-20 animate-fadeIn">
+            <div class="text-center mb-12">
+                <div class="text-8xl mb-6 icon-glow animate-float">${archetype.icon}</div>
+                <h1 class="text-5xl font-light mb-3 text-cosmic">
+                    ${archetype.name}
+                </h1>
+                <div class="h-px w-32 mx-auto bg-gradient-to-r from-transparent via-purple-400 to-transparent mb-4"></div>
+                <p class="text-gray-400 text-lg font-light max-w-xl mx-auto mb-6">${archetype.description}</p>
+                <div class="flex flex-wrap justify-center gap-3 mb-8">
+                    ${archetype.traits.map(trait => `
+                        <span class="glass-card px-5 py-2 rounded-full text-sm border border-purple-500/30 font-light">
+                            ${trait}
+                        </span>
+                    `).join('')}
+                </div>
+                <div class="inline-block glass-card rounded-2xl p-6 neon-border">
+                    <div class="text-xs text-gray-500 uppercase tracking-widest mb-2">Profile Score</div>
+                    <div class="text-5xl font-light text-cosmic">${avgScore.toFixed(1)}</div>
+                </div>
+            </div>
+
+            <div class="glass-card rounded-3xl p-8 mb-8 neon-border">
+                <h3 class="text-2xl font-light mb-8 text-center text-cosmic">
+                    Behavioral DNA
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    ${Object.entries(rubricScores).sort((a, b) => b[1] - a[1]).map(([dim, score]) => `
+                        <div class="glass-card rounded-xl p-4 border border-white/5">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-300 text-sm font-light">${dim.replace(/([A-Z])/g, ' $1').trim()}</span>
+                                <span class="text-cosmic font-semibold text-lg">${score}</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
+                                <div class="h-full cosmic-gradient rounded-full transition-all duration-1000" style="width: ${score * 10}%"></div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="glass-card rounded-3xl p-8 mb-8 neon-border">
+                <h3 class="text-2xl font-light mb-8 text-center text-cosmic">
+                    Career Pathways
+                </h3>
+                <div class="space-y-4">
+                    ${careerMatches.map((match, idx) => `
+                        <div class="glass-card rounded-2xl p-6 border border-white/5 hover:border-purple-500/30 transition-all">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-4xl icon-glow">${match.clusterIcon}</span>
+                                    <div>
+                                        <h4 class="text-xl font-light mb-1">${match.title}</h4>
+                                        <p class="text-xs text-gray-500 uppercase tracking-wider">${match.cluster}</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-3xl font-light text-cosmic">${match.matchScore}%</div>
+                                    <div class="text-xs text-gray-500 uppercase tracking-wider">Match</div>
+                                </div>
+                            </div>
+                            
+                            <div class="w-full h-1.5 bg-black/40 rounded-full mb-4 overflow-hidden">
+                                <div class="h-full cosmic-gradient rounded-full transition-all duration-1000" style="width: ${match.matchScore}%"></div>
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-4 text-sm">
+                                <div class="text-center">
+                                    <div class="text-gray-500 text-xs uppercase tracking-wider mb-1">Timeline</div>
+                                    <div class="font-light">${match.timeline}</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-gray-500 text-xs uppercase tracking-wider mb-1">Ready</div>
+                                    <div class="font-light">${match.skillLevel}/5</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-gray-500 text-xs uppercase tracking-wider mb-1">Salary</div>
+                                    <div class="font-light">${(match.salary/1000).toFixed(0)}K</div>
+                                </div>
+                            </div>
+
+                            ${match.gap > 0 ? `
+                                <div class="mt-4 glass-card rounded-lg p-3 border border-orange-500/30">
+                                    <div class="flex items-center gap-2 text-sm">
+                                        <span class="text-orange-400">⚠</span>
+                                        <span class="text-gray-400 font-light">Skill gap: Build ${match.gap} more level(s)</span>
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="glass-card rounded-3xl p-8 mb-8 neon-border">
+                <h3 class="text-2xl font-light mb-2 text-center text-cosmic">
+                    Predictive Model
+                </h3>
+                <p class="text-center text-gray-500 text-xs uppercase tracking-widest mb-8">${predictions.timeline}</p>
+                
+                <div class="mb-8">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-gray-400 text-sm font-light">Confidence Level</span>
+                        <span class="text-cosmic font-light">${predictions.confidence} · ${predictions.confidenceScore}%</span>
+                    </div>
+                    <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
+                        <div class="h-full cosmic-gradient rounded-full transition-all duration-1000" style="width: ${predictions.confidenceScore}%"></div>
+                    </div>
+                </div>
+
+                <div class="space-y-4 mb-8">
+                    <h4 class="text-gray-400 text-sm uppercase tracking-widest">Most Likely Path</h4>
+                    ${predictions.steps.map((step, idx) => `
+                        <div class="flex items-start gap-4 glass-card rounded-xl p-4 border border-white/5">
+                            <div class="w-8 h-8 rounded-full cosmic-gradient flex items-center justify-center flex-shrink-0 text-sm font-light icon-glow">
+                                ${idx + 1}
+                            </div>
+                            <p class="text-gray-300 pt-1 font-light">${step}</p>
+                        </div>
+                    `).join('')}
+                </div>
+
+                ${predictions.triggers.length > 0 ? `
+                    <div class="mb-8">
+                        <h4 class="text-gray-400 text-sm uppercase tracking-widest mb-4">Key Triggers</h4>
+                        <div class="space-y-2">
+                            ${predictions.triggers.map(trigger => `
+                                <div class="flex items-center gap-3 text-sm text-gray-400 font-light">
+                                    <span class="text-purple-400">⟡</span>
+                                    ${trigger}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${predictions.risks.length > 0 ? `
+                    <div class="glass-card rounded-xl p-4 border border-red-500/30">
+                        <h4 class="text-red-400 text-sm uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <span>⚠</span> Risk Factors
+                        </h4>
+                        <ul class="space-y-2 text-sm text-gray-400 font-light">
+                            ${predictions.risks.map(risk => `<li>· ${risk}</li>`).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+            </div>
+
+            <div class="glass-card rounded-3xl p-8 mb-8 border border-purple-500/30">
+                <div class="text-center">
+                    <div class="text-5xl mb-4 icon-glow">🎯</div>
+                    <h3 class="text-2xl font-light mb-3 text-cosmic">Unlock Your Full Path</h3>
+                    <p class="text-gray-400 mb-6 font-light">
+                        Personalized action plans · Resource recommendations · Ongoing tracking
+                    </p>
+                    <button onclick="showPaywall()" class="cosmic-gradient text-white py-4 px-10 rounded-full font-light tracking-wide transition-all transform hover:scale-105 neon-border">
+                        Upgrade · $9.99/mo
+                    </button>
+                </div>
+            </div>
+
+            <div class="glass-card rounded-3xl p-8 mb-8 neon-border">
+                <h3 class="text-xl font-light mb-6 text-center text-cosmic">Share Your Archetype</h3>
+                <div class="flex gap-3 justify-center flex-wrap">
+                    <button onclick="shareResults()" class="glass-card px-6 py-3 rounded-full transition-all hover:scale-105 border border-white/10 hover:border-purple-500/30 font-light">
+                        Share
+                    </button>
+                    <button onclick="emailResults()" class="glass-card px-6 py-3 rounded-full transition-all hover:scale-105 border border-white/10 hover:border-purple-500/30 font-light">
+                        Email
+                    </button>
+                    <button onclick="downloadPDF()" class="glass-card px-6 py-3 rounded-full transition-all hover:scale-105 border border-white/10 hover:border-purple-500/30 font-light">
+                        PDF
+                    </button>
+                </div>
+            </div>
+
+            <div class="glass-card rounded-3xl p-8 text-center neon-border">
+                <h4 class="text-xl font-light mb-4 text-cosmic">Your Next Step</h4>
+                <p class="text-gray-400 mb-6 font-light max-w-2xl mx-auto">
+                    As a <strong class="text-cosmic">${archetype.name}</strong>, your immediate focus: 
+                    <strong class="text-white">${predictions.steps[0]}</strong>
+                </p>
+                <div class="h-px w-32 mx-auto bg-gradient-to-r from-transparent via-purple-400 to-transparent mb-6"></div>
+                <button onclick="restartAssessment()" class="glass-card px-8 py-3 rounded-full transition-all hover:scale-105 border border-white/10 hover:border-purple-500/30 font-light">
+                    Retake Assessment
+                </button>
+            </div>
+        </div>
+
+        ${state.showPaywall ? renderPaywall() : ''}
+    `;
+}
+
+function renderPaywall() {
+    return `
+        <div class="fixed inset-0 bg-black/95 backdrop-blur-xl flex items-center justify-center z-50 p-6 animate-fadeIn">
+            <div class="glass-card border border-purple-500/30 rounded-3xl p-10 max-w-md w-full neon-border">
+                <div class="text-center mb-8">
+                    <div class="text-6xl mb-4 icon-glow">🔮</div>
+                    <h2 class="text-3xl font-light mb-3 text-cosmic">
+                        Unlock Full Access
+                    </h2>
+                    <div class="h-px w-24 mx-auto bg-gradient-to-r from-transparent via-purple-400 to-transparent"></div>
+                </div>
+                
+                <p class="text-gray-400 text-center mb-8 font-light">
+                    Complete action plans · Weekly goals · Career tracking · Resources
+                </p>
+
+                <div class="space-y-3 mb-8">
+                    ${['Personalized weekly action plans', 'Course & certification recommendations', 'Job board integration & alerts', 'Monthly reassessments'].map(item => `
+                        <div class="flex items-center gap-3">
+                            <div class="w-6 h-6 rounded-full cosmic-gradient flex items-center justify-center flex-shrink-0 icon-glow">
+                                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <p class="text-sm text-gray-300 font-light">${item}</p>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <button onclick="subscribe()" class="w-full cosmic-gradient text-white py-4 px-6 rounded-full font-light tracking-wide transition-all transform hover:scale-105 mb-3 neon-border">
+                    Subscribe · $9.99/month
+                </button>
+                
+                <button onclick="closePaywall()" class="w-full glass-card text-white py-3 px-6 rounded-full transition-all hover:border-purple-500/30 border border-white/10 font-light">
+                    Maybe Later
+                </button>
+            </div>
+        </div>
+    `;
 }
 
 function startAssessment() {
-state.stage = ‘assessment’;
-render();
+    state.stage = 'assessment';
+    render();
 }
 
-function handleInput(key) {
-const textarea = document.getElementById(key);
-if (textarea) {
-state.responses[key] = textarea.value;
-const counter = document.getElementById(`count_${key}`);
-if (counter) {
-counter.textContent = `${textarea.value.length} characters`;
-}
-checkCanProceed();
-}
-}
-
-function checkCanProceed() {
-const nextBtn = document.getElementById(‘nextBtn’);
-if (!nextBtn) return;
-
-```
-let canProceed = false;
-
-if (state.currentSection < SECTIONS.length) {
-    const section = SECTIONS[state.currentSection];
-    canProceed = section.questions.every((_, idx) => {
-        const response = state.responses[`${section.id}_${idx}`];
-        return response && response.trim().length >= 20;
-    });
-} else {
-    canProceed = state.selectedClusters.length > 0;
+function handleResponseChange(key) {
+    const textarea = document.getElementById(key);
+    if (textarea) {
+        state.responses[key] = textarea.value;
+        const counter = document.getElementById(`count_${key}`);
+        if (counter) {
+            counter.textContent = `${textarea.value.length} characters`;
+        }
+        updateNextButton();
+    }
 }
 
-nextBtn.disabled = !canProceed;
-```
-
+function handleSkillChange(skillId, value) {
+    state.skillLevels[skillId] = parseInt(value);
+    updateNextButton();
 }
 
-function toggleCluster(id) {
-if (state.selectedClusters.includes(id)) {
-state.selectedClusters = state.selectedClusters.filter(c => c !== id);
-} else if (state.selectedClusters.length < 2) {
-state.selectedClusters.push(id);
+function toggleCluster(clusterId) {
+    if (state.selectedClusters.includes(clusterId)) {
+        state.selectedClusters = state.selectedClusters.filter(id => id !== clusterId);
+    } else if (state.selectedClusters.length < 3) {
+        state.selectedClusters.push(clusterId);
+    }
+    // FIX: Ensure render is called to update the UI (check/uncheck icon)
+    render(); 
 }
-render();
+
+function updateNextButton() {
+    const nextBtn = document.getElementById('nextBtn');
+    if (!nextBtn) return;
+
+    let canProceed = false;
+    const totalQuestionSections = SECTIONS.length;
+
+    if (state.currentSection < totalQuestionSections) {
+        // Question Sections: Must have min 20 chars per response
+        const section = SECTIONS[state.currentSection];
+        canProceed = section.questions.every((_, idx) => {
+            const response = state.responses[`${section.id}_${idx}`];
+            // Check if response exists and has at least 20 characters
+            return response && response.trim().length >= 20;
+        });
+    } else if (state.currentSection === totalQuestionSections) {
+        // Cluster Selection Section: Must select at least one cluster
+        canProceed = state.selectedClusters.length > 0;
+    } else if (state.currentSection === totalQuestionSections + 1) {
+        // Skills Section: No specific validation, as defaults are set to 0
+        canProceed = true;
+    }
+
+    nextBtn.disabled = !canProceed;
 }
 
 function nextSection() {
-if (state.currentSection < SECTIONS.length) {
-state.currentSection++;
-render();
-} else {
-analyzeResults();
-}
+    const totalQuestionSections = SECTIONS.length;
+    
+    // Validate current section before proceeding
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn && nextBtn.disabled) return;
+    
+    if (state.currentSection < totalQuestionSections + 1) {
+        // Move to the next screen (next question section, then clusters, then skills)
+        state.currentSection++;
+        render();
+    } else if (state.currentSection === totalQuestionSections + 1) {
+        // Final screen, initiate analysis
+        analyzeResponses();
+    }
 }
 
 function previousSection() {
-if (state.currentSection > 0) {
-state.currentSection–;
-render();
+    if (state.currentSection > 0) {
+        state.currentSection--;
+        render();
+    }
 }
+
+function showPaywall() {
+    state.showPaywall = true;
+    render();
 }
 
-function analyzeResults() {
-const scores = {
-Vision: 8,
-Integrity: 7,
-Adaptability: 9,
-Communication: 8,
-RiskTolerance: 7,
-EthicalStance: 8
-};
+function closePaywall() {
+    state.showPaywall = false;
+    render();
+}
 
-```
-const avgScore = Object.values(scores).reduce((a, b) => a + b) / Object.keys(scores).length;
+function subscribe() {
+    alert('Subscription functionality would connect to Stripe here.\n\nIn production, this would:\n1. Open Stripe Checkout\n2. Process payment\n3. Create user account\n4. Unlock premium features');
+}
 
-state.results = {
-    archetype: {
-        name: 'Strategic Builder',
-        icon: '🎯',
-        description: 'You create defensible value through systematic adaptation.'
-    },
-    scores,
-    avgScore
-};
+function shareResults() {
+    if (navigator.share && state.results) {
+        navigator.share({
+            title: `I'm a ${state.results.archetype.name}!`,
+            text: `I just discovered my career archetype: ${state.results.archetype.name}. ${state.results.archetype.description}`,
+            url: window.location.href
+        }).catch(err => console.log('Share failed:', err));
+    } else {
+        alert('Share your archetype on social media!\n\nIn production, this would generate a shareable link with your results card.');
+    }
+}
 
-state.stage = 'results';
-render();
-```
+function emailResults() {
+    if (state.results) {
+        const subject = encodeURIComponent(`My Career Assessment Results: ${state.results.archetype.name}`);
+        const body = encodeURIComponent(`I completed a career intelligence assessment and discovered I'm a ${state.results.archetype.name}!\n\nCheck out The Mirror at: ${window.location.href}`);
+        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    }
+}
 
+function downloadPDF() {
+    alert('PDF Download\n\nIn production, this would:\n1. Generate a formatted PDF report\n2. Include all charts and insights\n3. Download to your device\n\nPremium feature ($9.99/mo)');
 }
 
 function restartAssessment() {
-state.stage = ‘intro’;
-state.currentSection = 0;
-state.responses = {};
-state.selectedClusters = [];
-state.results = null;
-render();
+    state.stage = 'intro';
+    state.currentSection = 0;
+    state.responses = {};
+    state.selectedClusters = [];
+    state.skillLevels = {};
+    state.results = null;
+    state.showPaywall = false;
+    render();
 }
 
 render();
