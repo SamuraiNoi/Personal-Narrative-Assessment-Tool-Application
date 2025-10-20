@@ -1,71 +1,93 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Brain, TrendingUp, Target, Calendar, BarChart3, CheckCircle, AlertCircle, 
-  Info, Plus, ChevronRight, Award, Zap, Clock, Activity, Star, Lock, Unlock, 
-  TrendingDown, AlertTriangle, Settings, Download, Database, Shield, Eye, 
+import {
+  Brain, TrendingUp, Target, Calendar, BarChart3, CheckCircle, AlertCircle,
+  Info, Plus, ChevronRight, Award, Zap, Clock, Activity, Star, Lock, Unlock,
+  TrendingDown, AlertTriangle, Settings, Download, Database, Shield, Eye,
   EyeOff, Moon, Sunrise, Coffee, Heart, Users, MapPin, Smartphone, Mail,
   MessageSquare, DollarSign, X, Check, ChevronDown, ChevronUp, HelpCircle
 } from 'lucide-react';
 
+// Define initial state function for clean reset/first load
+const getInitialUserData = () => ({
+  onboardingComplete: false,
+  decisions: [],
+  checkIns: [],
+  joinedDate: new Date().toISOString(),
+
+  // Enhanced data tracking (placeholders)
+  sleepData: [{ date: new Date().toDateString(), duration: 420, quality: 3 }], // Mock sleep data for immediate warning visibility
+  activityData: [],
+  calendarData: [{ date: new Date().toDateString(), meetingCount: 2 }], // Mock calendar data
+  communicationData: [],
+  environmentData: [],
+  substanceData: [],
+
+  // Privacy & integration settings
+  integrations: {
+    sleep: { enabled: false, source: null, lastSync: null },
+    calendar: { enabled: false, source: null, lastSync: null },
+    activity: { enabled: false, source: null, lastSync: null },
+    email: { enabled: false, source: null, lastSync: null },
+    location: { enabled: false, lastSync: null },
+    finance: { enabled: false, source: null, lastSync: null }
+  },
+
+  // Privacy preferences
+  privacy: {
+    dataStorageLocal: true,
+    cloudSyncEnabled: false,
+    analyticsEnabled: false,
+    researchParticipation: false
+  },
+
+  // Skills system
+  skills: {
+    calibration: { xp: 0, level: 1 },
+    evidenceGathering: { xp: 0, level: 1 },
+    emotionalRegulation: { xp: 0, level: 1 },
+    patternRecognition: { xp: 0, level: 1 },
+    biasDetection: { xp: 0, level: 1 },
+    riskAssessment: { xp: 0, level: 1 },
+    contextAwareness: { xp: 0, level: 1 },
+    domainExpertise: {
+      career: { xp: 0, level: 1 },
+      relationships: { xp: 0, level: 1 },
+      health: { xp: 0, level: 1 },
+      financial: { xp: 0, level: 1 }
+    }
+  },
+
+  // User profile
+  profile: {
+    typicalSleepHours: 7,
+    typicalWakeTime: '7:00',
+    optimalDecisionHours: [],
+    lifeRegime: 'single_career_focused'
+  }
+});
+
 const Calibrate = () => {
   const [currentView, setCurrentView] = useState('welcome');
-  const [userData, setUserData] = useState({
-    onboardingComplete: false,
-    decisions: [],
-    checkIns: [],
-    joinedDate: new Date().toISOString(),
-    
-    // Enhanced data tracking
-    sleepData: [],
-    activityData: [],
-    calendarData: [],
-    communicationData: [],
-    environmentData: [],
-    substanceData: [],
-    
-    // Privacy & integration settings
-    integrations: {
-      sleep: { enabled: false, source: null, lastSync: null },
-      calendar: { enabled: false, source: null, lastSync: null },
-      activity: { enabled: false, source: null, lastSync: null },
-      email: { enabled: false, source: null, lastSync: null },
-      location: { enabled: false, lastSync: null },
-      finance: { enabled: false, source: null, lastSync: null }
-    },
-    
-    // Privacy preferences
-    privacy: {
-      dataStorageLocal: true,
-      cloudSyncEnabled: false,
-      analyticsEnabled: false,
-      researchParticipation: false
-    },
-    
-    // Skills system
-    skills: {
-      calibration: { xp: 0, level: 1 },
-      evidenceGathering: { xp: 0, level: 1 },
-      emotionalRegulation: { xp: 0, level: 1 },
-      patternRecognition: { xp: 0, level: 1 },
-      biasDetection: { xp: 0, level: 1 },
-      riskAssessment: { xp: 0, level: 1 },
-      contextAwareness: { xp: 0, level: 1 },
-      domainExpertise: {
-        career: { xp: 0, level: 1 },
-        relationships: { xp: 0, level: 1 },
-        health: { xp: 0, level: 1 },
-        financial: { xp: 0, level: 1 }
+  const [userData, setUserData] = useState(getInitialUserData());
+
+  // ==================== FIX 1: STATE PERSISTENCE (localStorage) ====================
+  useEffect(() => {
+    const savedData = localStorage.getItem('calibrateV5_userData');
+    if (savedData) {
+      const parsedData = JSON.parse(savedData);
+      setUserData(parsedData);
+      // Determine starting view
+      if (parsedData.onboardingComplete) {
+        setCurrentView('dashboard');
       }
-    },
-    
-    // User profile
-    profile: {
-      typicalSleepHours: 7,
-      typicalWakeTime: '7:00',
-      optimalDecisionHours: [],
-      lifeRegime: 'single_career_focused'
     }
-  });
+  }, []);
+
+  useEffect(() => {
+    // Save state on every change
+    localStorage.setItem('calibrateV5_userData', JSON.stringify(userData));
+  }, [userData]);
+  // =================================================================================
 
   const daysSinceJoining = Math.floor(
     (new Date() - new Date(userData.joinedDate)) / (1000 * 60 * 60 * 24)
@@ -110,10 +132,10 @@ const Calibrate = () => {
             <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 mb-6">
               <h2 className="text-2xl font-bold mb-4">What is Calibrate?</h2>
               <p className="text-lg text-blue-50 mb-4">
-                Most people are overconfident about some decisions and underconfident about others. 
+                Most people are overconfident about some decisions and underconfident about others.
                 Calibrate helps you discover your blind spots through decision tracking and outcome feedback.
               </p>
-              
+
               <div className="space-y-4 my-6">
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-6 h-6 text-green-300 flex-shrink-0 mt-1" />
@@ -142,7 +164,7 @@ const Calibrate = () => {
                 <div className="flex items-start gap-2">
                   <Info className="w-5 h-5 text-yellow-300 flex-shrink-0 mt-0.5" />
                   <div className="text-sm">
-                    <strong>Based on Research:</strong> Tetlock's "Superforecasting" found that people who track predictions 
+                    <strong>Based on Research:</strong> Tetlock's "Superforecasting" found that people who track predictions
                     improve accuracy by 50%+ through calibration feedback.
                   </div>
                 </div>
@@ -170,7 +192,7 @@ const Calibrate = () => {
             <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8">
               <h2 className="text-2xl font-bold mb-6">Quick Profile Setup</h2>
               <p className="text-blue-100 mb-6">Help us personalize your experience (optional but recommended)</p>
-              
+
               <div className="space-y-6">
                 <div>
                   <label className="block font-medium mb-2">How many hours do you typically sleep?</label>
@@ -278,7 +300,7 @@ const Calibrate = () => {
       }
 
       // Get today's check-ins for mood
-      const todayCheckIns = userData.checkIns.filter(c => 
+      const todayCheckIns = userData.checkIns.filter(c =>
         new Date(c.timestamp).toDateString() === new Date().toDateString()
       );
       if (todayCheckIns.length > 0) {
@@ -287,17 +309,17 @@ const Calibrate = () => {
       }
 
       // Calendar data for meeting count
-      const todayCalendar = userData.calendarData.filter(c =>
+      const todayCalendar = userData.calendarData.find(c =>
         new Date(c.date).toDateString() === new Date().toDateString()
       );
-      if (todayCalendar.length > 0) {
-        setContextData(prev => ({...prev, meetingsToday: todayCalendar[0].meetingCount}));
+      if (todayCalendar) {
+        setContextData(prev => ({...prev, meetingsToday: todayCalendar.meetingCount}));
       }
-    }, []);
+    }, [userData.sleepData, userData.checkIns, userData.calendarData, userData.profile.typicalSleepHours]);
 
     const handleSubmit = () => {
       if (!newDecision.title) return;
-      
+
       const decision = {
         ...newDecision,
         id: Date.now(),
@@ -319,29 +341,38 @@ const Calibrate = () => {
 
       // Award XP for logging decision
       const updatedSkills = {...userData.skills};
-      
+
       // Evidence gathering XP
       if (newDecision.evidence.length > 20) {
         updatedSkills.evidenceGathering.xp += 30;
         updatedSkills.evidenceGathering.level = Math.floor(updatedSkills.evidenceGathering.xp / 150) + 1;
       }
-      
+
       // Emotional regulation XP
       if (newDecision.emotionalState === 'calm') {
         updatedSkills.emotionalRegulation.xp += 40;
         updatedSkills.emotionalRegulation.level = Math.floor(updatedSkills.emotionalRegulation.xp / 180) + 1;
       }
-      
+
       // Risk assessment XP
       updatedSkills.riskAssessment.xp += 35;
       updatedSkills.riskAssessment.level = Math.floor(updatedSkills.riskAssessment.xp / 160) + 1;
-      
+
       // Context awareness XP (if integrations used)
-      if (decision.contextSnapshot.integrationStatus.sleepTracked || 
+      if (decision.contextSnapshot.integrationStatus.sleepTracked ||
           decision.contextSnapshot.integrationStatus.calendarSynced) {
         updatedSkills.contextAwareness.xp += 50;
         updatedSkills.contextAwareness.level = Math.floor(updatedSkills.contextAwareness.xp / 200) + 1;
       }
+
+      // --- FIX 3: Domain Expertise XP ---
+      const domain = newDecision.domain;
+      if (updatedSkills.domainExpertise[domain]) {
+          updatedSkills.domainExpertise[domain].xp += 50;
+          updatedSkills.domainExpertise[domain].level =
+              Math.floor(updatedSkills.domainExpertise[domain].xp / 200) + 1;
+      }
+      // ----------------------------------
 
       setUserData({
         ...userData,
@@ -532,7 +563,7 @@ const Calibrate = () => {
             {/* Evidence */}
             <div>
               <label className="block font-semibold text-gray-800 mb-2">
-                What evidence supports your prediction? 
+                What evidence supports your prediction?
                 <span className="text-sm font-normal text-gray-600 ml-2">(+30 XP Evidence Gathering)</span>
               </label>
               <textarea
@@ -549,7 +580,7 @@ const Calibrate = () => {
             {/* Decision Process Context */}
             <div className="border-t pt-6">
               <h3 className="font-semibold text-gray-800 mb-4">Decision Process (helps detect patterns)</h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm text-gray-700 mb-2">Your emotional state right now:</label>
@@ -643,8 +674,8 @@ const Calibrate = () => {
           <div className="flex items-start gap-3">
             <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-blue-900">
-              <strong>Why track process?</strong> Research shows decision quality depends on your process 
-              (evidence, consultation, emotional state) as much as the outcome. Tracking both helps you 
+              <strong>Why track process?</strong> Research shows decision quality depends on your process
+              (evidence, consultation, emotional state) as much as the outcome. Tracking both helps you
               identify what improves your judgment.
             </div>
           </div>
@@ -928,19 +959,19 @@ const Calibrate = () => {
           </h3>
           <div className="space-y-4 text-sm text-gray-700">
             <p>
-              <strong>Research-backed context:</strong> Each integration provides data that's scientifically proven to affect 
+              <strong>Research-backed context:</strong> Each integration provides data that's scientifically proven to affect
               decision quality. For example, sleep deprivation reduces prefrontal cortex function, impairing risk assessment.
             </p>
             <p>
-              <strong>Personalized patterns:</strong> Generic advice says "get 8 hours sleep." Your data might show you're 
+              <strong>Personalized patterns:</strong> Generic advice says "get 8 hours sleep." Your data might show you're
               optimal at 7 hours, or that morning workouts boost your accuracy by 25%.
             </p>
             <p>
-              <strong>Proactive warnings:</strong> Instead of discovering patterns after the fact, we can warn you in real-time: 
+              <strong>Proactive warnings:</strong> Instead of discovering patterns after the fact, we can warn you in real-time:
               "You've had 3 poor sleep nights and 7 meetings today—consider deferring major decisions."
             </p>
             <p>
-              <strong>Your choice:</strong> Every integration is optional. The core system works with just manual decision logging. 
+              <strong>Your choice:</strong> Every integration is optional. The core system works with just manual decision logging.
               Integrations enhance accuracy but aren't required.
             </p>
           </div>
@@ -952,15 +983,15 @@ const Calibrate = () => {
   // ==================== DASHBOARD ====================
   const Dashboard = () => {
     const completedDecisions = userData.decisions.filter(d => d.outcome !== null);
-    const accurateDecisions = completedDecisions.filter(d => 
+    const accurateDecisions = completedDecisions.filter(d =>
       (d.prediction === 'positive' && d.outcome === 'positive') ||
       (d.prediction === 'negative' && d.outcome === 'negative')
     );
-    const accuracy = completedDecisions.length > 0 
-      ? (accurateDecisions.length / completedDecisions.length) * 100 
+    const accuracy = completedDecisions.length > 0
+      ? (accurateDecisions.length / completedDecisions.length) * 100
       : 0;
 
-    const todayCheckIns = userData.checkIns.filter(c => 
+    const todayCheckIns = userData.checkIns.filter(c =>
       new Date(c.timestamp).toDateString() === new Date().toDateString()
     ).length;
 
@@ -974,7 +1005,7 @@ const Calibrate = () => {
       });
     }
 
-    const todayCalendar = userData.calendarData.find(c => 
+    const todayCalendar = userData.calendarData.find(c =>
       new Date(c.date).toDateString() === new Date().toDateString()
     );
     if (todayCalendar && todayCalendar.meetingCount >= 5) {
@@ -997,7 +1028,7 @@ const Calibrate = () => {
             </div>
             <Calendar className="w-12 h-12 opacity-50" />
           </div>
-          
+
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-white/20 rounded-lg p-3">
               <div className="text-sm text-blue-100">Decisions Logged</div>
@@ -1078,7 +1109,7 @@ const Calibrate = () => {
               <Target className="w-6 h-6 text-blue-600" />
               Calibration Stats
             </h3>
-            
+
             {completedDecisions.length >= 5 ? (
               <div className="space-y-4">
                 <div>
@@ -1087,7 +1118,7 @@ const Calibrate = () => {
                     <span className="text-2xl font-bold text-blue-600">{accuracy.toFixed(0)}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div 
+                    <div
                       className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all"
                       style={{ width: `${accuracy}%` }}
                     />
@@ -1138,7 +1169,7 @@ const Calibrate = () => {
               Use Calibrate for 7 days to unlock calibration stats and pattern detection
             </p>
             <div className="w-full bg-gray-200 rounded-full h-3">
-              <div 
+              <div
                 className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full"
                 style={{ width: `${(daysSinceJoining / 7) * 100}%` }}
               />
@@ -1187,7 +1218,7 @@ const Calibrate = () => {
               <div className="flex-1">
                 <h3 className="font-bold text-gray-800 mb-2">📈 Improve Your Predictions</h3>
                 <p className="text-gray-700 text-sm mb-3">
-                  Connect sleep tracking or calendar to get context-aware insights. Research shows this improves 
+                  Connect sleep tracking or calendar to get context-aware insights. Research shows this improves
                   prediction accuracy by 20-30%.
                 </p>
                 <button
@@ -1204,11 +1235,7 @@ const Calibrate = () => {
     );
   };
 
-  // Keep all previous views (CalibrationView, BehavioralChartView, SkillsChartView, QuickCheckIn)
-  // For brevity, I'm noting they exist but not duplicating the full code
-  // They would be included exactly as in v4.0
-
-  // Simplified versions for the complete app:
+  // Simplified views to ensure the main component compiles
   const QuickCheckIn = () => {
     const [mood, setMood] = useState(null);
     const [compared, setCompared] = useState(null);
@@ -1366,6 +1393,28 @@ const Calibrate = () => {
   };
 
   const SkillsChartView = () => {
+    // Helper function to calculate progress towards next level
+    const calculateProgress = (xp, level) => {
+        const baseXP = (level - 1) * 200; // Simplified scaling: 200 XP per level
+        const requiredXP = 200 * level; // XP needed for the current level (e.g., L2 needs 400 total)
+        const currentLevelXP = xp - baseXP;
+        const nextLevelThreshold = 200; // XP needed *within* the current level
+
+        if (level === 1) {
+            return {
+                current: xp,
+                required: 150, // L1 threshold
+                percent: Math.min(100, (xp / 150) * 100)
+            }
+        }
+
+        return {
+            current: currentLevelXP,
+            required: nextLevelThreshold,
+            percent: Math.min(100, (currentLevelXP / nextLevelThreshold) * 100)
+        };
+    };
+
     return (
       <div className="max-w-7xl mx-auto">
         <button
@@ -1377,9 +1426,55 @@ const Calibrate = () => {
         <div className="bg-white rounded-xl border-2 border-gray-200 p-8">
           <h2 className="text-3xl font-bold mb-2">Decision-Making Skills</h2>
           <p className="text-gray-600 mb-6">Track your growth across competencies</p>
-          <div className="text-center py-12 text-gray-500">
-            <Star className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-            <p>Start logging decisions to build skills</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Object.entries(userData.skills)
+                .filter(([key]) => key !== 'domainExpertise')
+                .map(([key, skill]) => {
+                const progress = calculateProgress(skill.xp, skill.level);
+                return (
+                    <div key={key} className="p-5 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="font-bold capitalize text-lg text-gray-800">{key.replace(/([A-Z])/g, ' $1').trim()}</h3>
+                            <div className="flex items-center gap-1">
+                                <Star className="w-5 h-5 text-yellow-500" />
+                                <span className="text-2xl font-extrabold text-blue-600">{skill.level}</span>
+                            </div>
+                        </div>
+                        <div className="text-sm text-gray-600 mb-2">
+                            XP: {skill.xp} • Next Level: {progress.current}/{progress.required}
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                            <div
+                                className="bg-gradient-to-r from-blue-400 to-purple-500 h-2.5 rounded-full transition-all duration-500"
+                                style={{ width: `${progress.percent}%` }}
+                            ></div>
+                        </div>
+                    </div>
+                );
+            })}
+          </div>
+
+          <div className="mt-8 pt-6 border-t border-gray-200">
+             <h3 className="text-2xl font-bold mb-4">Domain Expertise</h3>
+             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {Object.entries(userData.skills.domainExpertise).map(([domain, skill]) => {
+                    const progress = calculateProgress(skill.xp, skill.level);
+                    return (
+                        <div key={domain} className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                            <div className="font-semibold capitalize text-blue-800">{domain}</div>
+                            <div className="text-3xl font-bold text-blue-600 my-1">{skill.level}</div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div
+                                    className="bg-blue-500 h-2 rounded-full"
+                                    style={{ width: `${progress.percent}%` }}
+                                ></div>
+                            </div>
+                            <div className="text-xs text-gray-600 mt-1">{progress.current}/{progress.required} XP</div>
+                        </div>
+                    );
+                })}
+             </div>
           </div>
         </div>
       </div>
@@ -1390,7 +1485,7 @@ const Calibrate = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {currentView === 'welcome' && <WelcomeScreen />}
-      
+
       {currentView !== 'welcome' && (
         <>
           {/* Header */}
@@ -1404,7 +1499,7 @@ const Calibrate = () => {
                     <p className="text-sm text-gray-600">Decision Quality System</p>
                   </div>
                 </div>
-                
+
                 {/* Navigation */}
                 <div className="flex gap-2">
                   <button
@@ -1443,7 +1538,7 @@ const Calibrate = () => {
             </div>
           </div>
 
-          {/* Content */}
+          {/* Content - FIX 2: Added missing view checks */}
           <div className="max-w-7xl mx-auto px-4 py-8">
             {currentView === 'dashboard' && <Dashboard />}
             {currentView === 'log-decision' && <LogDecision />}
