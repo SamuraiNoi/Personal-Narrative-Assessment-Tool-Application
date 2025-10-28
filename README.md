@@ -1,63 +1,230 @@
-This guide explains how to use the Calibrate V5.1 Decision Quality System, a tool designed to help you improve your judgment by tracking your predictions and analyzing the context of your decisions.
-The core principle is: Know When to Trust Your Gut. By logging decisions with your confidence level and later tracking the outcome, Calibrate reveals if your subjective confidence matches your objective accuracy.
-🚀 Getting Started: Onboarding
-The first time you use Calibrate, you'll go through a quick onboarding process.
- * Welcome Screen: Read the introduction to understand that Calibrate helps you find your "blind spots" in overconfidence or underconfidence.
- * Quick Profile Setup:
-   * Typical Sleep Hours & Wake Time: Enter your baseline sleep data. Calibrate uses this to warn you when fatigue might be impairing your decision quality.
-   * Life Context: Select your current life regime (e.g., Single, Career-Focused). This helps the system understand the typical stressors and contexts that may affect your judgment.
- * Complete Setup: This moves you to the main Dashboard.
-🧭 Dashboard: Your Command Center
-The Dashboard provides an overview of your progress and key actions.
-| Section | Purpose | Unlock Status |
-|---|---|---|
-| Status Banner | Shows total decisions, outcomes tracked, and active integrations. | Available immediately. |
-| Context Alerts | Real-time warnings based on logged data (e.g., poor sleep, high meeting load) that may impair your judgment. | Requires Integrations (sleep, calendar) or manual check-ins. |
-| Quick Actions | Log Decision, Quick Check-in, Integrations. These are your primary interaction buttons. | Available immediately. |
-| Calibration Stats | Shows your Overall Accuracy and compares it to your confidence level. | Unlocks after 7 days of use and 5+ outcomes tracked. |
-| Pending Outcomes | A list of your logged decisions awaiting an outcome date. | Available as soon as you log a decision. |
-✅ Logging a Decision
-This is the central action in Calibrate. You log a decision before you know the outcome to test your prediction skills.
- * From the Dashboard, click Log Decision.
- * Decision & Prediction:
-   * Decision Title: State the decision clearly (e.g., Investing in stock X, Accepting job offer).
-   * Domain: Categorize the decision (career, financial, health, relationships).
-   * Prediction: State what you expect: Positive, Neutral, or Negative.
-   * Confidence: Crucially, set your confidence level from 10\% (guessing) to 90\% (very sure). This is the number you'll be calibrated against.
-   * Timeline: Set when you expect to know the outcome (e.g., 1 month, 6 months).
- * Evidence & Context (Highly Recommended for XP):
-   * Evidence: Document the facts, data points, or reasoning supporting your prediction. Logging this awards Evidence Gathering XP.
-   * Emotional State: Note your emotional state (calm, neutral, stressed). Logging a 'calm' state awards Emotional Regulation XP.
-   * Reversibility: Note if the decision is high-stakes (irreversible) or low-stakes (reversible).
-   * Consultation & Deliberation: Track your decision process. Research shows consulting 2+ people or taking adequate time improves accuracy.
- * Click Log Decision. The decision moves to your Pending Outcomes list.
-Context Warnings (During Logging)
-If you have integrations enabled, Calibrate will display Context Warnings on the Log Decision screen (e.g., warnings about low sleep or high meeting load). This is the system prompting you to adjust your confidence before you submit the decision.
-💡 Tracking Outcomes (Crucial for Calibration)
-The system only works if you close the loop by tracking the results.
- * When the timeline approaches, or you know the result, find the decision in the Pending Outcomes list on the Dashboard (or a dedicated "Decisions" view, implied).
- * Update the decision with the Actual Outcome (Positive, Neutral, or Negative) and any notes.
- * The system now compares your Confidence (e.g., 70\%) with the Actual Outcome (Hit or Miss). This data is used to build your Calibration Curve.
- * Tracking an outcome awards Calibration XP and Bias Detection XP.
-📊 Skill Building and Progress
-Calibrate uses a gamified Skills system to incentivize good decision-making habits:
-| Skill Category | Action to Earn XP | Purpose |
-|---|---|---|
-| Calibration | Tracking a decision outcome. | Improves alignment between your subjective confidence and objective accuracy. |
-| Evidence Gathering | Writing detailed evidence in the Log Decision form. | Encourages data-driven reasoning over gut feeling. |
-| Emotional Regulation | Logging decisions while in a 'calm' emotional state. | Highlights the benefit of rational, non-stressed decision-making. |
-| Pattern Recognition | Consistent Quick Check-ins over time. | Helps the system (and you) spot correlations between daily context (mood, sleep) and accuracy. |
-| Context Awareness | Using Integrations (sleep, calendar) to inform the decision context. | Encourages using external, objective data for better self-awareness. |
-⚙️ Integrations & Privacy
-Access this view by clicking the Settings button in the main header.
- * Integrations: Connect external data sources (like Sleep, Calendar, Activity).
-   * Benefit: Connecting data sources allows Calibrate to provide real-time context alerts and more personalized Behavioral Pattern analysis. For example, syncing your sleep allows Calibrate to warn you when you log a 90\% confidence decision after a poor night's sleep.
-   * How to Connect: Click Connect on any of the cards (e.g., Sleep Tracking).
- * Privacy Preferences: Calibrate is designed to be Privacy-First.
-   * By default, your data is set to Local Storage on your device.
-   * You have the option to enable Cloud Sync, Anonymous Usage Analytics, or Research Participation.
-   * You can Export All Data or Delete All Data at any time.
-⚡ Quick Check-in
-Access this from the Dashboard.
- * This is a minimal, 5-second log of your current Mood and how it compares to yesterday.
- * Benefit: Regular check-ins build the data needed for the Behavioral Patterns analysis, helping you correlate your energy/mood with your subsequent decision quality. Consistent use earns Pattern Recognition XP.
+# Calibrate 🧠
+
+> A personal decision intelligence system that helps you track predictions, measure judgment accuracy, and discover your unique decision-making archetype.
+
+## What is Calibrate?
+
+Calibrate is a self-awareness tool for anyone who makes important decisions. By logging your predictions and tracking their outcomes, you'll discover patterns in your judgment, identify blind spots, and improve your calibration over time.
+
+Think of it as a **personal laboratory for decision-making** — where every prediction becomes data, and every outcome becomes insight.
+
+## ✨ Key Features
+
+### 📊 Decision Tracking
+- Log predictions across domains (Financial, Career, Relationships, Health, Business, Personal)
+- Record confidence levels, stakes, timeframes, and reasoning
+- Track what alternatives you considered
+- Store all decisions locally in your browser
+
+### 🎯 Outcome Logging
+- Update predictions after time passes
+- Assess accuracy: Correct, Partially Correct, or Wrong
+- Attribute outcomes to skill, luck, or external factors
+- Rate surprise level and capture key learnings
+
+### 🧬 Archetype System
+Discover your decision-making profile based on 4 dimensions:
+- **Thinking Style:** Analytical vs. Intuitive
+- **Decision Speed:** Deliberate vs. Rapid
+- **Risk Tolerance:** Conservative vs. Bold
+- **Information Need:** Comprehensive vs. Sufficient
+
+**16 unique archetypes** including:
+- Strategic Architect
+- Visionary Leader
+- Lightning Catalyst
+- Efficient Optimizer
+- And 12 more...
+
+Each archetype reveals:
+- Your natural strengths
+- Blind spots to watch for
+- How you add value to teams
+
+### 📈 Analytics (Premium)
+Unlock advanced insights with the premium tier:
+- Calibration curves showing confidence vs. accuracy
+- Domain-specific performance breakdown
+- Historical trend analysis
+- Pattern detection across decision types
+- Visual analytics and exportable reports
+
+**Pricing:** $29/month or $290/year (save $58)
+
+### 🔮 Oracle Assistant
+AI-powered guidance that helps you:
+- Understand your decision patterns
+- Calibrate confidence levels
+- Identify when you're in your blind spots
+- Get personalized improvement strategies
+
+## 🚀 Getting Started
+
+### Installation
+Simply open `calibrate-full.html` in any modern web browser. No installation or server required.
+
+### First-Time Setup
+1. **Welcome** - Learn what Calibrate does
+2. **Profile** - Enter your name and goals
+3. **Assessment** - Answer 4 questions about your decision style
+4. **Archetype** - Discover your unique decision-making profile
+5. **Dashboard** - Start tracking decisions!
+
+### Using Calibrate
+
+**To Log a Decision:**
+1. Click "Log Decision" on the dashboard
+2. Choose a domain and describe the decision
+3. Write your prediction
+4. Set your confidence level (0-100%)
+5. Select stakes and timeframe
+6. Add reasoning and alternatives (optional)
+7. Submit
+
+**To Log an Outcome:**
+1. Find the pending decision on your dashboard
+2. Click "Log Outcome"
+3. Describe what actually happened
+4. Rate accuracy and attribution
+5. Note surprise level and learnings
+6. Submit
+
+**To View Analytics:**
+- Click "View Analytics" (premium feature)
+- Unlock to see calibration curves, domain breakdowns, and trend analysis
+
+**To Consult the Oracle:**
+- Click "Oracle" to chat with the AI assistant
+- Ask about patterns, blind spots, or how to improve
+
+## 💡 Why Use Calibrate?
+
+### The Problem
+Most people are poorly calibrated. When we say we're "80% confident," we're often right only 60% of the time. We don't track our predictions, so we never learn from outcomes. Our blind spots remain invisible.
+
+### The Solution
+Calibrate creates a feedback loop:
+1. **Record** predictions with confidence levels
+2. **Wait** for outcomes to unfold
+3. **Compare** predictions to reality
+4. **Learn** from patterns and adjust
+
+Over time, you'll:
+- ✅ Make more accurate predictions
+- ✅ Better estimate uncertainty
+- ✅ Recognize when you're in familiar vs. unfamiliar territory
+- ✅ Understand your decision-making tendencies
+- ✅ Improve judgment in high-stakes situations
+
+## 🎨 Design Philosophy
+
+**Cosmic Aesthetic:** A dark, space-themed interface with purple/blue gradients, glassmorphism effects, and smooth animations creates an atmosphere of contemplation and clarity.
+
+**Minimalist UX:** Clean forms, clear navigation, and progressive disclosure keep the focus on your decisions, not the tool.
+
+**Privacy First:** All data stored locally in your browser. No servers, no tracking, no data collection. Your decisions are yours alone.
+
+## 🛠️ Technical Details
+
+**Built With:**
+- React 18 (via CDN)
+- Tailwind CSS (via CDN)
+- LocalStorage for data persistence
+- Vanilla JavaScript (no build step)
+
+**Browser Support:**
+- Chrome/Edge 90+
+- Firefox 88+
+- Safari 14+
+
+**Data Storage:**
+- All data stored in browser LocalStorage
+- Automatic save on every change
+- Reset option available in settings
+
+## 📱 Features Roadmap
+
+Future enhancements could include:
+- [ ] Data export (CSV, JSON)
+- [ ] Charts and visualizations
+- [ ] Calibration curve graphs
+- [ ] Decision templates
+- [ ] Team comparison mode
+- [ ] Mobile app
+- [ ] Spaced repetition reminders
+- [ ] Integration with calendar/notes
+
+## 🔐 Privacy & Data
+
+**Your data never leaves your device.** Calibrate runs entirely in your browser using LocalStorage. There are no servers, no accounts, no cloud sync. 
+
+To backup your data:
+1. Use your browser's developer tools
+2. Export LocalStorage (`calibrateData` key)
+3. Save the JSON file
+
+To restore:
+1. Import the JSON file
+2. Set it back to LocalStorage
+3. Refresh the page
+
+## 🧪 Use Cases
+
+**Investors:** Track market predictions and investment theses
+**Entrepreneurs:** Log strategic decisions and outcomes
+**Managers:** Improve hiring and project decisions
+**Students:** Calibrate exam predictions and study strategies
+**Anyone:** Build better judgment in life decisions
+
+## 📝 Best Practices
+
+1. **Be specific** - Vague predictions can't be accurately scored
+2. **Set timelines** - Clear deadlines make outcomes easier to assess
+3. **Track confidence** - This is where the calibration magic happens
+4. **Review regularly** - Weekly check-ins keep you honest
+5. **Embrace discomfort** - Seeing where you're wrong is how you improve
+
+## 🤝 Philosophy
+
+Calibrate is inspired by:
+- **Superforecasting** (Tetlock & Gardner)
+- **Thinking in Bets** (Annie Duke)
+- **The Scout Mindset** (Julia Galef)
+- **Calibration research** from cognitive psychology
+
+The goal: Help you become a better thinker by building a practice of prediction, measurement, and reflection.
+
+## ⚠️ Limitations
+
+- Not a prediction market or betting platform
+- AI assistant provides guidance, not professional advice
+- Analytics are descriptive, not prescriptive
+- Best used for decisions with clear outcomes
+
+## 🎯 Getting the Most Out of Calibrate
+
+**Week 1-2:** Log 5-10 decisions to establish baseline
+**Week 3-4:** Start reviewing outcomes, look for patterns
+**Month 2:** Notice your blind spots and strengths
+**Month 3+:** Adjust behavior based on insights, track improvement
+
+**Pro tip:** The magic happens when you log decisions you'd normally just make and forget. Small decisions compound into big insights.
+
+---
+
+## 🚦 Quick Start Checklist
+
+- [ ] Open `calibrate-full.html`
+- [ ] Complete onboarding (4 steps)
+- [ ] Log your first decision
+- [ ] Come back when outcome resolves
+- [ ] Log the outcome
+- [ ] Review your patterns
+- [ ] Consult the Oracle
+- [ ] Keep tracking!
+
+---
+
+**Built with curiosity, designed for clarity, made for better decisions.**
+
+*Reset & start fresh anytime with the reset button.*
