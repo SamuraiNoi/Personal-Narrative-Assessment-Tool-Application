@@ -1,1068 +1,1014 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Brain, TrendingUp, Target, Calendar, BarChart3, CheckCircle, AlertCircle,
-  Info, Plus, ChevronRight, Award, Zap, Clock, Activity, Star, Lock, Unlock,
-  TrendingDown, AlertTriangle, Settings, Download, Database, Shield, Eye,
-  EyeOff, Moon, Sunrise, Coffee, Heart, Users, MapPin, Smartphone, Mail,
-  MessageSquare, DollarSign, X, Check, ChevronDown, ChevronUp, HelpCircle
-} from 'lucide-react';
+/*
+  Calibrate- V6.1: The Self-Awareness AI Agent with Dynamic Search
+  - INTEGRATED AGENT IMPROVEMENTS:
+  - AnalyticsEngine: Upgraded to 'getContextualBlindSpot' to map user query keywords (e.g., 'investing') to specific domain weaknesses (e.g., 'financial accuracy').
+  - Agent Logic: The 'generateAgentResponse' now creates a "Personalized Filter" insight and an enriched Google Search query that specifically tells the user *how* to interpret the external information based on their blind spots and profile.
+  - UX/UI: DecisionAssistant modal updated to display the World Search Context, Personalized Filter, and Action Steps clearly.
+  - Debugging: All components and dependencies checked for consistency across V6.0 and V6.1 changes.
+*/
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Brain, Calendar, Plus, TrendingUp, Target, AlertCircle, CheckCircle, Clock, Send, X, BarChart3, Activity, Users, ChevronLeft, ChevronRight, Edit, MessageSquare, AlertTriangle, Zap, Search, Flag } from 'lucide-react';
 
-// Define initial state function for clean reset/first load
-const getInitialUserData = () => ({
-  onboardingComplete: false,
-  decisions: [],
-  checkIns: [],
-  joinedDate: new Date().toISOString(),
-
-  // Enhanced data tracking (placeholders)
-  sleepData: [{ date: new Date().toDateString(), duration: 420, quality: 3 }], // Mock sleep data for immediate warning visibility
-  activityData: [],
-  calendarData: [{ date: new Date().toDateString(), meetingCount: 2 }], // Mock calendar data
-  communicationData: [],
-  environmentData: [],
-  substanceData: [],
-
-  // Privacy & integration settings
-  integrations: {
-    sleep: { enabled: false, source: null, lastSync: null },
-    calendar: { enabled: false, source: null, lastSync: null },
-    activity: { enabled: false, source: null, lastSync: null },
-    email: { enabled: false, source: null, lastSync: null },
-    location: { enabled: false, lastSync: null },
-    finance: { enabled: false, source: null, lastSync: null }
+// ==================== QUADRANT SYSTEM (Unchanged) ====================
+const QuadrantSystem = {
+  dimensions: {
+    thinkingStyle: ['Analytical', 'Intuitive'],
+    decisionSpeed: ['Deliberate', 'Rapid'],
+    riskTolerance: ['Conservative', 'Bold'],
+    informationNeed: ['Comprehensive', 'Sufficient']
   },
 
-  // Privacy preferences
-  privacy: {
-    dataStorageLocal: true,
-    cloudSyncEnabled: false,
-    analyticsEnabled: false,
-    researchParticipation: false
+  types: {
+    'Analytical-Deliberate-Conservative-Comprehensive': { title: 'Strategic Architect', description: 'Methodical planner who excels at complex analysis', strengths: ['Risk assessment', 'Long-term planning', 'Detail orientation'], blindSpots: ['Analysis paralysis', 'Missed opportunities', 'Slow in crisis'], teamValue: 'Prevents costly mistakes through thorough evaluation' },
+    'Analytical-Deliberate-Bold-Comprehensive': { title: 'Calculated Innovator', description: 'Data-driven risk-taker who bets on analyzed opportunities', strengths: ['Informed risk-taking', 'Strategic disruption', 'Evidence-based boldness'], blindSpots: ['Overconfidence in models', 'Slow to pivot', 'Data blind spots'], teamValue: 'Drives innovation with analytical backing' },
+    'Analytical-Rapid-Conservative-Comprehensive': { title: 'Efficient Optimizer', description: 'Quick analyst who streamlines without recklessness', strengths: ['Rapid problem-solving', 'Pattern recognition', 'Efficient execution'], blindSpots: ['Premature optimization', 'Missing nuance', 'Burnout risk'], teamValue: 'Accelerates execution while maintaining quality' },
+    'Analytical-Rapid-Bold-Comprehensive': { title: 'Decisive Strategist', description: 'Fast, data-informed decision-maker who seizes opportunities', strengths: ['Speed + accuracy', 'Competitive advantage', 'Crisis management'], blindSpots: ['Overcommitment', 'Team overwhelm', 'Sustainability'], teamValue: 'Capitalizes on time-sensitive opportunities' },
+    'Intuitive-Deliberate-Conservative-Comprehensive': { title: 'Wise Counselor', description: 'Thoughtful advisor who reads between the lines', strengths: ['Cultural intelligence', 'People reading', 'Long-term relationships'], blindSpots: ['Overthinking signals', 'Risk aversion', 'Slow decisions'], teamValue: 'Identifies human factors others miss' },
+    'Intuitive-Deliberate-Bold-Comprehensive': { title: 'Visionary Leader', description: 'Bold thinker who trusts conviction backed by reflection', strengths: ['Vision setting', 'Inspiring others', 'Strategic courage'], blindSpots: ['Confirmation bias', 'Groupthink', 'Execution gaps'], teamValue: 'Sets direction and rallies teams toward ambitious goals' },
+    'Intuitive-Rapid-Conservative-Sufficient': { title: 'Agile Adapter', description: 'Flexible responder who reads situations quickly', strengths: ['Adaptability', 'Relationship building', 'Conflict resolution'], blindSpots: ['Indecisiveness', 'Insufficient rigor', 'Boundary issues'], teamValue: 'Maintains team cohesion through change' },
+    'Intuitive-Rapid-Bold-Sufficient': { title: 'Dynamic Catalyst', description: 'Instinct-driven mover who acts on gut feel', strengths: ['First-mover advantage', 'Energy creation', 'Breaking inertia'], blindSpots: ['Impulsiveness', 'Overlooking risks', 'Inconsistency'], teamValue: 'Initiates action when others hesitate' },
+    'Analytical-Deliberate-Conservative-Sufficient': { title: 'Prudent Operator', description: 'Careful executor who values proven methods', strengths: ['Reliability', 'Quality control', 'Risk management'], blindSpots: ['Rigidity', 'Innovation resistance', 'Opportunity cost'], teamValue: 'Ensures operational excellence and stability' },
+    'Analytical-Deliberate-Bold-Sufficient': { title: 'Strategic Disruptor', description: 'Bold analyst who challenges conventions with data', strengths: ['Creative problem-solving', 'Strategic pivots', 'Competitive edge'], blindSpots: ['Overestimating data', 'Change fatigue', 'Execution risk'], teamValue: 'Questions assumptions and finds better ways' },
+    'Analytical-Rapid-Conservative-Sufficient': { title: 'Tactical Executor', description: 'Quick implementer who delivers without drama', strengths: ['Execution speed', 'Pragmatism', 'Consistency'], blindSpots: ['Tunnel vision', 'Missing opportunities', 'Burnout'], teamValue: 'Ships reliably and keeps projects moving' },
+    'Analytical-Rapid-Bold-Sufficient': { title: 'Entrepreneurial Driver', description: 'Fast-moving builder who trusts quick analysis', strengths: ['Rapid scaling', 'Market timing', 'Momentum building'], blindSpots: ['Technical debt', 'Team strain', 'Unsustainable pace'], teamValue: 'Drives aggressive growth and market capture' },
+    'Intuitive-Deliberate-Conservative-Sufficient': { title: 'Empathetic Guardian', description: 'People-first thinker who protects team wellbeing', strengths: ['Team morale', 'Culture building', 'Conflict prevention'], blindSpots: ['Avoiding conflict', 'Slow growth', 'Performance issues'], teamValue: 'Creates psychological safety and retention' },
+    'Intuitive-Deliberate-Bold-Sufficient': { title: 'Inspirational Maverick', description: 'Conviction-driven leader who trusts their vision', strengths: ['Charisma', 'Big bets', 'Culture transformation'], blindSpots: ['Reality disconnect', 'Blind loyalty', 'Sustainability'], teamValue: 'Transforms culture and inspires extraordinary effort' },
+    'Intuitive-Rapid-Conservative-Comprehensive': { title: 'Diplomatic Navigator', description: 'Quick reader who builds consensus carefully', strengths: ['Stakeholder management', 'Political savvy', 'Harmony'], blindSpots: ['Over-accommodation', 'Decision delay', 'Conflict avoidance'], teamValue: 'Navigates complex organizational dynamics' },
+    'Intuitive-Rapid-Bold-Comprehensive': { title: 'Transformative Pioneer', description: 'Bold intuitive who acts on holistic understanding', strengths: ['Change leadership', 'Pattern synthesis', 'Strategic courage'], blindSpots: ['Overextension', 'Unpredictability', 'Team whiplash'], teamValue: 'Leads transformative initiatives others fear' }
   },
+  
+  assessFromDecisions: (decisions) => {
+    if (decisions.length < 5) return null;
+    const completed = decisions.filter(d => d.outcome !== null);
+    if (completed.length < 3) return null;
 
-  // Skills system
-  skills: {
-    calibration: { xp: 0, level: 1 },
-    evidenceGathering: { xp: 0, level: 1 },
-    emotionalRegulation: { xp: 0, level: 1 },
-    patternRecognition: { xp: 0, level: 1 },
-    biasDetection: { xp: 0, level: 1 },
-    riskAssessment: { xp: 0, level: 1 },
-    contextAwareness: { xp: 0, level: 1 },
-    domainExpertise: {
-      career: { xp: 0, level: 1 },
-      relationships: { xp: 0, level: 1 },
-      health: { xp: 0, level: 1 },
-      financial: { xp: 0, level: 1 }
-    }
-  },
+    // 1. Thinking Style
+    const analyticalDecisions = decisions.filter(d => d.decisionBasis === 'Data/Analysis').length;
+    const thinkingStyle = (analyticalDecisions / decisions.length) > 0.5 ? 'Analytical' : 'Intuitive';
 
-  // User profile
-  profile: {
-    typicalSleepHours: 7,
-    typicalWakeTime: '7:00',
-    optimalDecisionHours: [],
-    lifeRegime: 'single_career_focused'
-  }
-});
+    // 2. Decision Speed
+    const rapidDecisions = decisions.filter(d => d.timeToDecide === 'instant' || d.timeToDecide === 'hours').length;
+    const decisionSpeed = rapidDecisions / decisions.length > 0.5 ? 'Rapid' : 'Deliberate';
 
-const Calibrate = () => {
-  const [currentView, setCurrentView] = useState('welcome');
-  const [userData, setUserData] = useState(getInitialUserData());
-
-  // ==================== FIX 1: STATE PERSISTENCE (localStorage) ====================
-  useEffect(() => {
-    const savedData = localStorage.getItem('calibrateV5_userData');
-    if (savedData) {
-      const parsedData = JSON.parse(savedData);
-      setUserData(parsedData);
-      // Determine starting view
-      if (parsedData.onboardingComplete) {
-        setCurrentView('dashboard');
+    // 3. Risk Tolerance
+    const highStakesDecisions = decisions.filter(d => d.stakes === 'high');
+    let boldScore = 0;
+    if (highStakesDecisions.length > 0) {
+      const avgConfidenceOnHighStakes = highStakesDecisions.reduce((sum, d) => sum + d.confidence, 0) / highStakesDecisions.length;
+      if (avgConfidenceOnHighStakes > 65) boldScore = 1.0; 
+    } else {
+      const mediumStakes = decisions.filter(d => d.stakes === 'medium');
+      if (mediumStakes.length > 0) {
+        const avgConfMedium = mediumStakes.reduce((sum, d) => sum + d.confidence, 0) / mediumStakes.length;
+        boldScore = (avgConfMedium > 70) ? 0.6 : 0.3;
       }
     }
+    const riskTolerance = boldScore > 0.5 ? 'Bold' : 'Conservative';
+
+    // 4. Information Need
+    let comprehensiveScore = 0;
+    decisions.forEach(d => {
+      if (d.timeToDecide === 'weeks') comprehensiveScore += 2;
+      if (d.timeToDecide === 'days') comprehensiveScore += 1;
+      // Simple heuristic for comprehensive info: long evidence and alternatives
+      if (d.alternativesConsidered && d.alternativesConsidered.length > 30) comprehensiveScore += 1;
+      if (d.evidence && d.evidence.length > 120) comprehensiveScore += 1;
+    });
+    const informationNeed = (comprehensiveScore / decisions.length) > 1.0 ? 'Comprehensive' : 'Sufficient';
+
+    const key = `${thinkingStyle}-${decisionSpeed}-${riskTolerance}-${informationNeed}`;
+    const profile = QuadrantSystem.types[key] || QuadrantSystem.types['Analytical-Deliberate-Conservative-Sufficient'];
+
+    // Add displayName and values from userData for a richer profile object
+    const currentProfile = Storage.loadSync().profile;
+
+    return {
+      ...profile,
+      dimensions: { thinkingStyle, decisionSpeed, riskTolerance, informationNeed },
+      key,
+      displayName: currentProfile.displayName,
+      values: currentProfile.values,
+      selfAssessment: currentProfile.selfAssessment
+    };
+  }
+};
+
+// ==================== ANALYTICS ENGINE (UPGRADED V6.1) ====================
+const AnalyticsEngine = {
+  
+  calculateAccuracy: (decisions) => {
+    const completed = decisions.filter(d => d.outcome !== null);
+    if (completed.length === 0) return null;
+    const correct = completed.filter(d => d.prediction === d.outcome).length;
+    return (correct / completed.length) * 100;
+  },
+  
+  calculateFilteredAccuracy: (decisions, filterFn) => {
+    const filtered = decisions.filter(filterFn);
+    const completed = filtered.filter(d => d.outcome !== null);
+    if (completed.length === 0) return { accuracy: null, count: 0 };
+    const correct = completed.filter(d => d.prediction === d.outcome).length;
+    return {
+      accuracy: (correct / completed.length) * 100,
+      count: completed.length
+    };
+  },
+  
+  getAccuracyByDomain: (decisions) => {
+    const domains = ['career', 'relationships', 'health', 'financial'];
+    return domains.map(domain => {
+      const { accuracy, count } = AnalyticsEngine.calculateFilteredAccuracy(
+        decisions, 
+        d => d.domain === domain
+      );
+      return { domain, accuracy, count };
+    });
+  },
+
+  getCalibrationData: (decisions) => {
+    const completed = decisions.filter(d => d.outcome !== null);
+    const bins = [0, 50, 60, 70, 80, 90, 100];
+    const calibration = [];
+    
+    for (let i = 0; i < bins.length - 1; i++) {
+      const lower = bins[i];
+      const upper = bins[i+1];
+      
+      const filtered = completed.filter(d => d.confidence > lower && d.confidence <= upper);
+      const count = filtered.length;
+      
+      let actual = null;
+      if (count > 0) {
+        const correct = filtered.filter(d => d.prediction === d.outcome).length;
+        actual = (correct / count) * 100;
+      }
+
+      calibration.push({
+        range: `${lower + 1}-${upper}%`,
+        predicted: (lower + upper) / 2,
+        actual: actual,
+        count: count
+      });
+    }
+    return calibration;
+  },
+
+  getAccuracyByStakes: (decisions) => {
+      const stakes = ['low', 'medium', 'high'];
+      return stakes.map(stake => {
+          const { accuracy, count } = AnalyticsEngine.calculateFilteredAccuracy(decisions, d => d.stakes === stake);
+          return { stake, accuracy, count };
+      });
+  },
+
+  getAccuracyByEmotion: (decisions) => {
+      const emotions = ['calm', 'neutral', 'anxious'];
+      return emotions.map(emotion => {
+          const { accuracy, count } = AnalyticsEngine.calculateFilteredAccuracy(decisions, d => d.emotionalState === emotion);
+          return { emotion, accuracy, count };
+      });
+  },
+
+  checkForSelfServingBias: (decisions) => {
+    const completed = decisions.filter(d => d.outcome !== null && d.attribution);
+    if (completed.length < 5) return null;
+
+    let internalSuccesses = 0;
+    let externalFailures = 0;
+    let totalSuccesses = 0;
+    let totalFailures = 0;
+    
+    completed.forEach(d => {
+      const isCorrect = d.prediction === d.outcome;
+      
+      if (isCorrect) {
+        totalSuccesses++;
+        if (d.attribution === 'my_skill') internalSuccesses++;
+      } else {
+        totalFailures++;
+        if (d.attribution === 'external') externalFailures++;
+      }
+    });
+
+    if (totalSuccesses === 0 || totalFailures === 0) return null;
+
+    const internalSuccessRate = internalSuccesses / totalSuccesses;
+    const externalFailureRate = externalFailures / totalFailures;
+
+    if (internalSuccessRate > 0.6 && externalFailureRate > 0.6) {
+      return { severity: 'high', internalRate: internalSuccessRate, externalRate: externalFailureRate, message: "You exhibit a **strong Self-Serving Bias**. You tend to take credit for wins and blame losses on external factors. This hinders learning." };
+    }
+    
+    if (internalSuccessRate > 0.5 && externalFailureRate > 0.5) {
+      return { severity: 'medium', internalRate: internalSuccessRate, externalRate: externalFailureRate, message: "You show signs of a **Self-Serving Bias**. Try to be more objective when assessing the cause of your failures." };
+    }
+    
+    return { severity: 'low', message: "Your attribution of outcomes is generally balanced." };
+  },
+
+  getConsistencyScore: (decisions) => {
+    if (decisions.length < 5) return { score: 100, deviation: 0, isLow: false };
+    
+    const timeMap = { 'instant': 1, 'hours': 4, 'days': 48, 'weeks': 168 };
+    const timeToDecideValues = decisions.map(d => timeMap[d.timeToDecide] || 48); // Default to 'days' if missing
+    
+    const avgTime = timeToDecideValues.reduce((a, b) => a + b, 0) / timeToDecideValues.length;
+    const avgConfidence = decisions.reduce((sum, d) => sum + d.confidence, 0) / decisions.length;
+    
+    const recent = decisions.slice(-5);
+    if (recent.length < 3) return { score: 100, deviation: 0, isLow: false };
+
+    let totalDeviation = 0;
+    
+    recent.forEach(d => {
+      const timeDeviation = Math.abs((timeMap[d.timeToDecide] || 48) - avgTime) / avgTime;
+      const confidenceDeviation = Math.abs(d.confidence - avgConfidence) / 100; 
+      
+      totalDeviation += (timeDeviation * 0.5) + (confidenceDeviation * 0.5);
+    });
+
+    const averageDeviation = totalDeviation / recent.length;
+    
+    const score = Math.max(0, 100 - (averageDeviation * 100));
+
+    return { 
+      score: score.toFixed(0), 
+      deviation: averageDeviation.toFixed(2),
+      isLow: score < 70
+    };
+  },
+
+  // NEW V6.1: Maps a general query to the most relevant internal context (domain/bias)
+  getContextualBlindSpot: (decisions, userQuery) => {
+    const lowerQuery = userQuery.toLowerCase();
+    
+    // 1. Domain Mapping based on keywords
+    let domainFocus = null;
+    if (lowerQuery.includes('invest') || lowerQuery.includes('stock') || lowerQuery.includes('crypto') || lowerQuery.includes('money') || lowerQuery.includes('financial')) {
+      domainFocus = 'financial';
+    } else if (lowerQuery.includes('job') || lowerQuery.includes('career') || lowerQuery.includes('promotion') || lowerQuery.includes('work') || lowerQuery.includes('business')) {
+      domainFocus = 'career';
+    } else if (lowerQuery.includes('relationship') || lowerQuery.includes('friend') || lowerQuery.includes('partner') || lowerQuery.includes('conflict') || lowerQuery.includes('team')) {
+      domainFocus = 'relationships';
+    } else if (lowerQuery.includes('health') || lowerQuery.includes('diet') || lowerQuery.includes('fitness') || lowerQuery.includes('wellbeing') || lowerQuery.includes('sleep')) {
+      domainFocus = 'health';
+    }
+
+    if (domainFocus) {
+      const { accuracy, count } = AnalyticsEngine.calculateFilteredAccuracy(decisions, d => d.domain === domainFocus);
+      if (count > 2 && accuracy < 60) {
+        return { type: 'domain', focus: domainFocus, accuracy: accuracy.toFixed(0), message: `Your accuracy in **${domainFocus}** decisions is low (${accuracy.toFixed(0)}%).` };
+      }
+    }
+    
+    // 2. Bias/Consistency Check (Prioritized as they affect *all* decisions)
+    const consistency = AnalyticsEngine.getConsistencyScore(decisions);
+    if (consistency.isLow) {
+       return { type: 'consistency', focus: 'erratic_process', message: `Your decision-making process is becoming erratic (Consistency Score: ${consistency.score}!).` };
+    }
+    
+    const bias = AnalyticsEngine.checkForSelfServingBias(decisions);
+    if (bias && bias.severity === 'high') {
+      return { type: 'bias', focus: 'self_serving', message: bias.message };
+    }
+    
+    // 3. Default to confidence miscalibration
+    const miscalibration = AnalyticsEngine.getCalibrationData(decisions).find(c => c.count >= 3 && Math.abs((c.predicted || 0) - (c.actual || 0)) > 15);
+    if (miscalibration) {
+      return { type: 'confidence', focus: 'miscalibrated', message: `You are miscalibrated in the ${miscalibration.range} confidence range.` };
+    }
+    
+    return { type: 'none', focus: 'general', message: 'You are performing well. Let’s focus on reinforcement.' };
+  },
+
+  // UPDATED V6.1: Generates a truly dynamic, combined response
+  generateAgentResponse: (decisions, profile, userQuery) => {
+    const defaultResponse = {
+      message: "I need more data to be a useful friend! Log at least 5 decisions and 3 completed outcomes.",
+      insights: ["Track decisions consistently", "Be honest about outcomes"],
+      actionSteps: ["Log your next decision today", "Set a reminder to track outcomes"],
+      searchQuery: "how to log decisions consistently"
+    };
+
+    const completed = decisions.filter(d => d.outcome !== null);
+    if (completed.length < 3) return defaultResponse;
+    
+    const accuracy = AnalyticsEngine.calculateAccuracy(decisions);
+
+    // --- 1. Identify Contextual Blind Spot & Overall Profile ---
+    const blindSpot = AnalyticsEngine.getContextualBlindSpot(decisions, userQuery);
+    const bsType = blindSpot.type;
+    const bsFocus = blindSpot.focus;
+    
+    let generalSearchQuery = userQuery;
+    let personalizedInsight = "";
+    let actionSteps = [];
+    
+    // --- 2. Logic for General Query (Dynamic Search/Filter) ---
+    if (userQuery.toLowerCase().trim() !== 'get insight') {
+      
+      // Determine the Agent's Filter/Frame
+      if (bsType === 'domain' && profile.dimensions.riskTolerance === 'Bold') {
+          personalizedInsight = `I see your query. Given your **Bold** style and low **${bsFocus}** accuracy (${blindSpot.accuracy}%), the best external information for you is **structured risk mitigation**.`;
+          generalSearchQuery = `${userQuery} + structured risk mitigation strategies for ${bsFocus} + avoid impulsive action`;
+          actionSteps = [`Search for a "pre-mortem" exercise related to ${bsFocus}.`, `Reduce your confidence prediction by 20% on your next ${bsFocus} decision.`];
+          
+      } else if (bsType === 'bias' || bsType === 'consistency') {
+          personalizedInsight = `Your query relates to the external world, but our data shows your **process** is the current blocker (${blindSpot.message}). External information is only useful if your internal process is sound.`;
+          generalSearchQuery = `${userQuery} + how to objectively assess process failure + decision journaling methods`;
+          actionSteps = [`Write down your 'Attribution' for your last three outcomes. Were they honest?`, `Focus on your core strength: **${profile.strengths[0]}** before executing any search result.`];
+          
+      } else if (profile.dimensions.thinkingStyle === 'Intuitive' && bsType === 'confidence') {
+          personalizedInsight = `As an **Intuitive** thinker, your gut is powerful, but your **miscalibration** means you need solid proof. I'm searching for **objective data to test your intuition**.`;
+          generalSearchQuery = `objective data on ${userQuery} + external expert consensus + statistical validation`;
+          actionSteps = [`Before acting on the search results, find one piece of data that *contradicts* your intuition.`, `Log an updated decision in 48 hours to track confidence drift.`];
+          
+      } else {
+          // General query, no major blind spots or Analytical user. Focus on reinforcing strengths/profile.
+          personalizedInsight = `Your overall performance is **${accuracy.toFixed(0)}%**. As a **${profile.title}**, I'll filter the world's information to reinforce your strength in **${profile.strengths[0]}**.`;
+          generalSearchQuery = `leveraging ${profile.strengths[0]} in the context of ${userQuery}`;
+          actionSteps = [`Think about how the search results align with your core value of **${profile.values && profile.values.length > 0 ? profile.values[0] : 'Growth'}**.`, `Share the search result with a colleague to test its rigor.`];
+      }
+
+      return {
+        message: userQuery, // Placeholder for the simulated general answer
+        insights: [personalizedInsight],
+        actionSteps: actionSteps,
+        searchQuery: generalSearchQuery
+      };
+
+    } else {
+      // --- 3. Logic for 'Get Insight' (Self-Assessment Mode) ---
+      
+      const overallBlindSpot = AnalyticsEngine.getContextualBlindSpot(decisions, 'general');
+
+      let message = `Hello, ${profile.displayName || 'Friend'}. Your overall accuracy is **${accuracy.toFixed(0)}%**. My current focus is your **${overallBlindSpot.message}**`;
+      let suggestion = "";
+      let searchQuery = "";
+      actionSteps = [];
+
+      if (overallBlindSpot.type === 'consistency') {
+        suggestion = `You're deviating from your norms. As a **${profile.title}**, you excel with structure. My advice is to pause and explicitly write down your Confidence and Evidence *before* proceeding.`;
+        searchQuery = `how to improve consistency in decision making process`;
+        actionSteps = ["Review the average time and confidence of your last 5 decisions", "Take a 24-hour break before the next major decision."];
+        
+      } else if (overallBlindSpot.type === 'bias') {
+        suggestion = `The data shows you might be avoiding responsibility for losses (Self-Serving Bias). Next time you fail, consciously attribute the cause to a *lack of skill* or *poor process*.`;
+        searchQuery = `strategies to overcome self-serving bias in professional context`;
+        actionSteps = ["Find one example of a failure and write down three internal reasons for it.", "Review your attribution rates in the Charts section."];
+      
+      } else if (overallBlindSpot.type === 'domain') {
+        suggestion = `Your **${overallBlindSpot.focus.toUpperCase()}** decisions are struggling. As a **${profile.title}**, you need ${profile.dimensions.informationNeed === 'Comprehensive' ? 'more external data/experts' : 'a quicker feedback loop'} for this domain.`;
+        searchQuery = `best practices for ${overallBlindSpot.focus} decision making and risk assessment`;
+        actionSteps = [`Seek an expert opinion for the next ${overallBlindSpot.focus} decision.`, `Log the exact data points you used for your next ${overallBlindSpot.focus} decision.`];
+      
+      } else {
+         // If no major blind spots, focus on reinforcement
+         message = `You're performing well! Your overall accuracy is **${accuracy.toFixed(0)}%**. Let's reinforce your strengths.`;
+         suggestion = `Your profile is a **${profile.title}**. Leverage your top strength: **${profile.strengths[0]}**. Think about how you can teach this skill to someone else.`;
+         searchQuery = `how to leverage the strengths of a ${profile.title} decision style`;
+         actionSteps = ["Write down your favorite success story where you used your primary strength.", "Mentor a colleague on one of your strengths."];
+      }
+
+      return {
+        message: message,
+        insights: [suggestion],
+        actionSteps: actionSteps,
+        searchQuery: searchQuery
+      };
+    }
+  }
+};
+
+
+// ==================== STORAGE HELPER (Updated to include sync load for profile) ====================
+const Storage = {
+  // Synchronous load for immediate profile access during initial QuadrantSystem assessment
+  loadSync() { 
+    try {
+      const result = localStorage.getItem('calibrate_v6_data');
+      return result ? JSON.parse(result) : {};
+    } catch (e) {
+      console.error('Storage sync load error:', e);
+      return {};
+    }
+  },
+
+  async load() {
+    return Storage.loadSync();
+  },
+
+  async save(data) {
+    try {
+      localStorage.setItem('calibrate_v6_data', JSON.stringify(data));
+      return true;
+    } catch (e) {
+      console.error('Storage save error:', e);
+      return false;
+    }
+  }
+};
+
+// ==================== DECISION ASSISTANT MODAL (UPDATED V6.1) ====================
+const DecisionAssistant = ({ userData, setUserData, onClose }) => {
+  const decisions = userData.decisions;
+  const profile = QuadrantSystem.assessFromDecisions(decisions);
+  const [chatInput, setChatInput] = useState('');
+  const chatEndRef = useRef(null);
+  
+  const initialAgentResponse = useMemo(() => {
+    if (!profile) return null;
+    return AnalyticsEngine.generateAgentResponse(decisions, profile, 'get insight');
+  }, [decisions, profile]);
+
+  const [chatMessages, setChatMessages] = useState(
+    initialAgentResponse ? [{ role: 'assistant', ...initialAgentResponse }] : []
+  );
+
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages]);
+  
+  const handleQuery = (query) => {
+    const finalQuery = query || chatInput;
+    if (!finalQuery.trim()) return;
+    
+    // 1. Log User Query
+    setChatMessages(prev => [...prev, { role: 'user', content: finalQuery }]);
+    setChatInput('');
+
+    // 2. Get Agent Response
+    const insight = AnalyticsEngine.generateAgentResponse(decisions, profile, finalQuery);
+
+    // 3. Log Agent Response
+    setTimeout(() => {
+      setChatMessages(prev => [...prev, {
+        role: 'assistant',
+        ...insight
+      }]);
+    }, 500);
+  };
+
+  if (!profile) {
+    return (
+      <Modal onClose={onClose}>
+        <div className="text-center p-8">
+          <Brain className="w-16 h-16 mx-auto mb-4 text-purple-500" />
+          <h3 className="text-2xl font-bold mb-2 text-gray-800">Agent Offline</h3>
+          <p className="text-gray-600">Need at least 5 decisions and 3 outcomes to generate a profile.</p>
+        </div>
+      </Modal>
+    );
+  }
+
+  return (
+    <Modal onClose={onClose}>
+      <div className="flex flex-col h-full">
+        <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-4 rounded-t-xl flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Zap className="w-6 h-6" />
+            <h3 className="font-bold text-xl">Decision Assistant Agent</h3>
+          </div>
+          <button onClick={onClose} className="hover:bg-white/20 rounded-lg p-1">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+          {chatMessages.map((msg, idx) => (
+            <div key={idx} className={`${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
+              <div className={`inline-block max-w-[90%] p-3 rounded-2xl ${
+                msg.role === 'user' 
+                  ? 'bg-blue-600 text-white rounded-br-sm' 
+                  : 'bg-white text-gray-800 rounded-bl-sm shadow border border-gray-200'
+              }`}>
+                {msg.role === 'user' ? (
+                  <p className="text-sm whitespace-pre-wrap text-white">{msg.content}</p>
+                ) : (
+                  <>
+                    <div className="font-bold text-lg mb-2 text-gray-800">
+                      {msg.message === 'get insight' ? 'Personal Insight' : 'World Search Context'}
+                    </div>
+                    
+                    {msg.message !== 'get insight' && (
+                      <p className="text-sm text-gray-700 italic mb-3">
+                        Your query, **"{msg.message}"**, is being filtered through your personal data.
+                      </p>
+                    )}
+                    
+                    {msg.insights && msg.insights.length > 0 && (
+                      <div className={`mt-3 pt-3 border-t ${msg.message === 'get insight' ? 'border-gray-200' : 'border-purple-200'} space-y-2`}>
+                        <div className="font-semibold text-xs text-purple-600 mb-1 flex items-center gap-1">
+                          <Brain className="w-4 h-4" /> 
+                          {msg.message === 'get insight' ? 'Personalized Insight:' : 'Personalized Filter:'}
+                        </div>
+                        {msg.insights.map((insight, i) => (
+                          <div key={i} className="text-sm flex items-start gap-2 text-gray-700">
+                            <span dangerouslySetInnerHTML={{ __html: insight.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {msg.searchQuery && (
+                      <div className="mt-4 pt-3 border-t border-blue-200 bg-blue-50 -m-3 mt-3 p-3 rounded-b-2xl">
+                        <div className="font-semibold text-xs text-blue-900 mb-2 flex items-center gap-1">
+                          <Search className="w-4 h-4" /> Agent Search Query: (Click to open)
+                        </div>
+                        <a
+                          href={`https://www.google.com/search?q=${encodeURIComponent(msg.searchQuery)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-700 hover:text-blue-900 underline block break-words"
+                        >
+                          "{msg.searchQuery}"
+                        </a>
+                      </div>
+                    )}
+                    
+                    {msg.actionSteps && msg.actionSteps.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-green-200 bg-green-50 -m-3 mt-3 p-3 rounded-b-2xl">
+                        <div className="font-semibold text-xs text-green-900 mb-2">🎯 Immediate Action Steps:</div>
+                        {msg.actionSteps.map((step, i) => (
+                          <div key={i} className="text-xs text-green-800 mb-1">{i + 1}. {step}</div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+          <div ref={chatEndRef} />
+        </div>
+
+        <div className="p-4 border-t border-gray-200 bg-white">
+          <div className="text-sm text-gray-600 mb-2">Popular Questions:</div>
+          <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
+            <PromptChip label="How do I invest in crypto?" onClick={() => handleQuery("How do I invest in crypto?")} />
+            <PromptChip label="What is my biggest blind spot?" onClick={() => handleQuery("get insight")} />
+            <PromptChip label="How to ask for a raise?" onClick={() => handleQuery("How to ask for a raise?")} />
+          </div>
+          <form onSubmit={(e) => { e.preventDefault(); handleQuery(); }} className="flex gap-2">
+            <input
+              type="text"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder="Ask your Decision Assistant (e.g., 'career advice' or 'What is my bias?')..."
+              className="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none text-sm"
+            />
+            <button
+              type="submit"
+              className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-2 rounded-lg hover:opacity-90"
+            >
+              <Send className="w-5 h-5" />
+            </button>
+          </form>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
+// Helper component for the assistant modal
+const Modal = ({ children, onClose }) => (
+  <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg h-[80vh] flex flex-col">
+      {children}
+    </div>
+  </div>
+);
+
+const PromptChip = ({ label, onClick }) => (
+  <button 
+    onClick={onClick}
+    className="bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded-full whitespace-nowrap hover:bg-gray-300 transition-colors"
+  >
+    {label}
+  </button>
+);
+
+
+// ==================== MAIN APP ====================
+const Calibrate = () => {
+  const [loading, setLoading] = useState(true);
+  const [currentView, setCurrentView] = useState('dashboard'); 
+  const [showAssistant, setShowAssistant] = useState(false); 
+  const [userData, setUserData] = useState({
+    onboardingComplete: false,
+    decisions: [],
+    joinedDate: new Date().toISOString(),
+    profile: {
+      displayName: '',
+      professionalRole: '',
+      professionalBio: '',
+      goals: [],
+      values: [],
+      selfAssessment: { 
+        thinkingStyle: 'Analytical', 
+        decisionSpeed: 'Deliberate',
+        riskTolerance: 'Conservative',
+        informationNeed: 'Comprehensive'
+      } 
+    }
+  });
+
+  useEffect(() => {
+    const loadData = async () => {
+      const saved = await Storage.load();
+      if (saved && Object.keys(saved).length > 0) {
+        setUserData(saved);
+        if (saved.onboardingComplete) {
+          setCurrentView('dashboard');
+        } else {
+          setCurrentView('onboarding'); 
+        }
+      } else {
+        setCurrentView('onboarding'); 
+      }
+      setLoading(false);
+    };
+    loadData();
   }, []);
 
   useEffect(() => {
-    // Save state on every change
-    localStorage.setItem('calibrateV5_userData', JSON.stringify(userData));
-  }, [userData]);
-  // =================================================================================
+    if (!loading) {
+      Storage.save(userData);
+    }
+  }, [userData, loading]);
+  
+  // ==================== ONBOARDING WIZARD (Condensed for Final Delivery) ====================
+  const OnboardingWizard = () => { 
+    const [step, setStep] = useState(1);
+    const [profileData, setProfileData] = useState(userData.profile);
 
-  const daysSinceJoining = Math.floor(
-    (new Date() - new Date(userData.joinedDate)) / (1000 * 60 * 60 * 24)
-  );
-
-  const unlocks = {
-    basicStats: daysSinceJoining >= 7,
-    patternDetection: userData.decisions.length >= 10,
-    advancedCalibration: userData.decisions.filter(d => d.outcome !== null).length >= 20,
-    integrations: daysSinceJoining >= 3,
-    aiInsights: userData.decisions.filter(d => d.outcome !== null).length >= 15
-  };
-
-  // ==================== WELCOME SCREEN ====================
-  const WelcomeScreen = () => {
-    const [step, setStep] = useState(0);
-    const [profile, setProfile] = useState({
-      typicalSleepHours: 7,
-      typicalWakeTime: '7:00',
-      lifeRegime: 'single_career_focused'
-    });
-
-    const handleComplete = () => {
-      setUserData({
-        ...userData,
-        onboardingComplete: true,
-        profile: profile
-      });
-      setCurrentView('dashboard');
+    const updateProfile = (key, value) => {
+      setProfileData(prev => ({ ...prev, [key]: value }));
     };
-
-    if (step === 0) {
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 text-white p-6 flex items-center justify-center">
-          <div className="max-w-2xl">
-            <div className="text-center mb-8">
-              <Brain className="w-20 h-20 mx-auto mb-4 animate-pulse" />
-              <h1 className="text-5xl font-bold mb-4">Calibrate</h1>
-              <p className="text-2xl text-blue-100">Know When to Trust Your Gut</p>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 mb-6">
-              <h2 className="text-2xl font-bold mb-4">What is Calibrate?</h2>
-              <p className="text-lg text-blue-50 mb-4">
-                Most people are overconfident about some decisions and underconfident about others.
-                Calibrate helps you discover your blind spots through decision tracking and outcome feedback.
-              </p>
-
-              <div className="space-y-4 my-6">
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="w-6 h-6 text-green-300 flex-shrink-0 mt-1" />
-                  <div>
-                    <div className="font-semibold">Track Decision Quality</div>
-                    <div className="text-sm text-blue-100">Log predictions with confidence levels, then track outcomes</div>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="w-6 h-6 text-green-300 flex-shrink-0 mt-1" />
-                  <div>
-                    <div className="font-semibold">Build Calibration</div>
-                    <div className="text-sm text-blue-100">Learn if your "70% confident" predictions are actually 70% accurate</div>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="w-6 h-6 text-green-300 flex-shrink-0 mt-1" />
-                  <div>
-                    <div className="font-semibold">Discover Patterns</div>
-                    <div className="text-sm text-blue-100">Find when you're overconfident (or underconfident) in specific contexts</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-yellow-500/20 border border-yellow-400/50 rounded-lg p-4 mb-6">
-                <div className="flex items-start gap-2">
-                  <Info className="w-5 h-5 text-yellow-300 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm">
-                    <strong>Based on Research:</strong> Tetlock's "Superforecasting" found that people who track predictions
-                    improve accuracy by 50%+ through calibration feedback.
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setStep(1)}
-              className="w-full bg-white text-blue-700 py-4 rounded-xl font-bold text-lg hover:bg-blue-50 transition-colors"
-            >
-              Get Started
-            </button>
-            <p className="text-center text-sm text-blue-200 mt-4">
-              Privacy-first • Data stays local • Takes 30 seconds/day
-            </p>
-          </div>
-        </div>
-      );
-    }
-
-    if (step === 1) {
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 text-white p-6 flex items-center justify-center">
-          <div className="max-w-2xl w-full">
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8">
-              <h2 className="text-2xl font-bold mb-6">Quick Profile Setup</h2>
-              <p className="text-blue-100 mb-6">Help us personalize your experience (optional but recommended)</p>
-
-              <div className="space-y-6">
-                <div>
-                  <label className="block font-medium mb-2">How many hours do you typically sleep?</label>
-                  <input
-                    type="number"
-                    min="4"
-                    max="12"
-                    value={profile.typicalSleepHours}
-                    onChange={(e) => setProfile({...profile, typicalSleepHours: parseInt(e.target.value)})}
-                    className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white text-lg"
-                  />
-                  <p className="text-sm text-blue-200 mt-1">We'll use this to detect when you're sleep-deprived</p>
-                </div>
-
-                <div>
-                  <label className="block font-medium mb-2">What time do you typically wake up?</label>
-                  <input
-                    type="time"
-                    value={profile.typicalWakeTime}
-                    onChange={(e) => setProfile({...profile, typicalWakeTime: e.target.value})}
-                    className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white text-lg"
-                  />
-                  <p className="text-sm text-blue-200 mt-1">Helps identify your peak decision-making hours</p>
-                </div>
-
-                <div>
-                  <label className="block font-medium mb-2">Current life context:</label>
-                  <select
-                    value={profile.lifeRegime}
-                    onChange={(e) => setProfile({...profile, lifeRegime: e.target.value})}
-                    className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white text-lg"
-                  >
-                    <option value="single_career_focused">Single, Career-Focused</option>
-                    <option value="partnered_dual_career">Partnered, Dual-Career</option>
-                    <option value="parent_young_children">Parent, Young Children</option>
-                    <option value="parent_teens">Parent, Teenagers</option>
-                    <option value="caregiver">Caregiver</option>
-                    <option value="student">Student</option>
-                    <option value="career_transition">Career Transition</option>
-                    <option value="health_recovery">Health Recovery</option>
-                  </select>
-                  <p className="text-sm text-blue-200 mt-1">Patterns vary by life stage—this helps us adapt</p>
-                </div>
-              </div>
-
-              <div className="flex gap-4 mt-8">
-                <button
-                  onClick={() => setStep(0)}
-                  className="flex-1 bg-white/20 text-white py-3 rounded-xl font-semibold hover:bg-white/30"
-                >
-                  Back
-                </button>
-                <button
-                  onClick={handleComplete}
-                  className="flex-1 bg-white text-blue-700 py-3 rounded-xl font-semibold hover:bg-blue-50"
-                >
-                  Complete Setup
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-  };
-
-  // ==================== ENHANCED LOG DECISION ====================
-  const LogDecision = () => {
-    const [newDecision, setNewDecision] = useState({
-      title: '',
-      context: '',
-      prediction: 'positive',
-      confidence: 50,
-      evidence: '',
-      domain: 'career',
-      reversible: true,
-      emotionalState: 'neutral',
-      timeline: '3_months',
-      peopleConsulted: 0,
-      deliberationTime: 'less_than_hour',
-      alternativesConsidered: 1
-    });
-
-    const [contextData, setContextData] = useState({
-      recentSleep: null,
-      currentMood: null,
-      meetingsToday: 0,
-      stressLevel: 'normal'
-    });
-
-    // Auto-populate context data
-    useEffect(() => {
-      // Get recent sleep data
-      const lastSleep = userData.sleepData[userData.sleepData.length - 1];
-      if (lastSleep) {
-        const hoursSleep = lastSleep.duration / 60;
-        setContextData(prev => ({
-          ...prev,
-          recentSleep: {
-            hours: hoursSleep,
-            quality: lastSleep.quality,
-            belowBaseline: hoursSleep < userData.profile.typicalSleepHours
-          }
-        }));
-      }
-
-      // Get today's check-ins for mood
-      const todayCheckIns = userData.checkIns.filter(c =>
-        new Date(c.timestamp).toDateString() === new Date().toDateString()
-      );
-      if (todayCheckIns.length > 0) {
-        const avgMood = todayCheckIns.reduce((sum, c) => sum + c.mood, 0) / todayCheckIns.length;
-        setContextData(prev => ({...prev, currentMood: avgMood}));
-      }
-
-      // Calendar data for meeting count
-      const todayCalendar = userData.calendarData.find(c =>
-        new Date(c.date).toDateString() === new Date().toDateString()
-      );
-      if (todayCalendar) {
-        setContextData(prev => ({...prev, meetingsToday: todayCalendar.meetingCount}));
-      }
-    }, [userData.sleepData, userData.checkIns, userData.calendarData, userData.profile.typicalSleepHours]);
-
-    const handleSubmit = () => {
-      if (!newDecision.title) return;
-
-      const decision = {
-        ...newDecision,
-        id: Date.now(),
-        date: new Date().toISOString(),
-        outcome: null,
-        outcomeDate: null,
-        outcomeNotes: '',
-        contextSnapshot: {
-          ...contextData,
-          timeOfDay: new Date().getHours(),
-          dayOfWeek: new Date().getDay(),
-          integrationStatus: {
-            sleepTracked: contextData.recentSleep !== null,
-            calendarSynced: contextData.meetingsToday > 0,
-            moodTracked: contextData.currentMood !== null
-          }
+    
+    const updateSelfAssessment = (key, value) => {
+      setProfileData(prev => ({
+        ...prev,
+        selfAssessment: {
+          ...prev.selfAssessment,
+          [key]: value
         }
-      };
+      }));
+    };
 
-      // Award XP for logging decision
-      const updatedSkills = {...userData.skills};
-
-      // Evidence gathering XP
-      if (newDecision.evidence.length > 20) {
-        updatedSkills.evidenceGathering.xp += 30;
-        updatedSkills.evidenceGathering.level = Math.floor(updatedSkills.evidenceGathering.xp / 150) + 1;
+    const toggleValue = (value) => {
+      const currentValues = profileData.values || [];
+      if (currentValues.includes(value)) {
+        updateProfile('values', currentValues.filter(v => v !== value));
+      } else {
+        updateProfile('values', [...currentValues, value]);
       }
+    };
 
-      // Emotional regulation XP
-      if (newDecision.emotionalState === 'calm') {
-        updatedSkills.emotionalRegulation.xp += 40;
-        updatedSkills.emotionalRegulation.level = Math.floor(updatedSkills.emotionalRegulation.xp / 180) + 1;
-      }
-
-      // Risk assessment XP
-      updatedSkills.riskAssessment.xp += 35;
-      updatedSkills.riskAssessment.level = Math.floor(updatedSkills.riskAssessment.xp / 160) + 1;
-
-      // Context awareness XP (if integrations used)
-      if (decision.contextSnapshot.integrationStatus.sleepTracked ||
-          decision.contextSnapshot.integrationStatus.calendarSynced) {
-        updatedSkills.contextAwareness.xp += 50;
-        updatedSkills.contextAwareness.level = Math.floor(updatedSkills.contextAwareness.xp / 200) + 1;
-      }
-
-      // --- FIX 3: Domain Expertise XP ---
-      const domain = newDecision.domain;
-      if (updatedSkills.domainExpertise[domain]) {
-          updatedSkills.domainExpertise[domain].xp += 50;
-          updatedSkills.domainExpertise[domain].level =
-              Math.floor(updatedSkills.domainExpertise[domain].xp / 200) + 1;
-      }
-      // ----------------------------------
-
-      setUserData({
-        ...userData,
-        decisions: [...userData.decisions, decision],
-        skills: updatedSkills
-      });
-
+    const handleFinish = () => {
+      setUserData({ ...userData, profile: profileData, onboardingComplete: true });
       setCurrentView('dashboard');
     };
 
-    // Context warnings
-    const warnings = [];
-    if (contextData.recentSleep?.belowBaseline) {
-      warnings.push({
-        type: 'warning',
-        text: `You slept ${contextData.recentSleep.hours.toFixed(1)} hours (below your ${userData.profile.typicalSleepHours}h baseline). Decision quality may be impaired by ~20%.`
-      });
-    }
-    if (contextData.meetingsToday >= 5) {
-      warnings.push({
-        type: 'warning',
-        text: `You have ${contextData.meetingsToday} meetings today. Decision fatigue may reduce accuracy by ~15%.`
-      });
-    }
-    if (contextData.currentMood && contextData.currentMood < 2.5) {
-      warnings.push({
-        type: 'warning',
-        text: 'Your mood check-ins suggest low energy today. Consider deferring major decisions.'
-      });
-    }
+    const coreValues = ['Security', 'Growth', 'Autonomy', 'Integrity', 'Community', 'Impact'];
 
-    return (
-      <div className="max-w-2xl mx-auto">
-        <button
-          onClick={() => setCurrentView('dashboard')}
-          className="text-blue-600 hover:text-blue-800 mb-4 flex items-center gap-1"
-        >
-          ← Back to Dashboard
-        </button>
-
-        {warnings.length > 0 && (
-          <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4 mb-6">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-1" />
-              <div className="flex-1">
-                <h3 className="font-bold text-yellow-900 mb-2">⚠️ Context Warnings</h3>
-                {warnings.map((warning, i) => (
-                  <p key={i} className="text-sm text-yellow-800 mb-1">{warning.text}</p>
-                ))}
-                <p className="text-sm text-yellow-700 mt-2 font-medium">
-                  Consider: Is this decision time-sensitive, or can it wait until conditions improve?
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="bg-white rounded-xl border-2 border-gray-200 p-8">
-          <h2 className="text-3xl font-bold mb-2">Log a Decision</h2>
-          <p className="text-gray-600 mb-6">
-            Track a decision you're making today. We'll follow up based on your timeline to see how it turned out.
-          </p>
-
-          <div className="space-y-6">
-            {/* Decision Title */}
-            <div>
-              <label className="block font-semibold text-gray-800 mb-2">
-                What decision are you making? *
-              </label>
-              <input
-                type="text"
-                value={newDecision.title}
-                onChange={(e) => setNewDecision({...newDecision, title: e.target.value})}
-                placeholder="e.g., Accepting job offer at Company X"
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
-              />
-            </div>
-
-            {/* Domain */}
-            <div>
-              <label className="block font-semibold text-gray-800 mb-2">Domain *</label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {['career', 'relationships', 'health', 'financial'].map(domain => (
-                  <button
-                    key={domain}
-                    onClick={() => setNewDecision({...newDecision, domain})}
-                    className={`py-2 px-4 rounded-lg font-medium capitalize transition-colors ${
-                      newDecision.domain === domain
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {domain}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Prediction */}
-            <div>
-              <label className="block font-semibold text-gray-800 mb-2">
-                What do you predict will happen? *
-              </label>
-              <div className="grid grid-cols-3 gap-3">
-                <button
-                  onClick={() => setNewDecision({...newDecision, prediction: 'positive'})}
-                  className={`py-3 rounded-lg font-medium transition-colors ${
-                    newDecision.prediction === 'positive'
-                      ? 'bg-green-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  ✅ Positive
-                </button>
-                <button
-                  onClick={() => setNewDecision({...newDecision, prediction: 'neutral'})}
-                  className={`py-3 rounded-lg font-medium transition-colors ${
-                    newDecision.prediction === 'neutral'
-                      ? 'bg-yellow-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  😐 Neutral
-                </button>
-                <button
-                  onClick={() => setNewDecision({...newDecision, prediction: 'negative'})}
-                  className={`py-3 rounded-lg font-medium transition-colors ${
-                    newDecision.prediction === 'negative'
-                      ? 'bg-red-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  ❌ Negative
-                </button>
-              </div>
-            </div>
-
-            {/* Confidence */}
-            <div>
-              <label className="block font-semibold text-gray-800 mb-2">
-                How confident are you? {newDecision.confidence}% *
-              </label>
-              <input
-                type="range"
-                min="10"
-                max="90"
-                step="5"
-                value={newDecision.confidence}
-                onChange={(e) => setNewDecision({...newDecision, confidence: parseInt(e.target.value)})}
-                className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-              />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>10% (Guessing)</span>
-                <span>50% (Coin flip)</span>
-                <span>90% (Very sure)</span>
-              </div>
-            </div>
-
-            {/* Timeline */}
-            <div>
-              <label className="block font-semibold text-gray-800 mb-2">
-                When should we check the outcome? *
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {[
-                  { value: '1_week', label: '1 Week' },
-                  { value: '1_month', label: '1 Month' },
-                  { value: '3_months', label: '3 Months' },
-                  { value: '6_months', label: '6 Months' },
-                  { value: '1_year', label: '1 Year' },
-                  { value: 'custom', label: 'Custom' }
-                ].map(option => (
-                  <button
-                    key={option.value}
-                    onClick={() => setNewDecision({...newDecision, timeline: option.value})}
-                    className={`py-2 rounded-lg text-sm font-medium ${
-                      newDecision.timeline === option.value
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Evidence */}
-            <div>
-              <label className="block font-semibold text-gray-800 mb-2">
-                What evidence supports your prediction?
-                <span className="text-sm font-normal text-gray-600 ml-2">(+30 XP Evidence Gathering)</span>
-              </label>
-              <textarea
-                value={newDecision.evidence}
-                onChange={(e) => setNewDecision({...newDecision, evidence: e.target.value})}
-                placeholder="List key facts, data points, or reasoning..."
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none h-24"
-              />
-              <div className="text-xs text-gray-500 mt-1">
-                {newDecision.evidence.length} characters • Research shows decisions with documented evidence are 15% more accurate
-              </div>
-            </div>
-
-            {/* Decision Process Context */}
-            <div className="border-t pt-6">
-              <h3 className="font-semibold text-gray-800 mb-4">Decision Process (helps detect patterns)</h3>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm text-gray-700 mb-2">Your emotional state right now:</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {['calm', 'neutral', 'stressed'].map(state => (
-                      <button
-                        key={state}
-                        onClick={() => setNewDecision({...newDecision, emotionalState: state})}
-                        className={`py-2 rounded-lg text-sm font-medium capitalize ${
-                          newDecision.emotionalState === state
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-700'
-                        }`}
-                      >
-                        {state}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm text-gray-700 mb-2">Is this decision reversible?</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => setNewDecision({...newDecision, reversible: true})}
-                      className={`py-2 rounded-lg text-sm font-medium ${
-                        newDecision.reversible
-                          ? 'bg-green-600 text-white'
-                          : 'bg-gray-100 text-gray-700'
-                      }`}
-                    >
-                      Yes (low stakes)
-                    </button>
-                    <button
-                      onClick={() => setNewDecision({...newDecision, reversible: false})}
-                      className={`py-2 rounded-lg text-sm font-medium ${
-                        !newDecision.reversible
-                          ? 'bg-red-600 text-white'
-                          : 'bg-gray-100 text-gray-700'
-                      }`}
-                    >
-                      No (high stakes)
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm text-gray-700 mb-2">How many people did you consult?</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="20"
-                    value={newDecision.peopleConsulted}
-                    onChange={(e) => setNewDecision({...newDecision, peopleConsulted: parseInt(e.target.value)})}
-                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg"
-                  />
-                  <div className="text-xs text-gray-500 mt-1">
-                    Research shows consulting 2+ people improves accuracy by 22%
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm text-gray-700 mb-2">How long have you been deliberating?</label>
-                  <select
-                    value={newDecision.deliberationTime}
-                    onChange={(e) => setNewDecision({...newDecision, deliberationTime: e.target.value})}
-                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg"
-                  >
-                    <option value="less_than_hour">Less than 1 hour</option>
-                    <option value="few_hours">Few hours</option>
-                    <option value="one_day">About 1 day</option>
-                    <option value="few_days">Few days</option>
-                    <option value="week_plus">Week or more</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Submit */}
+    const SelfAssessmentRadio = ({ label, options, selected, onChange }) => (
+      <div className="text-gray-800">
+        <label className="block font-semibold mb-2 text-blue-100">{label}</label>
+        <div className="flex bg-white/50 rounded-lg p-1">
+          {options.map(opt => (
             <button
-              onClick={handleSubmit}
-              disabled={!newDecision.title}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              key={opt}
+              onClick={() => onChange(opt)}
+              className={`w-1/2 py-2 rounded-md font-medium text-sm transition-all ${
+                selected === opt ? 'bg-white text-blue-700 shadow' : 'text-gray-700 hover:bg-white/50'
+              }`}
             >
-              Log Decision
+              {opt}
             </button>
-          </div>
+          ))}
         </div>
-
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-900">
-              <strong>Why track process?</strong> Research shows decision quality depends on your process
-              (evidence, consultation, emotional state) as much as the outcome. Tracking both helps you
-              identify what improves your judgment.
+      </div>
+    );
+    
+    const steps = [
+      { step: 1, title: "Welcome to Calibrate", content: () => ( <><div className="text-center mb-8"><Brain className="w-20 h-20 mx-auto mb-4 animate-pulse" /><h1 className="text-5xl font-bold mb-4">Welcome to Calibrate</h1><p className="text-2xl text-blue-100">Know When to Trust Your Gut</p></div><p className="text-lg text-blue-50 mb-6">Before you start, let's set up your profile. This 2-minute process helps Calibrate understand your starting point.</p></>), nextAction: () => setStep(2), nextLabel: "Let's Get Started" },
+      { step: 2, title: "About You", content: () => (
+          <div className="space-y-4">
+            <div><label className="block font-semibold mb-2 text-blue-100">Display Name</label><input type="text" value={profileData.displayName} onChange={(e) => updateProfile('displayName', e.target.value)} placeholder="e.g., Jane Doe" className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-gray-800" /></div>
+            <div><label className="block font-semibold mb-2 text-blue-100">Professional Role</label><input type="text" value={profileData.professionalRole} onChange={(e) => updateProfile('professionalRole', e.target.value)} placeholder="e.g., Senior Product Manager" className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-gray-800" /></div>
+            <div><label className="block font-semibold mb-2 text-blue-100">Professional Bio / Summary</label><textarea value={profileData.professionalBio} onChange={(e) => updateProfile('professionalBio', e.target.value)} placeholder="Paste your LinkedIn summary or a brief bio here..." className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none h-24 resize-none text-gray-800" /></div>
+          </div>
+        ), nextAction: () => setStep(3), nextLabel: "Next" },
+      { step: 3, title: "How You See Yourself", content: () => (
+          <div className="space-y-6">
+            <p className="text-blue-100 mb-4 text-sm">How do you *think* you make decisions? (This helps us spot perception gaps).</p>
+            <SelfAssessmentRadio label="Thinking Style" options={QuadrantSystem.dimensions.thinkingStyle} selected={profileData.selfAssessment.thinkingStyle} onChange={(val) => updateSelfAssessment('thinkingStyle', val)} />
+            <SelfAssessmentRadio label="Decision Speed" options={QuadrantSystem.dimensions.decisionSpeed} selected={profileData.selfAssessment.decisionSpeed} onChange={(val) => updateSelfAssessment('decisionSpeed', val)} />
+            <SelfAssessmentRadio label="Risk Tolerance" options={QuadrantSystem.dimensions.riskTolerance} selected={profileData.selfAssessment.riskTolerance} onChange={(val) => updateSelfAssessment('riskTolerance', val)} />
+            <SelfAssessmentRadio label="Information Need" options={QuadrantSystem.dimensions.informationNeed} selected={profileData.selfAssessment.informationNeed} onChange={(val) => updateSelfAssessment('informationNeed', val)} />
+          </div>
+        ), nextAction: () => setStep(4), nextLabel: "Next" },
+      { step: 4, title: "What Drives You?", content: () => (
+          <div className="space-y-6">
+            <div>
+              <label className="block font-semibold mb-2 text-blue-100">What do you want to improve? (1 goal per line)</label>
+              <textarea value={profileData.goals ? profileData.goals.join('\n') : ''} onChange={(e) => updateProfile('goals', e.target.value.split('\n'))} placeholder="e.g., Be more confident in financial decisions&#10;e.g., Improve my leadership skills..." className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none h-24 resize-none text-gray-800" />
             </div>
+            <div>
+              <label className="block font-semibold mb-2 text-blue-100">Which of these values resonate most?</label>
+              <div className="grid grid-cols-3 gap-2">
+                {coreValues.map(value => (
+                  <button
+                    key={value}
+                    onClick={() => toggleValue(value)}
+                    className={`py-3 px-2 rounded-lg font-medium text-sm transition-colors ${
+                      (profileData.values || []).includes(value)
+                        ? 'bg-green-400 text-black'
+                        : 'bg-white/50 text-gray-800 hover:bg-white/80'
+                    }`}
+                  >
+                    {value}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ), nextAction: handleFinish, nextLabel: "Finish Setup" }
+    ];
+
+    const currentStepData = steps.find(s => s.step === step);
+    
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 text-white p-6 flex items-center justify-center">
+        <div className="max-w-2xl w-full bg-white/10 backdrop-blur-lg rounded-2xl p-8 shadow-2xl">
+          <div className="text-gray-800">
+            {step > 1 && <h2 className="text-3xl font-bold text-white mb-6">{currentStepData.title}</h2>}
+            {currentStepData.content()}
+          </div>
+          <div className="flex justify-between items-center mt-8 pt-6 border-t border-white/20">
+            <button 
+              onClick={() => setStep(s => s - 1)}
+              disabled={step === 1}
+              className="flex items-center gap-2 px-6 py-3 bg-white/30 text-white rounded-lg font-medium hover:bg-white/50 disabled:opacity-50"
+            >
+              <ChevronLeft className="w-5 h-5" />
+              Back
+            </button>
+            <button 
+              onClick={currentStepData.nextAction}
+              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold transition-colors ${step < 4 ? 'bg-white text-blue-700 hover:bg-blue-50' : 'bg-green-400 text-black hover:bg-green-300'}`}
+            >
+              {currentStepData.nextLabel}
+              {step < 4 ? <ChevronRight className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />}
+            </button>
           </div>
         </div>
       </div>
     );
   };
 
-  // ==================== INTEGRATIONS & PRIVACY VIEW ====================
-  const IntegrationsView = () => {
-    const [showPrivacySettings, setShowPrivacySettings] = useState(false);
+  // ==================== CHARTS VIEW (Condensed for Final Delivery) ====================
+  const ChartsView = () => { 
+    const completedDecisions = userData.decisions.filter(d => d.outcome !== null);
+    const domainAccuracy = AnalyticsEngine.getAccuracyByDomain(userData.decisions);
+    const calibration = AnalyticsEngine.getCalibrationData(userData.decisions);
+    const profile = QuadrantSystem.assessFromDecisions(userData.decisions);
+    const stakesAccuracy = AnalyticsEngine.getAccuracyByStakes(userData.decisions);
+    const emotionAccuracy = AnalyticsEngine.getAccuracyByEmotion(userData.decisions);
+    const bias = AnalyticsEngine.checkForSelfServingBias(userData.decisions);
+    const consistency = AnalyticsEngine.getConsistencyScore(userData.decisions);
 
-    const integrationOptions = [
-      {
-        id: 'sleep',
-        name: 'Sleep Tracking',
-        icon: <Moon className="w-6 h-6" />,
-        description: 'Track sleep duration and quality',
-        sources: ['Oura Ring', 'Apple Watch', 'Whoop', 'Fitbit', 'Manual Entry'],
-        value: 'High - Sleep predicts decision quality 24-48 hours later',
-        dataCollected: 'Duration, quality score, bedtime/wake time',
-        dataNotCollected: 'Heart rate details, movement data',
-        impact: '30% variance in decision quality explained by sleep'
-      },
-      {
-        id: 'calendar',
-        name: 'Calendar Sync',
-        icon: <Calendar className="w-6 h-6" />,
-        description: 'Detect decision fatigue from meeting load',
-        sources: ['Google Calendar', 'Outlook', 'Apple Calendar'],
-        value: 'High - Meeting density predicts decision fatigue',
-        dataCollected: 'Meeting count, duration, free time blocks',
-        dataNotCollected: 'Meeting titles, attendees, content',
-        impact: '25% variance in decision quality from meeting load'
-      },
-      {
-        id: 'activity',
-        name: 'Activity Tracking',
-        icon: <Activity className="w-6 h-6" />,
-        description: 'Exercise improves cognitive function',
-        sources: ['Apple Health', 'Google Fit', 'Strava', 'Manual Entry'],
-        value: 'Medium - Exercise boosts accuracy for 2-3 hours',
-        dataCollected: 'Step count, exercise sessions, intensity',
-        dataNotCollected: 'GPS routes, detailed workout data',
-        impact: '15-20% accuracy boost on workout days'
-      },
-      {
-        id: 'email',
-        name: 'Communication Patterns',
-        icon: <Mail className="w-6 h-6" />,
-        description: 'Email volume as cognitive load indicator',
-        sources: ['Gmail', 'Outlook'],
-        value: 'Medium - High inbox correlates with overload',
-        dataCollected: 'Message count, response time patterns',
-        dataNotCollected: 'Message content, sender info, subject lines',
-        impact: 'Stress proxy - accuracy drops when inbox >100'
-      },
-      {
-        id: 'location',
-        name: 'Location Context',
-        icon: <MapPin className="w-6 h-6" />,
-        description: 'Environmental impact on decisions',
-        sources: ['Phone GPS (coarse location only)'],
-        value: 'Low - Some users make different decisions while traveling',
-        dataCollected: 'Location type (home/office/travel)',
-        dataNotCollected: 'Exact addresses, movement patterns',
-        impact: 'Varies by user - some travel poorly, others thrive'
-      },
-      {
-        id: 'finance',
-        name: 'Financial Stress Indicators',
-        icon: <DollarSign className="w-6 h-6" />,
-        description: 'Financial stress affects all decision types',
-        sources: ['Plaid (bank integration)', 'Manual entry'],
-        value: 'Medium - Financial strain impacts judgment',
-        dataCollected: 'Balance trends (up/down/stable), large transactions',
-        dataNotCollected: 'Actual amounts, account numbers, transaction details',
-        impact: 'Financial stress → 15% worse in non-financial decisions'
-      }
-    ];
-
-    const IntegrationCard = ({ integration }) => {
-      const enabled = userData.integrations[integration.id]?.enabled;
-      const [expanded, setExpanded] = useState(false);
-
+    if (completedDecisions.length < 3) {
       return (
-        <div className={`bg-white rounded-xl border-2 ${enabled ? 'border-green-500' : 'border-gray-200'} p-6`}>
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-start gap-4">
-              <div className={`p-3 rounded-lg ${enabled ? 'bg-green-100' : 'bg-gray-100'}`}>
-                {React.cloneElement(integration.icon, {
-                  className: `w-6 h-6 ${enabled ? 'text-green-600' : 'text-gray-400'}`
-                })}
-              </div>
-              <div>
-                <h3 className="font-bold text-lg text-gray-800">{integration.name}</h3>
-                <p className="text-sm text-gray-600">{integration.description}</p>
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                const newIntegrations = {...userData.integrations};
-                newIntegrations[integration.id] = {
-                  enabled: !enabled,
-                  source: enabled ? null : integration.sources[0],
-                  lastSync: enabled ? null : new Date().toISOString()
-                };
-                setUserData({...userData, integrations: newIntegrations});
-              }}
-              className={`px-4 py-2 rounded-lg font-medium ${
-                enabled
-                  ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
+        <div className="max-w-4xl mx-auto">
+          <button onClick={() => setCurrentView('dashboard')} className="text-blue-600 hover:text-blue-800 mb-4 font-medium">← Back to Dashboard</button>
+          <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-8 text-center">
+            <BarChart3 className="w-16 h-16 mx-auto mb-4 text-yellow-600" />
+            <h3 className="text-2xl font-bold text-yellow-900 mb-2">Not Enough Data Yet</h3>
+            <p className="text-yellow-800">You need at least 3 completed outcomes to generate meaningful charts. Keep logging decisions and outcomes!</p>
+          </div>
+        </div>
+      );
+    }
+
+    const AccuracyBar = ({ label, accuracy, count }) => (
+      <div>
+        <div className="flex justify-between items-center mb-2">
+          <span className="font-medium capitalize">{label}</span>
+          <span className="text-sm text-gray-600">
+            {accuracy !== null ? `${accuracy.toFixed(0)}%` : 'No data'} 
+            <span className="text-xs ml-1">({count})</span>
+          </span>
+        </div>
+        <div className="h-8 bg-gray-100 rounded-lg overflow-hidden">
+          {accuracy !== null && (
+            <div 
+              className={`h-full flex items-center justify-center text-white text-sm font-medium transition-all ${
+                accuracy >= 70 ? 'bg-green-500' : 
+                accuracy >= 50 ? 'bg-yellow-500' : 
+                'bg-red-500'
               }`}
+              style={{ width: `${Math.max(accuracy, 10)}%` }}
             >
-              {enabled ? 'Disconnect' : 'Connect'}
-            </button>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-            <div>
-              <div className="text-gray-600">Value</div>
-              <div className="font-medium">{integration.value}</div>
-            </div>
-            <div>
-              <div className="text-gray-600">Impact</div>
-              <div className="font-medium">{integration.impact}</div>
-            </div>
-          </div>
-
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800"
-          >
-            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            {expanded ? 'Hide' : 'Show'} Privacy Details
-          </button>
-
-          {expanded && (
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg space-y-3">
-              <div>
-                <div className="font-medium text-sm text-gray-700 mb-1">✅ We Collect:</div>
-                <div className="text-sm text-gray-600">{integration.dataCollected}</div>
-              </div>
-              <div>
-                <div className="font-medium text-sm text-gray-700 mb-1">❌ We Don't Collect:</div>
-                <div className="text-sm text-gray-600">{integration.dataNotCollected}</div>
-              </div>
-              <div>
-                <div className="font-medium text-sm text-gray-700 mb-1">Available Sources:</div>
-                <div className="text-sm text-gray-600">{integration.sources.join(', ')}</div>
-              </div>
+              {accuracy >= 30 && `${accuracy.toFixed(0)}%`}
             </div>
           )}
         </div>
-      );
-    };
-
+      </div>
+    );
+    
     return (
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold mb-2">Integrations & Privacy</h2>
-            <p className="text-gray-600">Connect data sources to improve decision quality predictions</p>
-          </div>
-          <button
-            onClick={() => setCurrentView('dashboard')}
-            className="text-blue-600 hover:text-blue-800"
-          >
-            ← Dashboard
-          </button>
+          <button onClick={() => setCurrentView('dashboard')} className="text-blue-600 hover:text-blue-800 font-medium">← Back to Dashboard</button>
+          <h2 className="text-3xl font-bold text-gray-800">Analytics & Charts</h2>
+          <div className="w-32"></div>
         </div>
 
-        {/* Privacy Overview */}
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200 p-6">
-          <div className="flex items-start gap-4">
-            <Shield className="w-8 h-8 text-blue-600 flex-shrink-0" />
-            <div className="flex-1">
-              <h3 className="font-bold text-lg text-gray-800 mb-2">Privacy-First Design</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div>
-                  <div className="font-medium text-blue-900">🔒 Local Storage</div>
-                  <div className="text-gray-700">All data stored on your device by default</div>
-                </div>
-                <div>
-                  <div className="font-medium text-blue-900">🔐 You Control</div>
-                  <div className="text-gray-700">Enable/disable each integration individually</div>
-                </div>
-                <div>
-                  <div className="font-medium text-blue-900">📤 Full Export</div>
-                  <div className="text-gray-700">Download or delete all data anytime</div>
+        {profile && (
+          <div className="bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-300 rounded-xl p-6">
+            <div className="flex items-start gap-4">
+              <Users className="w-12 h-12 text-purple-600 flex-shrink-0" />
+              <div className="flex-1">
+                <h3 className="text-2xl font-bold text-purple-900 mb-2">{profile.title}</h3>
+                <p className="text-gray-700 mb-4">{profile.description}</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                  <div className="bg-white rounded-lg p-3 border border-purple-200"><div className="text-xs text-gray-600">Thinking</div><div className="font-bold text-purple-900">{profile.dimensions.thinkingStyle}</div></div>
+                  <div className="bg-white rounded-lg p-3 border border-purple-200"><div className="text-xs text-gray-600">Speed</div><div className="font-bold text-purple-900">{profile.dimensions.decisionSpeed}</div></div>
+                  <div className="bg-white rounded-lg p-3 border border-purple-200"><div className="text-xs text-gray-600">Risk</div><div className="font-bold text-purple-900">{profile.dimensions.riskTolerance}</div></div>
+                  <div className="bg-white rounded-lg p-3 border border-purple-200"><div className="text-xs text-gray-600">Info Need</div><div className="font-bold text-purple-900">{profile.dimensions.informationNeed}</div></div>
                 </div>
               </div>
-              <button
-                onClick={() => setShowPrivacySettings(!showPrivacySettings)}
-                className="mt-4 text-sm text-blue-600 hover:text-blue-800 font-medium"
-              >
-                {showPrivacySettings ? 'Hide' : 'Show'} Privacy Settings
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Privacy Settings Panel */}
-        {showPrivacySettings && (
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
-            <h3 className="font-bold text-lg mb-4">Privacy Preferences</h3>
-            <div className="space-y-4">
-              {[
-                {
-                  key: 'dataStorageLocal',
-                  label: 'Store data locally on device',
-                  description: 'Data never leaves your device unless you enable cloud sync'
-                },
-                {
-                  key: 'cloudSyncEnabled',
-                  label: 'Enable cloud sync (optional)',
-                  description: 'Sync across devices using encrypted cloud storage'
-                },
-                {
-                  key: 'analyticsEnabled',
-                  label: 'Anonymous usage analytics',
-                  description: 'Help us improve by sharing anonymized feature usage'
-                },
-                {
-                  key: 'researchParticipation',
-                  label: 'Participate in research',
-                  description: 'Contribute anonymized data to behavioral science research'
-                }
-              ].map(setting => (
-                <div key={setting.key} className="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-800">{setting.label}</div>
-                    <div className="text-sm text-gray-600 mt-1">{setting.description}</div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      const newPrivacy = {...userData.privacy};
-                      newPrivacy[setting.key] = !newPrivacy[setting.key];
-                      setUserData({...userData, privacy: newPrivacy});
-                    }}
-                    className={`ml-4 px-4 py-2 rounded-lg font-medium ${
-                      userData.privacy[setting.key]
-                        ? 'bg-green-600 text-white'
-                        : 'bg-gray-300 text-gray-700'
-                    }`}
-                  >
-                    {userData.privacy[setting.key] ? 'Enabled' : 'Disabled'}
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-6 pt-6 border-t flex gap-4">
-              <button className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 flex items-center justify-center gap-2">
-                <Download className="w-5 h-5" />
-                Export All Data
-              </button>
-              <button className="flex-1 bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700">
-                Delete All Data
-              </button>
             </div>
           </div>
         )}
 
-        {/* Integrations Grid */}
-        <div className="space-y-4">
-          <h3 className="text-xl font-bold">Available Integrations</h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {integrationOptions.map(integration => (
-              <IntegrationCard key={integration.id} integration={integration} />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-xl border-2 border-gray-200 p-6 md:col-span-2">
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><Target className="w-6 h-6 text-purple-600" />Calibration Curve</h3>
+            {calibration.map(({ range, predicted, actual, count }) => (
+              <div key={range}>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium">{range} confidence</span>
+                  <span className="text-xs text-gray-600">{actual !== null ? `${actual.toFixed(0)}% actual` : 'No data'} ({count})</span>
+                </div>
+                {actual !== null ? (
+                  <div className="relative h-6 bg-gray-100 rounded-lg overflow-hidden">
+                    <div className="absolute h-full bg-blue-200 border-r-2 border-blue-400" style={{ width: `${predicted}%` }} title={`Predicted: ${predicted.toFixed(0)}%`}/>
+                    <div className="absolute h-full bg-green-500 opacity-75" style={{ width: `${actual}%` }} title={`Actual: ${actual.toFixed(0)}%`}/>
+                  </div>
+                ) : (<div className="h-6 bg-gray-100 rounded-lg" />)}
+              </div>
             ))}
           </div>
-        </div>
 
-        {/* Value Explanation */}
-        <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
-          <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-            <HelpCircle className="w-6 h-6 text-blue-600" />
-            Why Connect These?
-          </h3>
-          <div className="space-y-4 text-sm text-gray-700">
-            <p>
-              <strong>Research-backed context:</strong> Each integration provides data that's scientifically proven to affect
-              decision quality. For example, sleep deprivation reduces prefrontal cortex function, impairing risk assessment.
-            </p>
-            <p>
-              <strong>Personalized patterns:</strong> Generic advice says "get 8 hours sleep." Your data might show you're
-              optimal at 7 hours, or that morning workouts boost your accuracy by 25%.
-            </p>
-            <p>
-              <strong>Proactive warnings:</strong> Instead of discovering patterns after the fact, we can warn you in real-time:
-              "You've had 3 poor sleep nights and 7 meetings today—consider deferring major decisions."
-            </p>
-            <p>
-              <strong>Your choice:</strong> Every integration is optional. The core system works with just manual decision logging.
-              Integrations enhance accuracy but aren't required.
-            </p>
+          <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
+             <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><AlertTriangle className="w-6 h-6 text-orange-600" />Behavioral Metrics</h3>
+             <div className="space-y-4">
+                <div className={`p-3 rounded-lg border ${bias && bias.severity === 'high' ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
+                    <div className="text-sm font-medium text-gray-900 mb-1">Self-Serving Bias</div>
+                    <p className="text-xs text-gray-800">{bias ? bias.message : "Not enough data/No significant bias detected."}</p>
+                </div>
+                <div className={`p-3 rounded-lg border ${consistency.isLow ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
+                    <div className="text-sm font-medium text-gray-900 mb-1">Consistency Score</div>
+                    <p className="text-xs text-gray-800">Your recent consistency score is **{consistency.score}%**. (Measures deviation from your average process.)</p>
+                </div>
+             </div>
+          </div>
+          
+          <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><BarChart3 className="w-6 h-6 text-blue-600" />Accuracy by Domain</h3>
+            <div className="space-y-4">{domainAccuracy.map(({ domain, accuracy, count }) => (<AccuracyBar key={domain} label={domain} accuracy={accuracy} count={count} />))}</div>
+          </div>
+          
+          <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><Flag className="w-6 h-6 text-red-600" />Accuracy by Stakes</h3>
+            <div className="space-y-4">{stakesAccuracy.map(({ stake, accuracy, count }) => (<AccuracyBar key={stake} label={stake} accuracy={accuracy} count={count} />))}</div>
+          </div>
+          
+          <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><Activity className="w-6 h-6 text-orange-600" />Accuracy by Emotion</h3>
+            <div className="space-y-4">{emotionAccuracy.map(({ emotion, accuracy, count }) => (<AccuracyBar key={emotion} label={emotion} accuracy={accuracy} count={count} />))}</div>
           </div>
         </div>
       </div>
     );
   };
 
-  // ==================== DASHBOARD ====================
+
+  // ==================== DASHBOARD (Condensed for Final Delivery) ====================
   const Dashboard = () => {
     const completedDecisions = userData.decisions.filter(d => d.outcome !== null);
-    const accurateDecisions = completedDecisions.filter(d =>
-      (d.prediction === 'positive' && d.outcome === 'positive') ||
-      (d.prediction === 'negative' && d.outcome === 'negative')
-    );
-    const accuracy = completedDecisions.length > 0
-      ? (accurateDecisions.length / completedDecisions.length) * 100
-      : 0;
+    const accuracy = AnalyticsEngine.calculateAccuracy(userData.decisions);
+    const profile = QuadrantSystem.assessFromDecisions(userData.decisions);
+    const { accuracy: highStakesAcc, count: highStakesCount } = AnalyticsEngine.calculateFilteredAccuracy(userData.decisions, d => d.stakes === 'high');
 
-    const todayCheckIns = userData.checkIns.filter(c =>
-      new Date(c.timestamp).toDateString() === new Date().toDateString()
-    ).length;
-
-    // Context alerts
-    const contextAlerts = [];
-    const lastSleep = userData.sleepData[userData.sleepData.length - 1];
-    if (lastSleep && (lastSleep.duration / 60) < userData.profile.typicalSleepHours - 1) {
-      contextAlerts.push({
-        type: 'warning',
-        text: `Sleep below baseline (${(lastSleep.duration / 60).toFixed(1)}h vs ${userData.profile.typicalSleepHours}h) - decision quality may be reduced`
-      });
-    }
-
-    const todayCalendar = userData.calendarData.find(c =>
-      new Date(c.date).toDateString() === new Date().toDateString()
-    );
-    if (todayCalendar && todayCalendar.meetingCount >= 5) {
-      contextAlerts.push({
-        type: 'warning',
-        text: `High meeting load today (${todayCalendar.meetingCount} meetings) - watch for decision fatigue`
-      });
-    }
-
-    const activeIntegrations = Object.values(userData.integrations).filter(i => i.enabled).length;
+    const needsOutcome = userData.decisions.filter(d => d.outcome === null && (new Date() - new Date(d.date)) / (1000 * 60 * 60 * 24) >= 7);
+    const consistency = AnalyticsEngine.getConsistencyScore(userData.decisions);
+    const bias = AnalyticsEngine.checkForSelfServingBias(userData.decisions);
 
     return (
       <div className="space-y-6">
-        {/* Status Banner */}
         <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-2xl font-bold">Your Calibration Journey</h2>
-              <p className="text-blue-100">Day {daysSinceJoining} • {activeIntegrations} integrations active</p>
-            </div>
-            <Calendar className="w-12 h-12 opacity-50" />
+          <div className="flex justify-between items-start">
+            <h2 className="text-2xl font-bold mb-4">
+              Welcome back, {userData.profile.displayName || 'User'}!
+            </h2>
+            <button 
+              onClick={() => setCurrentView('onboarding')}
+              className="flex items-center gap-1 text-xs bg-white/20 px-3 py-1 rounded-full hover:bg-white/40"
+            >
+              <Edit className="w-3 h-3" />
+              Edit Profile
+            </button>
           </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white/20 rounded-lg p-3">
-              <div className="text-sm text-blue-100">Decisions Logged</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-white/20 rounded-lg p-4">
+              <div className="text-sm text-blue-100">Total Decisions</div>
               <div className="text-3xl font-bold">{userData.decisions.length}</div>
             </div>
-            <div className="bg-white/20 rounded-lg p-3">
-              <div className="text-sm text-blue-100">Outcomes Tracked</div>
+            <div className="bg-white/20 rounded-lg p-4">
+              <div className="text-sm text-blue-100">Completed</div>
               <div className="text-3xl font-bold">{completedDecisions.length}</div>
             </div>
-            <div className="bg-white/20 rounded-lg p-3">
-              <div className="text-sm text-blue-100">Today's Check-ins</div>
-              <div className="text-3xl font-bold">{todayCheckIns}/3</div>
+            <div className="bg-white/20 rounded-lg p-4">
+              <div className="text-sm text-blue-100">Overall Accuracy</div>
+              <div className="text-3xl font-bold">
+                {accuracy !== null ? `${accuracy.toFixed(0)}%` : 'N/A'}
+              </div>
+            </div>
+            <div className="bg-white/20 rounded-lg p-4 border-2 border-red-300">
+              <div className="text-sm text-red-100">High-Stakes Acc.</div>
+              <div className="text-3xl font-bold">
+                {highStakesAcc !== null ? `${highStakesAcc.toFixed(0)}%` : 'N/A'}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Context Alerts */}
-        {contextAlerts.length > 0 && (
-          <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-6 h-6 text-yellow-600 flex-shrink-0" />
-              <div className="flex-1">
-                <h3 className="font-bold text-yellow-900 mb-2">⚠️ Today's Context</h3>
-                {contextAlerts.map((alert, i) => (
-                  <p key={i} className="text-sm text-yellow-800 mb-1">{alert.text}</p>
-                ))}
+        {profile && (
+          <div className="bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-300 rounded-xl p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <Users className="w-8 h-8 text-purple-600" />
+              <div>
+                <h3 className="text-xl font-bold text-purple-900">{profile.title}</h3>
+                <p className="text-sm text-gray-700">{profile.description}</p>
               </div>
+            </div>
+            <div className="bg-white/60 rounded-lg p-3 text-sm text-gray-700">
+              <strong>Team Value:</strong> {profile.teamValue}
+            </div>
+          </div>
+        )}
+        
+        {(consistency.isLow || (bias && bias.severity === 'high')) && (
+          <div className="bg-red-100 border-2 border-red-400 text-red-900 rounded-xl p-4 flex items-start gap-4">
+            <AlertTriangle className="w-6 h-6 flex-shrink-0 mt-1" />
+            <div>
+              <div className="font-bold">Urgent Behavioral Alert!</div>
+              <p className="text-sm mt-1">
+                {consistency.isLow && `Your **Consistency Score is only ${consistency.score}%**, indicating erratic decision-making behavior. `}
+                {(consistency.isLow && bias && bias.severity === 'high') && `| `}
+                {bias && bias.severity === 'high' && `You have a **Strong Self-Serving Bias**. `}
+              </p>
+              <button 
+                onClick={() => setShowAssistant(true)}
+                className="mt-2 text-sm text-blue-600 font-semibold hover:text-blue-800 underline"
+              >
+                Ask the Agent for a Fix →
+              </button>
             </div>
           </div>
         )}
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <button
+        {needsOutcome.length > 0 && (
+          <div className="bg-yellow-100 border-2 border-yellow-400 text-yellow-900 rounded-xl p-4">
+            <div className="font-bold flex items-center gap-2">
+              <Calendar className="w-5 h-5" />
+              {needsOutcome.length} Decision{needsOutcome.length !== 1 && 's'} Awaiting Outcome
+            </div>
+            <p className="text-sm mt-1">Don't miss the learning opportunity! Log outcomes for:</p>
+            <ul className="mt-2 space-y-1">
+              {needsOutcome.slice(0, 3).map(d => (
+                <li key={d.id} className="flex justify-between items-center text-sm">
+                  <span className="truncate flex-1">{d.title}</span>
+                  <button 
+                    onClick={() => setCurrentView(`log-outcome-${d.id}`)}
+                    className="text-xs bg-yellow-600 text-white px-3 py-1 rounded-full hover:bg-yellow-700 ml-3 flex-shrink-0"
+                  >
+                    Log Outcome
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button 
             onClick={() => setCurrentView('log-decision')}
             className="bg-white border-2 border-blue-200 rounded-xl p-6 hover:border-blue-400 hover:shadow-lg transition-all group"
           >
@@ -1072,482 +1018,311 @@ const Calibrate = () => {
               </div>
               <h3 className="text-xl font-bold text-gray-800">Log Decision</h3>
             </div>
-            <p className="text-gray-600 text-sm">Make a prediction about something important</p>
+            <p className="text-gray-600 text-sm">Make a new prediction</p>
           </button>
 
-          <button
-            onClick={() => setCurrentView('check-in')}
+          <button 
+            onClick={() => setCurrentView('charts')}
             className="bg-white border-2 border-purple-200 rounded-xl p-6 hover:border-purple-400 hover:shadow-lg transition-all group"
           >
             <div className="flex items-center gap-4 mb-3">
               <div className="p-3 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
-                <Zap className="w-6 h-6 text-purple-600" />
+                <BarChart3 className="w-6 h-6 text-purple-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-800">Quick Check-in</h3>
+              <h3 className="text-xl font-bold text-gray-800">Charts</h3>
             </div>
-            <p className="text-gray-600 text-sm">How are you feeling right now? (5 sec)</p>
+            <p className="text-gray-600 text-sm">View analytics & profile</p>
           </button>
 
-          <button
-            onClick={() => setCurrentView('integrations')}
-            className="bg-white border-2 border-green-200 rounded-xl p-6 hover:border-green-400 hover:shadow-lg transition-all group"
+          <button 
+            onClick={() => setShowAssistant(true)}
+            className="bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl p-6 hover:shadow-lg transition-all"
           >
             <div className="flex items-center gap-4 mb-3">
-              <div className="p-3 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
-                <Database className="w-6 h-6 text-green-600" />
+              <div className="p-3 bg-white/30 rounded-lg">
+                <Zap className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-gray-800">Integrations</h3>
+              <h3 className="text-xl font-bold text-white">Ask the Agent</h3>
             </div>
-            <p className="text-gray-600 text-sm">{activeIntegrations} connected • Improve predictions</p>
+            <p className="text-purple-100 text-sm">Get personalized suggestions</p>
           </button>
         </div>
-
-        {/* Current Stats */}
-        {unlocks.basicStats ? (
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
-            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <Target className="w-6 h-6 text-blue-600" />
-              Calibration Stats
-            </h3>
-
-            {completedDecisions.length >= 5 ? (
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-gray-600">Overall Accuracy</span>
-                    <span className="text-2xl font-bold text-blue-600">{accuracy.toFixed(0)}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div
-                      className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all"
-                      style={{ width: `${accuracy}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                  <div>
-                    <div className="text-sm text-gray-600">Correct Predictions</div>
-                    <div className="text-2xl font-bold text-green-600">{accurateDecisions.length}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-600">Need Improvement</div>
-                    <div className="text-2xl font-bold text-orange-600">
-                      {completedDecisions.length - accurateDecisions.length}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setCurrentView('calibration')}
-                    className="flex-1 bg-blue-50 text-blue-700 py-3 rounded-lg font-semibold hover:bg-blue-100 transition-colors"
-                  >
-                    View Calibration →
-                  </button>
-                  <button
-                    onClick={() => setCurrentView('behavioral')}
-                    className="flex-1 bg-purple-50 text-purple-700 py-3 rounded-lg font-semibold hover:bg-purple-100 transition-colors"
-                  >
-                    View Patterns →
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                <Target className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p>Track 5 outcomes to unlock calibration stats</p>
-                <p className="text-sm mt-2">You're {5 - completedDecisions.length} away!</p>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 p-8 text-center">
-            <Clock className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-            <h3 className="font-bold text-gray-700 mb-2">Building Your Baseline</h3>
-            <p className="text-gray-600 mb-4">
-              Use Calibrate for 7 days to unlock calibration stats and pattern detection
-            </p>
-            <div className="w-full bg-gray-200 rounded-full h-3">
-              <div
-                className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full"
-                style={{ width: `${(daysSinceJoining / 7) * 100}%` }}
-              />
-            </div>
-            <div className="text-sm text-gray-500 mt-2">
-              {daysSinceJoining}/7 days complete
-            </div>
-          </div>
-        )}
-
-        {/* Pending Decisions */}
-        {userData.decisions.filter(d => d.outcome === null).length > 0 && (
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
-            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <Clock className="w-6 h-6 text-orange-600" />
-              Pending Outcomes ({userData.decisions.filter(d => d.outcome === null).length})
-            </h3>
-            <div className="space-y-3">
-              {userData.decisions.filter(d => d.outcome === null).slice(-3).map(decision => (
-                <div key={decision.id} className="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-800">{decision.title}</div>
-                    <div className="text-sm text-gray-600 mt-1">
-                      Predicted: {decision.prediction} • Confidence: {decision.confidence}%
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {new Date(decision.date).toLocaleDateString()} • Check back: {decision.timeline.replace('_', ' ')}
-                    </div>
-                  </div>
-                  <button
-                    className="ml-4 px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm font-medium hover:bg-blue-200"
-                  >
-                    Update
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Integration Prompts */}
-        {activeIntegrations < 2 && unlocks.integrations && (
-          <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl border border-green-200 p-6">
-            <div className="flex items-start gap-4">
-              <Database className="w-8 h-8 text-green-600 flex-shrink-0" />
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-800 mb-2">📈 Improve Your Predictions</h3>
-                <p className="text-gray-700 text-sm mb-3">
-                  Connect sleep tracking or calendar to get context-aware insights. Research shows this improves
-                  prediction accuracy by 20-30%.
-                </p>
-                <button
-                  onClick={() => setCurrentView('integrations')}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700"
-                >
-                  View Integrations
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     );
   };
 
-  // Simplified views to ensure the main component compiles
-  const QuickCheckIn = () => {
-    const [mood, setMood] = useState(null);
-    const [compared, setCompared] = useState(null);
+  // ==================== LOG DECISION (Condensed for Final Delivery) ====================
+  const LogDecision = () => {
+    const [newDecision, setNewDecision] = useState({
+      title: '', 
+      prediction: 'positive', 
+      confidence: 50, 
+      evidence: '', 
+      domain: 'career',
+      stakes: 'medium',
+      emotionalState: 'neutral',
+      timeToDecide: 'days',
+      alternativesConsidered: '',
+      decisionBasis: 'Data/Analysis' 
+    });
 
     const handleSubmit = () => {
-      if (!mood) return;
+      if (!newDecision.title) return;
+      const decision = { ...newDecision, id: Date.now(), date: new Date().toISOString(), outcome: null };
+      setUserData({ ...userData, decisions: [...userData.decisions, decision] });
+      setCurrentView('dashboard');
+    };
+    
+    // Helper for button groups
+    const ButtonGroup = ({ label, options, selected, field }) => (
+      <div>
+        <label className="block font-semibold mb-2">{label} *</label>
+        <div className="grid grid-cols-3 gap-2">
+          {options.map(opt => (
+            <button 
+              key={opt.value} 
+              onClick={() => setNewDecision({...newDecision, [field]: opt.value})}
+              className={`py-3 px-2 rounded-lg font-medium text-sm transition-colors ${
+                selected === opt.value 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+    
+    const BinarySelect = ({ label, options, selected, field }) => (
+      <div>
+        <label className="block font-semibold mb-2">{label} *</label>
+        <div className="flex bg-gray-100 rounded-lg p-1">
+          {options.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => setNewDecision({...newDecision, [field]: opt.value})}
+              className={`w-1/2 py-2 rounded-md font-medium text-sm transition-all ${
+                selected === opt.value 
+                  ? 'bg-white text-blue-700 shadow' 
+                  : 'text-gray-700 hover:bg-white/50'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
 
-      const checkIn = {
-        id: Date.now(),
-        timestamp: new Date().toISOString(),
-        mood,
-        comparedToYesterday: compared
-      };
+    return (
+      <div className="max-w-2xl mx-auto">
+        <button onClick={() => setCurrentView('dashboard')} className="text-blue-600 hover:text-blue-800 mb-4 font-medium">← Back to Dashboard</button>
+        <div className="bg-white rounded-xl border-2 border-gray-200 p-8 shadow-lg">
+          <h2 className="text-3xl font-bold mb-6">Log a Decision</h2>
+          <div className="space-y-6">
+            <div>
+              <label className="block font-semibold mb-2">What are you deciding? *</label>
+              <input type="text" value={newDecision.title} onChange={(e) => setNewDecision({...newDecision, title: e.target.value})} placeholder="e.g., Accepting job offer at Company X" className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" />
+            </div>
+            
+            <ButtonGroup label="Stakes" field="stakes" selected={newDecision.stakes} options={[{ value: 'low', label: 'Low' }, { value: 'medium', label: 'Medium' }, { value: 'high', label: 'High' }]}/>
+            <ButtonGroup label="Emotional State" field="emotionalState" selected={newDecision.emotionalState} options={[{ value: 'calm', label: 'Calm' }, { value: 'neutral', label: 'Neutral' }, { value: 'anxious', label: 'Anxious/Stressed' }]}/>
+            <ButtonGroup label="Time to Decide" field="timeToDecide" selected={newDecision.timeToDecide} options={[{ value: 'instant', label: 'Instant' }, { value: 'days', label: 'Days' }, { value: 'weeks', label: 'Weeks+' }]}/>
+            
+            <BinarySelect label="Primary Decision Basis" field="decisionBasis" selected={newDecision.decisionBasis} options={[{ value: 'Data/Analysis', label: 'Data / Analysis' }, { value: 'Gut/Intuition', label: 'Gut / Intuition' }]}/>
+            
+            <div>
+              <label className="block font-semibold mb-2">Domain *</label>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {['career', 'relationships', 'health', 'financial'].map(domain => (<button key={domain} onClick={() => setNewDecision({...newDecision, domain})} className={`py-3 px-4 rounded-lg font-medium capitalize transition-colors ${newDecision.domain === domain ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>{domain}</button>))}
+              </div>
+            </div>
 
-      // Award pattern recognition XP
-      const updatedSkills = {...userData.skills};
-      const checkInCount = userData.checkIns.length + 1;
-      const consistentWeeks = Math.floor(checkInCount / 21);
-      updatedSkills.patternRecognition.xp = consistentWeeks * 100;
-      updatedSkills.patternRecognition.level = Math.floor(updatedSkills.patternRecognition.xp / 250) + 1;
+            <ButtonGroup label="Your Prediction" field="prediction" selected={newDecision.prediction} options={[{ value: 'positive', label: '✅ Positive' }, { value: 'neutral', label: '😐 Neutral' }, { value: 'negative', label: '❌ Negative' }]}/>
 
-      setUserData({
-        ...userData,
-        checkIns: [...userData.checkIns, checkIn],
-        skills: updatedSkills
-      });
+            <div>
+              <label className="block font-semibold mb-2">Confidence: {newDecision.confidence}% *</label>
+              <input type="range" min="10" max="90" step="5" value={newDecision.confidence} onChange={(e) => setNewDecision({...newDecision, confidence: parseInt(e.target.value)})} className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
+            </div>
+            
+            <div>
+              <label className="block font-semibold mb-2">Alternatives Considered (Optional)</label>
+              <textarea value={newDecision.alternativesConsidered} onChange={(e) => setNewDecision({...newDecision, alternativesConsidered: e.target.value})} placeholder="What other options did you rule out? e.g., 'Stay at current job', 'Negotiate for higher pay'..." className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none h-24 resize-none" />
+            </div>
+            
+            <div>
+              <label className="block font-semibold mb-2">Evidence / Reasoning (Optional)</label>
+              <textarea value={newDecision.evidence} onChange={(e) => setNewDecision({...newDecision, evidence: e.target.value})} placeholder="Key facts, data, or 'gut feel' behind your prediction..." className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none h-24 resize-none" />
+            </div>
 
+            <button onClick={handleSubmit} disabled={!newDecision.title} className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity">Log Decision</button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ==================== LOG OUTCOME (Condensed for Final Delivery) ====================
+  const LogOutcome = ({ decisionId }) => {
+    const decision = userData.decisions.find(d => d.id === parseInt(decisionId));
+    
+    const [outcome, setOutcome] = useState(null);
+    const [notes, setNotes] = useState('');
+    const [attribution, setAttribution] = useState(null); 
+    const [surpriseLevel, setSurpriseLevel] = useState(50);
+    const [keyLearning, setKeyLearning] = useState('');
+
+    if (!decision) { setCurrentView('dashboard'); return null; }
+
+    const handleSubmit = () => {
+      if (outcome === null || attribution === null) return;
+
+      const updatedDecisions = userData.decisions.map(d => 
+        d.id === decision.id 
+          ? { ...d, 
+              outcome, 
+              outcomeNotes: notes, 
+              outcomeDate: new Date().toISOString(),
+              attribution, 
+              surpriseLevel,
+              keyLearning
+            }
+          : d
+      );
+
+      setUserData({ ...userData, decisions: updatedDecisions });
       setCurrentView('dashboard');
     };
 
     return (
       <div className="max-w-2xl mx-auto">
-        <button
-          onClick={() => setCurrentView('dashboard')}
-          className="text-blue-600 hover:text-blue-800 mb-4 flex items-center gap-1"
-        >
-          ← Back
-        </button>
+        <button onClick={() => setCurrentView('dashboard')} className="text-blue-600 hover:text-blue-800 mb-4 font-medium">← Back to Dashboard</button>
+        <div className="bg-white rounded-xl border-2 border-gray-200 p-8 shadow-lg">
+          <h2 className="text-3xl font-bold mb-6">Log Outcome</h2>
+          <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6">
+            <div className="font-bold text-lg mb-2">{decision.title}</div>
+            <div className="text-sm text-gray-700">
+              <strong>Your prediction:</strong> {decision.prediction} ({decision.confidence}% confident)
+            </div>
+          </div>
 
-        <div className="bg-white rounded-xl border-2 border-gray-200 p-8">
-          <h2 className="text-3xl font-bold mb-2">Quick Check-in</h2>
-          <p className="text-gray-600 mb-8">Takes 5 seconds</p>
-
-          <div className="space-y-8">
+          <div className="space-y-6">
             <div>
-              <label className="block font-semibold text-gray-800 mb-4 text-lg">
-                Right now, how do you feel?
-              </label>
-              <div className="grid grid-cols-5 gap-3">
-                {[
-                  { emoji: '😢', label: 'Bad', value: 1 },
-                  { emoji: '😕', label: 'Meh', value: 2 },
-                  { emoji: '😐', label: 'Okay', value: 3 },
-                  { emoji: '🙂', label: 'Good', value: 4 },
-                  { emoji: '😊', label: 'Great', value: 5 }
-                ].map(option => (
-                  <button
-                    key={option.value}
-                    onClick={() => setMood(option.value)}
-                    className={`py-6 rounded-xl transition-all ${
-                      mood === option.value
-                        ? 'bg-blue-600 text-white transform scale-105 shadow-lg'
-                        : 'bg-gray-100 hover:bg-gray-200'
-                    }`}
-                  >
-                    <div className="text-4xl mb-2">{option.emoji}</div>
-                    <div className="text-sm font-medium">{option.label}</div>
+              <label className="block font-semibold mb-3">What actually happened? *</label>
+              <div className="grid grid-cols-3 gap-3">
+                {[{ value: 'positive', label: '✅ Positive' }, { value: 'neutral', label: '😐 Neutral' }, { value: 'negative', label: '❌ Negative' }].map(opt => (
+                  <button key={opt.value} onClick={() => setOutcome(opt.value)} className={`py-4 rounded-lg font-medium transition-all ${outcome === opt.value ? 'bg-green-600 text-white shadow-md' : 'bg-gray-100 hover:bg-gray-200'}`}>
+                    {opt.label}
                   </button>
                 ))}
               </div>
             </div>
-
+            
             <div>
-              <label className="block font-semibold text-gray-800 mb-4 text-lg">
-                Compared to yesterday:
-              </label>
-              <div className="grid grid-cols-5 gap-3">
-                {[
-                  { label: 'Much worse', value: -2 },
-                  { label: 'Worse', value: -1 },
-                  { label: 'Same', value: 0 },
-                  { label: 'Better', value: 1 },
-                  { label: 'Much better', value: 2 }
-                ].map(option => (
-                  <button
-                    key={option.value}
-                    onClick={() => setCompared(option.value)}
-                    className={`py-4 rounded-xl text-sm font-medium transition-all ${
-                      compared === option.value
-                        ? 'bg-purple-600 text-white transform scale-105 shadow-lg'
+              <label className="block font-semibold mb-3">Attribution: Why did this happen? *</label>
+              <div className="grid grid-cols-2 gap-3">
+                {[{ value: 'my_skill', label: 'Internal (My Skill/Process)' }, { value: 'external', label: 'External (Luck/Market)' }].map(opt => (
+                  <button 
+                    key={opt.value} 
+                    onClick={() => setAttribution(opt.value)}
+                    className={`py-3 px-2 rounded-lg text-sm font-medium transition-all ${
+                      attribution === opt.value 
+                        ? 'bg-purple-600 text-white shadow-md' 
                         : 'bg-gray-100 hover:bg-gray-200'
                     }`}
                   >
-                    {option.label}
+                    {opt.label}
                   </button>
                 ))}
               </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Be honest about the *primary* cause. (Helps the agent track your **Self-Serving Bias**).
+              </p>
+            </div>
+            
+            <div>
+              <label className="block font-semibold mb-2">Surprise Level: {surpriseLevel}%</label>
+              <input type="range" min="0" max="100" step="5" value={surpriseLevel} onChange={(e) => setSurpriseLevel(parseInt(e.target.value))} className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
+            </div>
+            
+            <div>
+              <label className="block font-semibold mb-2">Key Learning (Optional)</label>
+              <textarea value={keyLearning} onChange={(e) => setKeyLearning(e.target.value)} placeholder="What's the one lesson you'll take from this?" className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none h-20 resize-none" />
             </div>
 
-            <button
-              onClick={handleSubmit}
-              disabled={!mood}
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-            >
-              Save Check-in
-            </button>
+            <div>
+              <label className="block font-semibold mb-2">Outcome Notes (Optional)</label>
+              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="What happened? Why?" className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none h-24 resize-none" />
+            </div>
+
+            <button onClick={handleSubmit} disabled={outcome === null || attribution === null} className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity">Save Outcome</button>
           </div>
         </div>
       </div>
     );
   };
 
-  const CalibrationView = () => {
+
+  // ==================== MAIN RENDER ====================
+  if (loading) {
     return (
-      <div className="max-w-4xl mx-auto">
-        <button
-          onClick={() => setCurrentView('dashboard')}
-          className="text-blue-600 hover:text-blue-800 mb-4"
-        >
-          ← Back
-        </button>
-        <div className="bg-white rounded-xl border-2 border-gray-200 p-8">
-          <h2 className="text-3xl font-bold mb-2">Calibration Curve</h2>
-          <p className="text-gray-600 mb-6">
-            Perfect calibration means your X% confident predictions are correct X% of the time
-          </p>
-          <div className="text-center py-12 text-gray-500">
-            <Target className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-            <p>Track 5+ outcomes to see your calibration curve</p>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Brain className="w-16 h-16 mx-auto mb-4 text-blue-600 animate-pulse" />
+          <p className="text-gray-600">Loading Calibrate...</p>
         </div>
       </div>
     );
-  };
+  }
 
-  const BehavioralChartView = () => {
-    return (
-      <div className="max-w-6xl mx-auto">
-        <button
-          onClick={() => setCurrentView('dashboard')}
-          className="text-blue-600 hover:text-blue-800 mb-4"
-        >
-          ← Back
-        </button>
-        <div className="bg-white rounded-xl border-2 border-gray-200 p-8">
-          <h2 className="text-3xl font-bold mb-2">Behavioral Patterns</h2>
-          <p className="text-gray-600 mb-6">Discover patterns in your decision-making</p>
-          <div className="text-center py-12 text-gray-500">
-            <Activity className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-            <p>Complete 10+ check-ins to unlock pattern detection</p>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const SkillsChartView = () => {
-    // Helper function to calculate progress towards next level
-    const calculateProgress = (xp, level) => {
-        const baseXP = (level - 1) * 200; // Simplified scaling: 200 XP per level
-        const requiredXP = 200 * level; // XP needed for the current level (e.g., L2 needs 400 total)
-        const currentLevelXP = xp - baseXP;
-        const nextLevelThreshold = 200; // XP needed *within* the current level
-
-        if (level === 1) {
-            return {
-                current: xp,
-                required: 150, // L1 threshold
-                percent: Math.min(100, (xp / 150) * 100)
-            }
-        }
-
-        return {
-            current: currentLevelXP,
-            required: nextLevelThreshold,
-            percent: Math.min(100, (currentLevelXP / nextLevelThreshold) * 100)
-        };
-    };
-
-    return (
-      <div className="max-w-7xl mx-auto">
-        <button
-          onClick={() => setCurrentView('dashboard')}
-          className="text-blue-600 hover:text-blue-800 mb-4"
-        >
-          ← Back
-        </button>
-        <div className="bg-white rounded-xl border-2 border-gray-200 p-8">
-          <h2 className="text-3xl font-bold mb-2">Decision-Making Skills</h2>
-          <p className="text-gray-600 mb-6">Track your growth across competencies</p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Object.entries(userData.skills)
-                .filter(([key]) => key !== 'domainExpertise')
-                .map(([key, skill]) => {
-                const progress = calculateProgress(skill.xp, skill.level);
-                return (
-                    <div key={key} className="p-5 bg-gray-50 rounded-lg border border-gray-200">
-                        <div className="flex items-center justify-between mb-3">
-                            <h3 className="font-bold capitalize text-lg text-gray-800">{key.replace(/([A-Z])/g, ' $1').trim()}</h3>
-                            <div className="flex items-center gap-1">
-                                <Star className="w-5 h-5 text-yellow-500" />
-                                <span className="text-2xl font-extrabold text-blue-600">{skill.level}</span>
-                            </div>
-                        </div>
-                        <div className="text-sm text-gray-600 mb-2">
-                            XP: {skill.xp} • Next Level: {progress.current}/{progress.required}
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2.5">
-                            <div
-                                className="bg-gradient-to-r from-blue-400 to-purple-500 h-2.5 rounded-full transition-all duration-500"
-                                style={{ width: `${progress.percent}%` }}
-                            ></div>
-                        </div>
-                    </div>
-                );
-            })}
-          </div>
-
-          <div className="mt-8 pt-6 border-t border-gray-200">
-             <h3 className="text-2xl font-bold mb-4">Domain Expertise</h3>
-             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {Object.entries(userData.skills.domainExpertise).map(([domain, skill]) => {
-                    const progress = calculateProgress(skill.xp, skill.level);
-                    return (
-                        <div key={domain} className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                            <div className="font-semibold capitalize text-blue-800">{domain}</div>
-                            <div className="text-3xl font-bold text-blue-600 my-1">{skill.level}</div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                                <div
-                                    className="bg-blue-500 h-2 rounded-full"
-                                    style={{ width: `${progress.percent}%` }}
-                                ></div>
-                            </div>
-                            <div className="text-xs text-gray-600 mt-1">{progress.current}/{progress.required} XP</div>
-                        </div>
-                    );
-                })}
-             </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // ==================== MAIN LAYOUT ====================
   return (
     <div className="min-h-screen bg-gray-50">
-      {currentView === 'welcome' && <WelcomeScreen />}
+      {currentView === 'onboarding' && <OnboardingWizard />}
 
-      {currentView !== 'welcome' && (
+      {currentView !== 'onboarding' && (
         <>
-          {/* Header */}
-          <div className="bg-white border-b shadow-sm">
+          <div className="bg-white border-b shadow-sm sticky top-0 z-40">
             <div className="max-w-7xl mx-auto px-4 py-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <button onClick={() => setCurrentView('dashboard')} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                   <Brain className="w-8 h-8 text-blue-600" />
                   <div>
                     <h1 className="text-2xl font-bold text-gray-800">Calibrate</h1>
-                    <p className="text-sm text-gray-600">Decision Quality System</p>
+                    <p className="text-sm text-gray-600">Decision Intelligence System</p>
                   </div>
-                </div>
+                </button>
 
-                {/* Navigation */}
-                <div className="flex gap-2">
+                <div className="flex items-center gap-4">
                   <button
-                    onClick={() => setCurrentView('dashboard')}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                      currentView === 'dashboard'
-                        ? 'bg-blue-600 text-white'
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
+                    onClick={() => setShowAssistant(true)}
+                    className="px-4 py-2 rounded-lg font-medium transition-colors bg-purple-600 text-white hover:bg-purple-700"
                   >
-                    Dashboard
-                  </button>
-                  <button
-                    onClick={() => setCurrentView('skills')}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                      currentView === 'skills'
-                        ? 'bg-blue-600 text-white'
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    Skills
-                  </button>
-                  <button
-                    onClick={() => setCurrentView('integrations')}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                      currentView === 'integrations'
-                        ? 'bg-blue-600 text-white'
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    <Settings className="w-4 h-4 inline mr-1" />
-                    Settings
+                    <Zap className="w-5 h-5 inline mr-2" />
+                    Agent
                   </button>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Content - FIX 2: Added missing view checks */}
           <div className="max-w-7xl mx-auto px-4 py-8">
             {currentView === 'dashboard' && <Dashboard />}
             {currentView === 'log-decision' && <LogDecision />}
-            {currentView === 'check-in' && <QuickCheckIn />}
-            {currentView === 'calibration' && <CalibrationView />}
-            {currentView === 'behavioral' && <BehavioralChartView />}
-            {currentView === 'skills' && <SkillsChartView />}
-            {currentView === 'integrations' && <IntegrationsView />}
+            {currentView === 'charts' && <ChartsView />}
+            {currentView.startsWith('log-outcome-') && (
+              <LogOutcome decisionId={currentView.replace('log-outcome-', '')} />
+            )}
           </div>
+
+          {showAssistant && (
+            <DecisionAssistant 
+              userData={userData} 
+              setUserData={setUserData} 
+              onClose={() => setShowAssistant(false)} 
+            />
+          )}
         </>
       )}
     </div>
