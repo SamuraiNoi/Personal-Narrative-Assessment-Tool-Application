@@ -1,1332 +1,1023 @@
-/*
-  Calibrate- V6.1: The Self-Awareness AI Agent with Dynamic Search
-  - INTEGRATED AGENT IMPROVEMENTS:
-  - AnalyticsEngine: Upgraded to 'getContextualBlindSpot' to map user query keywords (e.g., 'investing') to specific domain weaknesses (e.g., 'financial accuracy').
-  - Agent Logic: The 'generateAgentResponse' now creates a "Personalized Filter" insight and an enriched Google Search query that specifically tells the user *how* to interpret the external information based on their blind spots and profile.
-  - UX/UI: DecisionAssistant modal updated to display the World Search Context, Personalized Filter, and Action Steps clearly.
-  - Debugging: All components and dependencies checked for consistency across V6.0 and V6.1 changes.
-*/
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Brain, Calendar, Plus, TrendingUp, Target, AlertCircle, CheckCircle, Clock, Send, X, BarChart3, Activity, Users, ChevronLeft, ChevronRight, Edit, MessageSquare, AlertTriangle, Zap, Search, Flag } from 'lucide-react';
+<!DOCTYPE html>
 
-// ==================== QUADRANT SYSTEM (Unchanged) ====================
-const QuadrantSystem = {
-  dimensions: {
-    thinkingStyle: ['Analytical', 'Intuitive'],
-    decisionSpeed: ['Deliberate', 'Rapid'],
-    riskTolerance: ['Conservative', 'Bold'],
-    informationNeed: ['Comprehensive', 'Sufficient']
-  },
-
-  types: {
-    'Analytical-Deliberate-Conservative-Comprehensive': { title: 'Strategic Architect', description: 'Methodical planner who excels at complex analysis', strengths: ['Risk assessment', 'Long-term planning', 'Detail orientation'], blindSpots: ['Analysis paralysis', 'Missed opportunities', 'Slow in crisis'], teamValue: 'Prevents costly mistakes through thorough evaluation' },
-    'Analytical-Deliberate-Bold-Comprehensive': { title: 'Calculated Innovator', description: 'Data-driven risk-taker who bets on analyzed opportunities', strengths: ['Informed risk-taking', 'Strategic disruption', 'Evidence-based boldness'], blindSpots: ['Overconfidence in models', 'Slow to pivot', 'Data blind spots'], teamValue: 'Drives innovation with analytical backing' },
-    'Analytical-Rapid-Conservative-Comprehensive': { title: 'Efficient Optimizer', description: 'Quick analyst who streamlines without recklessness', strengths: ['Rapid problem-solving', 'Pattern recognition', 'Efficient execution'], blindSpots: ['Premature optimization', 'Missing nuance', 'Burnout risk'], teamValue: 'Accelerates execution while maintaining quality' },
-    'Analytical-Rapid-Bold-Comprehensive': { title: 'Decisive Strategist', description: 'Fast, data-informed decision-maker who seizes opportunities', strengths: ['Speed + accuracy', 'Competitive advantage', 'Crisis management'], blindSpots: ['Overcommitment', 'Team overwhelm', 'Sustainability'], teamValue: 'Capitalizes on time-sensitive opportunities' },
-    'Intuitive-Deliberate-Conservative-Comprehensive': { title: 'Wise Counselor', description: 'Thoughtful advisor who reads between the lines', strengths: ['Cultural intelligence', 'People reading', 'Long-term relationships'], blindSpots: ['Overthinking signals', 'Risk aversion', 'Slow decisions'], teamValue: 'Identifies human factors others miss' },
-    'Intuitive-Deliberate-Bold-Comprehensive': { title: 'Visionary Leader', description: 'Bold thinker who trusts conviction backed by reflection', strengths: ['Vision setting', 'Inspiring others', 'Strategic courage'], blindSpots: ['Confirmation bias', 'Groupthink', 'Execution gaps'], teamValue: 'Sets direction and rallies teams toward ambitious goals' },
-    'Intuitive-Rapid-Conservative-Sufficient': { title: 'Agile Adapter', description: 'Flexible responder who reads situations quickly', strengths: ['Adaptability', 'Relationship building', 'Conflict resolution'], blindSpots: ['Indecisiveness', 'Insufficient rigor', 'Boundary issues'], teamValue: 'Maintains team cohesion through change' },
-    'Intuitive-Rapid-Bold-Sufficient': { title: 'Dynamic Catalyst', description: 'Instinct-driven mover who acts on gut feel', strengths: ['First-mover advantage', 'Energy creation', 'Breaking inertia'], blindSpots: ['Impulsiveness', 'Overlooking risks', 'Inconsistency'], teamValue: 'Initiates action when others hesitate' },
-    'Analytical-Deliberate-Conservative-Sufficient': { title: 'Prudent Operator', description: 'Careful executor who values proven methods', strengths: ['Reliability', 'Quality control', 'Risk management'], blindSpots: ['Rigidity', 'Innovation resistance', 'Opportunity cost'], teamValue: 'Ensures operational excellence and stability' },
-    'Analytical-Deliberate-Bold-Sufficient': { title: 'Strategic Disruptor', description: 'Bold analyst who challenges conventions with data', strengths: ['Creative problem-solving', 'Strategic pivots', 'Competitive edge'], blindSpots: ['Overestimating data', 'Change fatigue', 'Execution risk'], teamValue: 'Questions assumptions and finds better ways' },
-    'Analytical-Rapid-Conservative-Sufficient': { title: 'Tactical Executor', description: 'Quick implementer who delivers without drama', strengths: ['Execution speed', 'Pragmatism', 'Consistency'], blindSpots: ['Tunnel vision', 'Missing opportunities', 'Burnout'], teamValue: 'Ships reliably and keeps projects moving' },
-    'Analytical-Rapid-Bold-Sufficient': { title: 'Entrepreneurial Driver', description: 'Fast-moving builder who trusts quick analysis', strengths: ['Rapid scaling', 'Market timing', 'Momentum building'], blindSpots: ['Technical debt', 'Team strain', 'Unsustainable pace'], teamValue: 'Drives aggressive growth and market capture' },
-    'Intuitive-Deliberate-Conservative-Sufficient': { title: 'Empathetic Guardian', description: 'People-first thinker who protects team wellbeing', strengths: ['Team morale', 'Culture building', 'Conflict prevention'], blindSpots: ['Avoiding conflict', 'Slow growth', 'Performance issues'], teamValue: 'Creates psychological safety and retention' },
-    'Intuitive-Deliberate-Bold-Sufficient': { title: 'Inspirational Maverick', description: 'Conviction-driven leader who trusts their vision', strengths: ['Charisma', 'Big bets', 'Culture transformation'], blindSpots: ['Reality disconnect', 'Blind loyalty', 'Sustainability'], teamValue: 'Transforms culture and inspires extraordinary effort' },
-    'Intuitive-Rapid-Conservative-Comprehensive': { title: 'Diplomatic Navigator', description: 'Quick reader who builds consensus carefully', strengths: ['Stakeholder management', 'Political savvy', 'Harmony'], blindSpots: ['Over-accommodation', 'Decision delay', 'Conflict avoidance'], teamValue: 'Navigates complex organizational dynamics' },
-    'Intuitive-Rapid-Bold-Comprehensive': { title: 'Transformative Pioneer', description: 'Bold intuitive who acts on holistic understanding', strengths: ['Change leadership', 'Pattern synthesis', 'Strategic courage'], blindSpots: ['Overextension', 'Unpredictability', 'Team whiplash'], teamValue: 'Leads transformative initiatives others fear' }
-  },
-  
-  assessFromDecisions: (decisions) => {
-    if (decisions.length < 5) return null;
-    const completed = decisions.filter(d => d.outcome !== null);
-    if (completed.length < 3) return null;
-
-    // 1. Thinking Style
-    const analyticalDecisions = decisions.filter(d => d.decisionBasis === 'Data/Analysis').length;
-    const thinkingStyle = (analyticalDecisions / decisions.length) > 0.5 ? 'Analytical' : 'Intuitive';
-
-    // 2. Decision Speed
-    const rapidDecisions = decisions.filter(d => d.timeToDecide === 'instant' || d.timeToDecide === 'hours').length;
-    const decisionSpeed = rapidDecisions / decisions.length > 0.5 ? 'Rapid' : 'Deliberate';
-
-    // 3. Risk Tolerance
-    const highStakesDecisions = decisions.filter(d => d.stakes === 'high');
-    let boldScore = 0;
-    if (highStakesDecisions.length > 0) {
-      const avgConfidenceOnHighStakes = highStakesDecisions.reduce((sum, d) => sum + d.confidence, 0) / highStakesDecisions.length;
-      if (avgConfidenceOnHighStakes > 65) boldScore = 1.0; 
-    } else {
-      const mediumStakes = decisions.filter(d => d.stakes === 'medium');
-      if (mediumStakes.length > 0) {
-        const avgConfMedium = mediumStakes.reduce((sum, d) => sum + d.confidence, 0) / mediumStakes.length;
-        boldScore = (avgConfMedium > 70) ? 0.6 : 0.3;
-      }
-    }
-    const riskTolerance = boldScore > 0.5 ? 'Bold' : 'Conservative';
-
-    // 4. Information Need
-    let comprehensiveScore = 0;
-    decisions.forEach(d => {
-      if (d.timeToDecide === 'weeks') comprehensiveScore += 2;
-      if (d.timeToDecide === 'days') comprehensiveScore += 1;
-      // Simple heuristic for comprehensive info: long evidence and alternatives
-      if (d.alternativesConsidered && d.alternativesConsidered.length > 30) comprehensiveScore += 1;
-      if (d.evidence && d.evidence.length > 120) comprehensiveScore += 1;
-    });
-    const informationNeed = (comprehensiveScore / decisions.length) > 1.0 ? 'Comprehensive' : 'Sufficient';
-
-    const key = `${thinkingStyle}-${decisionSpeed}-${riskTolerance}-${informationNeed}`;
-    const profile = QuadrantSystem.types[key] || QuadrantSystem.types['Analytical-Deliberate-Conservative-Sufficient'];
-
-    // Add displayName and values from userData for a richer profile object
-    const currentProfile = Storage.loadSync().profile;
-
-    return {
-      ...profile,
-      dimensions: { thinkingStyle, decisionSpeed, riskTolerance, informationNeed },
-      key,
-      displayName: currentProfile.displayName,
-      values: currentProfile.values,
-      selfAssessment: currentProfile.selfAssessment
-    };
-  }
-};
-
-// ==================== ANALYTICS ENGINE (UPGRADED V6.1) ====================
-const AnalyticsEngine = {
-  
-  calculateAccuracy: (decisions) => {
-    const completed = decisions.filter(d => d.outcome !== null);
-    if (completed.length === 0) return null;
-    const correct = completed.filter(d => d.prediction === d.outcome).length;
-    return (correct / completed.length) * 100;
-  },
-  
-  calculateFilteredAccuracy: (decisions, filterFn) => {
-    const filtered = decisions.filter(filterFn);
-    const completed = filtered.filter(d => d.outcome !== null);
-    if (completed.length === 0) return { accuracy: null, count: 0 };
-    const correct = completed.filter(d => d.prediction === d.outcome).length;
-    return {
-      accuracy: (correct / completed.length) * 100,
-      count: completed.length
-    };
-  },
-  
-  getAccuracyByDomain: (decisions) => {
-    const domains = ['career', 'relationships', 'health', 'financial'];
-    return domains.map(domain => {
-      const { accuracy, count } = AnalyticsEngine.calculateFilteredAccuracy(
-        decisions, 
-        d => d.domain === domain
-      );
-      return { domain, accuracy, count };
-    });
-  },
-
-  getCalibrationData: (decisions) => {
-    const completed = decisions.filter(d => d.outcome !== null);
-    const bins = [0, 50, 60, 70, 80, 90, 100];
-    const calibration = [];
-    
-    for (let i = 0; i < bins.length - 1; i++) {
-      const lower = bins[i];
-      const upper = bins[i+1];
-      
-      const filtered = completed.filter(d => d.confidence > lower && d.confidence <= upper);
-      const count = filtered.length;
-      
-      let actual = null;
-      if (count > 0) {
-        const correct = filtered.filter(d => d.prediction === d.outcome).length;
-        actual = (correct / count) * 100;
-      }
-
-      calibration.push({
-        range: `${lower + 1}-${upper}%`,
-        predicted: (lower + upper) / 2,
-        actual: actual,
-        count: count
-      });
-    }
-    return calibration;
-  },
-
-  getAccuracyByStakes: (decisions) => {
-      const stakes = ['low', 'medium', 'high'];
-      return stakes.map(stake => {
-          const { accuracy, count } = AnalyticsEngine.calculateFilteredAccuracy(decisions, d => d.stakes === stake);
-          return { stake, accuracy, count };
-      });
-  },
-
-  getAccuracyByEmotion: (decisions) => {
-      const emotions = ['calm', 'neutral', 'anxious'];
-      return emotions.map(emotion => {
-          const { accuracy, count } = AnalyticsEngine.calculateFilteredAccuracy(decisions, d => d.emotionalState === emotion);
-          return { emotion, accuracy, count };
-      });
-  },
-
-  checkForSelfServingBias: (decisions) => {
-    const completed = decisions.filter(d => d.outcome !== null && d.attribution);
-    if (completed.length < 5) return null;
-
-    let internalSuccesses = 0;
-    let externalFailures = 0;
-    let totalSuccesses = 0;
-    let totalFailures = 0;
-    
-    completed.forEach(d => {
-      const isCorrect = d.prediction === d.outcome;
-      
-      if (isCorrect) {
-        totalSuccesses++;
-        if (d.attribution === 'my_skill') internalSuccesses++;
-      } else {
-        totalFailures++;
-        if (d.attribution === 'external') externalFailures++;
-      }
-    });
-
-    if (totalSuccesses === 0 || totalFailures === 0) return null;
-
-    const internalSuccessRate = internalSuccesses / totalSuccesses;
-    const externalFailureRate = externalFailures / totalFailures;
-
-    if (internalSuccessRate > 0.6 && externalFailureRate > 0.6) {
-      return { severity: 'high', internalRate: internalSuccessRate, externalRate: externalFailureRate, message: "You exhibit a **strong Self-Serving Bias**. You tend to take credit for wins and blame losses on external factors. This hinders learning." };
-    }
-    
-    if (internalSuccessRate > 0.5 && externalFailureRate > 0.5) {
-      return { severity: 'medium', internalRate: internalSuccessRate, externalRate: externalFailureRate, message: "You show signs of a **Self-Serving Bias**. Try to be more objective when assessing the cause of your failures." };
-    }
-    
-    return { severity: 'low', message: "Your attribution of outcomes is generally balanced." };
-  },
-
-  getConsistencyScore: (decisions) => {
-    if (decisions.length < 5) return { score: 100, deviation: 0, isLow: false };
-    
-    const timeMap = { 'instant': 1, 'hours': 4, 'days': 48, 'weeks': 168 };
-    const timeToDecideValues = decisions.map(d => timeMap[d.timeToDecide] || 48); // Default to 'days' if missing
-    
-    const avgTime = timeToDecideValues.reduce((a, b) => a + b, 0) / timeToDecideValues.length;
-    const avgConfidence = decisions.reduce((sum, d) => sum + d.confidence, 0) / decisions.length;
-    
-    const recent = decisions.slice(-5);
-    if (recent.length < 3) return { score: 100, deviation: 0, isLow: false };
-
-    let totalDeviation = 0;
-    
-    recent.forEach(d => {
-      const timeDeviation = Math.abs((timeMap[d.timeToDecide] || 48) - avgTime) / avgTime;
-      const confidenceDeviation = Math.abs(d.confidence - avgConfidence) / 100; 
-      
-      totalDeviation += (timeDeviation * 0.5) + (confidenceDeviation * 0.5);
-    });
-
-    const averageDeviation = totalDeviation / recent.length;
-    
-    const score = Math.max(0, 100 - (averageDeviation * 100));
-
-    return { 
-      score: score.toFixed(0), 
-      deviation: averageDeviation.toFixed(2),
-      isLow: score < 70
-    };
-  },
-
-  // NEW V6.1: Maps a general query to the most relevant internal context (domain/bias)
-  getContextualBlindSpot: (decisions, userQuery) => {
-    const lowerQuery = userQuery.toLowerCase();
-    
-    // 1. Domain Mapping based on keywords
-    let domainFocus = null;
-    if (lowerQuery.includes('invest') || lowerQuery.includes('stock') || lowerQuery.includes('crypto') || lowerQuery.includes('money') || lowerQuery.includes('financial')) {
-      domainFocus = 'financial';
-    } else if (lowerQuery.includes('job') || lowerQuery.includes('career') || lowerQuery.includes('promotion') || lowerQuery.includes('work') || lowerQuery.includes('business')) {
-      domainFocus = 'career';
-    } else if (lowerQuery.includes('relationship') || lowerQuery.includes('friend') || lowerQuery.includes('partner') || lowerQuery.includes('conflict') || lowerQuery.includes('team')) {
-      domainFocus = 'relationships';
-    } else if (lowerQuery.includes('health') || lowerQuery.includes('diet') || lowerQuery.includes('fitness') || lowerQuery.includes('wellbeing') || lowerQuery.includes('sleep')) {
-      domainFocus = 'health';
-    }
-
-    if (domainFocus) {
-      const { accuracy, count } = AnalyticsEngine.calculateFilteredAccuracy(decisions, d => d.domain === domainFocus);
-      if (count > 2 && accuracy < 60) {
-        return { type: 'domain', focus: domainFocus, accuracy: accuracy.toFixed(0), message: `Your accuracy in **${domainFocus}** decisions is low (${accuracy.toFixed(0)}%).` };
-      }
-    }
-    
-    // 2. Bias/Consistency Check (Prioritized as they affect *all* decisions)
-    const consistency = AnalyticsEngine.getConsistencyScore(decisions);
-    if (consistency.isLow) {
-       return { type: 'consistency', focus: 'erratic_process', message: `Your decision-making process is becoming erratic (Consistency Score: ${consistency.score}!).` };
-    }
-    
-    const bias = AnalyticsEngine.checkForSelfServingBias(decisions);
-    if (bias && bias.severity === 'high') {
-      return { type: 'bias', focus: 'self_serving', message: bias.message };
-    }
-    
-    // 3. Default to confidence miscalibration
-    const miscalibration = AnalyticsEngine.getCalibrationData(decisions).find(c => c.count >= 3 && Math.abs((c.predicted || 0) - (c.actual || 0)) > 15);
-    if (miscalibration) {
-      return { type: 'confidence', focus: 'miscalibrated', message: `You are miscalibrated in the ${miscalibration.range} confidence range.` };
-    }
-    
-    return { type: 'none', focus: 'general', message: 'You are performing well. Let’s focus on reinforcement.' };
-  },
-
-  // UPDATED V6.1: Generates a truly dynamic, combined response
-  generateAgentResponse: (decisions, profile, userQuery) => {
-    const defaultResponse = {
-      message: "I need more data to be a useful friend! Log at least 5 decisions and 3 completed outcomes.",
-      insights: ["Track decisions consistently", "Be honest about outcomes"],
-      actionSteps: ["Log your next decision today", "Set a reminder to track outcomes"],
-      searchQuery: "how to log decisions consistently"
-    };
-
-    const completed = decisions.filter(d => d.outcome !== null);
-    if (completed.length < 3) return defaultResponse;
-    
-    const accuracy = AnalyticsEngine.calculateAccuracy(decisions);
-
-    // --- 1. Identify Contextual Blind Spot & Overall Profile ---
-    const blindSpot = AnalyticsEngine.getContextualBlindSpot(decisions, userQuery);
-    const bsType = blindSpot.type;
-    const bsFocus = blindSpot.focus;
-    
-    let generalSearchQuery = userQuery;
-    let personalizedInsight = "";
-    let actionSteps = [];
-    
-    // --- 2. Logic for General Query (Dynamic Search/Filter) ---
-    if (userQuery.toLowerCase().trim() !== 'get insight') {
-      
-      // Determine the Agent's Filter/Frame
-      if (bsType === 'domain' && profile.dimensions.riskTolerance === 'Bold') {
-          personalizedInsight = `I see your query. Given your **Bold** style and low **${bsFocus}** accuracy (${blindSpot.accuracy}%), the best external information for you is **structured risk mitigation**.`;
-          generalSearchQuery = `${userQuery} + structured risk mitigation strategies for ${bsFocus} + avoid impulsive action`;
-          actionSteps = [`Search for a "pre-mortem" exercise related to ${bsFocus}.`, `Reduce your confidence prediction by 20% on your next ${bsFocus} decision.`];
-          
-      } else if (bsType === 'bias' || bsType === 'consistency') {
-          personalizedInsight = `Your query relates to the external world, but our data shows your **process** is the current blocker (${blindSpot.message}). External information is only useful if your internal process is sound.`;
-          generalSearchQuery = `${userQuery} + how to objectively assess process failure + decision journaling methods`;
-          actionSteps = [`Write down your 'Attribution' for your last three outcomes. Were they honest?`, `Focus on your core strength: **${profile.strengths[0]}** before executing any search result.`];
-          
-      } else if (profile.dimensions.thinkingStyle === 'Intuitive' && bsType === 'confidence') {
-          personalizedInsight = `As an **Intuitive** thinker, your gut is powerful, but your **miscalibration** means you need solid proof. I'm searching for **objective data to test your intuition**.`;
-          generalSearchQuery = `objective data on ${userQuery} + external expert consensus + statistical validation`;
-          actionSteps = [`Before acting on the search results, find one piece of data that *contradicts* your intuition.`, `Log an updated decision in 48 hours to track confidence drift.`];
-          
-      } else {
-          // General query, no major blind spots or Analytical user. Focus on reinforcing strengths/profile.
-          personalizedInsight = `Your overall performance is **${accuracy.toFixed(0)}%**. As a **${profile.title}**, I'll filter the world's information to reinforce your strength in **${profile.strengths[0]}**.`;
-          generalSearchQuery = `leveraging ${profile.strengths[0]} in the context of ${userQuery}`;
-          actionSteps = [`Think about how the search results align with your core value of **${profile.values && profile.values.length > 0 ? profile.values[0] : 'Growth'}**.`, `Share the search result with a colleague to test its rigor.`];
-      }
-
-      return {
-        message: userQuery, // Placeholder for the simulated general answer
-        insights: [personalizedInsight],
-        actionSteps: actionSteps,
-        searchQuery: generalSearchQuery
-      };
-
-    } else {
-      // --- 3. Logic for 'Get Insight' (Self-Assessment Mode) ---
-      
-      const overallBlindSpot = AnalyticsEngine.getContextualBlindSpot(decisions, 'general');
-
-      let message = `Hello, ${profile.displayName || 'Friend'}. Your overall accuracy is **${accuracy.toFixed(0)}%**. My current focus is your **${overallBlindSpot.message}**`;
-      let suggestion = "";
-      let searchQuery = "";
-      actionSteps = [];
-
-      if (overallBlindSpot.type === 'consistency') {
-        suggestion = `You're deviating from your norms. As a **${profile.title}**, you excel with structure. My advice is to pause and explicitly write down your Confidence and Evidence *before* proceeding.`;
-        searchQuery = `how to improve consistency in decision making process`;
-        actionSteps = ["Review the average time and confidence of your last 5 decisions", "Take a 24-hour break before the next major decision."];
-        
-      } else if (overallBlindSpot.type === 'bias') {
-        suggestion = `The data shows you might be avoiding responsibility for losses (Self-Serving Bias). Next time you fail, consciously attribute the cause to a *lack of skill* or *poor process*.`;
-        searchQuery = `strategies to overcome self-serving bias in professional context`;
-        actionSteps = ["Find one example of a failure and write down three internal reasons for it.", "Review your attribution rates in the Charts section."];
-      
-      } else if (overallBlindSpot.type === 'domain') {
-        suggestion = `Your **${overallBlindSpot.focus.toUpperCase()}** decisions are struggling. As a **${profile.title}**, you need ${profile.dimensions.informationNeed === 'Comprehensive' ? 'more external data/experts' : 'a quicker feedback loop'} for this domain.`;
-        searchQuery = `best practices for ${overallBlindSpot.focus} decision making and risk assessment`;
-        actionSteps = [`Seek an expert opinion for the next ${overallBlindSpot.focus} decision.`, `Log the exact data points you used for your next ${overallBlindSpot.focus} decision.`];
-      
-      } else {
-         // If no major blind spots, focus on reinforcement
-         message = `You're performing well! Your overall accuracy is **${accuracy.toFixed(0)}%**. Let's reinforce your strengths.`;
-         suggestion = `Your profile is a **${profile.title}**. Leverage your top strength: **${profile.strengths[0]}**. Think about how you can teach this skill to someone else.`;
-         searchQuery = `how to leverage the strengths of a ${profile.title} decision style`;
-         actionSteps = ["Write down your favorite success story where you used your primary strength.", "Mentor a colleague on one of your strengths."];
-      }
-
-      return {
-        message: message,
-        insights: [suggestion],
-        actionSteps: actionSteps,
-        searchQuery: searchQuery
-      };
-    }
-  }
-};
-
-
-// ==================== STORAGE HELPER (Updated to include sync load for profile) ====================
-const Storage = {
-  // Synchronous load for immediate profile access during initial QuadrantSystem assessment
-  loadSync() { 
-    try {
-      const result = localStorage.getItem('calibrate_v6_data');
-      return result ? JSON.parse(result) : {};
-    } catch (e) {
-      console.error('Storage sync load error:', e);
-      return {};
-    }
-  },
-
-  async load() {
-    return Storage.loadSync();
-  },
-
-  async save(data) {
-    try {
-      localStorage.setItem('calibrate_v6_data', JSON.stringify(data));
-      return true;
-    } catch (e) {
-      console.error('Storage save error:', e);
-      return false;
-    }
-  }
-};
-
-// ==================== DECISION ASSISTANT MODAL (UPDATED V6.1) ====================
-const DecisionAssistant = ({ userData, setUserData, onClose }) => {
-  const decisions = userData.decisions;
-  const profile = QuadrantSystem.assessFromDecisions(decisions);
-  const [chatInput, setChatInput] = useState('');
-  const chatEndRef = useRef(null);
-  
-  const initialAgentResponse = useMemo(() => {
-    if (!profile) return null;
-    return AnalyticsEngine.generateAgentResponse(decisions, profile, 'get insight');
-  }, [decisions, profile]);
-
-  const [chatMessages, setChatMessages] = useState(
-    initialAgentResponse ? [{ role: 'assistant', ...initialAgentResponse }] : []
-  );
-
-  useEffect(() => {
-    if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [chatMessages]);
-  
-  const handleQuery = (query) => {
-    const finalQuery = query || chatInput;
-    if (!finalQuery.trim()) return;
-    
-    // 1. Log User Query
-    setChatMessages(prev => [...prev, { role: 'user', content: finalQuery }]);
-    setChatInput('');
-
-    // 2. Get Agent Response
-    const insight = AnalyticsEngine.generateAgentResponse(decisions, profile, finalQuery);
-
-    // 3. Log Agent Response
-    setTimeout(() => {
-      setChatMessages(prev => [...prev, {
-        role: 'assistant',
-        ...insight
-      }]);
-    }, 500);
-  };
-
-  if (!profile) {
-    return (
-      <Modal onClose={onClose}>
-        <div className="text-center p-8">
-          <Brain className="w-16 h-16 mx-auto mb-4 text-purple-500" />
-          <h3 className="text-2xl font-bold mb-2 text-gray-800">Agent Offline</h3>
-          <p className="text-gray-600">Need at least 5 decisions and 3 outcomes to generate a profile.</p>
-        </div>
-      </Modal>
-    );
-  }
-
-  return (
-    <Modal onClose={onClose}>
-      <div className="flex flex-col h-full">
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-4 rounded-t-xl flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Zap className="w-6 h-6" />
-            <h3 className="font-bold text-xl">Decision Assistant Agent</h3>
-          </div>
-          <button onClick={onClose} className="hover:bg-white/20 rounded-lg p-1">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
-          {chatMessages.map((msg, idx) => (
-            <div key={idx} className={`${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
-              <div className={`inline-block max-w-[90%] p-3 rounded-2xl ${
-                msg.role === 'user' 
-                  ? 'bg-blue-600 text-white rounded-br-sm' 
-                  : 'bg-white text-gray-800 rounded-bl-sm shadow border border-gray-200'
-              }`}>
-                {msg.role === 'user' ? (
-                  <p className="text-sm whitespace-pre-wrap text-white">{msg.content}</p>
-                ) : (
-                  <>
-                    <div className="font-bold text-lg mb-2 text-gray-800">
-                      {msg.message === 'get insight' ? 'Personal Insight' : 'World Search Context'}
-                    </div>
-                    
-                    {msg.message !== 'get insight' && (
-                      <p className="text-sm text-gray-700 italic mb-3">
-                        Your query, **"{msg.message}"**, is being filtered through your personal data.
-                      </p>
-                    )}
-                    
-                    {msg.insights && msg.insights.length > 0 && (
-                      <div className={`mt-3 pt-3 border-t ${msg.message === 'get insight' ? 'border-gray-200' : 'border-purple-200'} space-y-2`}>
-                        <div className="font-semibold text-xs text-purple-600 mb-1 flex items-center gap-1">
-                          <Brain className="w-4 h-4" /> 
-                          {msg.message === 'get insight' ? 'Personalized Insight:' : 'Personalized Filter:'}
-                        </div>
-                        {msg.insights.map((insight, i) => (
-                          <div key={i} className="text-sm flex items-start gap-2 text-gray-700">
-                            <span dangerouslySetInnerHTML={{ __html: insight.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {msg.searchQuery && (
-                      <div className="mt-4 pt-3 border-t border-blue-200 bg-blue-50 -m-3 mt-3 p-3 rounded-b-2xl">
-                        <div className="font-semibold text-xs text-blue-900 mb-2 flex items-center gap-1">
-                          <Search className="w-4 h-4" /> Agent Search Query: (Click to open)
-                        </div>
-                        <a
-                          href={`https://www.google.com/search?q=${encodeURIComponent(msg.searchQuery)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-blue-700 hover:text-blue-900 underline block break-words"
-                        >
-                          "{msg.searchQuery}"
-                        </a>
-                      </div>
-                    )}
-                    
-                    {msg.actionSteps && msg.actionSteps.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-green-200 bg-green-50 -m-3 mt-3 p-3 rounded-b-2xl">
-                        <div className="font-semibold text-xs text-green-900 mb-2">🎯 Immediate Action Steps:</div>
-                        {msg.actionSteps.map((step, i) => (
-                          <div key={i} className="text-xs text-green-800 mb-1">{i + 1}. {step}</div>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
-          <div ref={chatEndRef} />
-        </div>
-
-        <div className="p-4 border-t border-gray-200 bg-white">
-          <div className="text-sm text-gray-600 mb-2">Popular Questions:</div>
-          <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
-            <PromptChip label="How do I invest in crypto?" onClick={() => handleQuery("How do I invest in crypto?")} />
-            <PromptChip label="What is my biggest blind spot?" onClick={() => handleQuery("get insight")} />
-            <PromptChip label="How to ask for a raise?" onClick={() => handleQuery("How to ask for a raise?")} />
-          </div>
-          <form onSubmit={(e) => { e.preventDefault(); handleQuery(); }} className="flex gap-2">
-            <input
-              type="text"
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              placeholder="Ask your Decision Assistant (e.g., 'career advice' or 'What is my bias?')..."
-              className="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none text-sm"
-            />
-            <button
-              type="submit"
-              className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-2 rounded-lg hover:opacity-90"
-            >
-              <Send className="w-5 h-5" />
-            </button>
-          </form>
-        </div>
-      </div>
-    </Modal>
-  );
-};
-
-// Helper component for the assistant modal
-const Modal = ({ children, onClose }) => (
-  <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-    <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg h-[80vh] flex flex-col">
-      {children}
-    </div>
-  </div>
-);
-
-const PromptChip = ({ label, onClick }) => (
-  <button 
-    onClick={onClick}
-    className="bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded-full whitespace-nowrap hover:bg-gray-300 transition-colors"
-  >
-    {label}
-  </button>
-);
-
-
-// ==================== MAIN APP ====================
-const Calibrate = () => {
-  const [loading, setLoading] = useState(true);
-  const [currentView, setCurrentView] = useState('dashboard'); 
-  const [showAssistant, setShowAssistant] = useState(false); 
-  const [userData, setUserData] = useState({
-    onboardingComplete: false,
-    decisions: [],
-    joinedDate: new Date().toISOString(),
-    profile: {
-      displayName: '',
-      professionalRole: '',
-      professionalBio: '',
-      goals: [],
-      values: [],
-      selfAssessment: { 
-        thinkingStyle: 'Analytical', 
-        decisionSpeed: 'Deliberate',
-        riskTolerance: 'Conservative',
-        informationNeed: 'Comprehensive'
-      } 
-    }
-  });
-
-  useEffect(() => {
-    const loadData = async () => {
-      const saved = await Storage.load();
-      if (saved && Object.keys(saved).length > 0) {
-        setUserData(saved);
-        if (saved.onboardingComplete) {
-          setCurrentView('dashboard');
-        } else {
-          setCurrentView('onboarding'); 
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calibrate - Decision Intelligence System</title>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            margin: 0; 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
         }
-      } else {
-        setCurrentView('onboarding'); 
-      }
-      setLoading(false);
-    };
-    loadData();
-  }, []);
-
-  useEffect(() => {
-    if (!loading) {
-      Storage.save(userData);
-    }
-  }, [userData, loading]);
-  
-  // ==================== ONBOARDING WIZARD (Condensed for Final Delivery) ====================
-  const OnboardingWizard = () => { 
-    const [step, setStep] = useState(1);
-    const [profileData, setProfileData] = useState(userData.profile);
-
-    const updateProfile = (key, value) => {
-      setProfileData(prev => ({ ...prev, [key]: value }));
-    };
-    
-    const updateSelfAssessment = (key, value) => {
-      setProfileData(prev => ({
-        ...prev,
-        selfAssessment: {
-          ...prev.selfAssessment,
-          [key]: value
+        .serif { font-family: 'DM Serif Display', serif; }
+        .cosmic-bg {
+            background: radial-gradient(ellipse at top, #1a1a2e 0%, #0a0a0a 50%);
         }
-      }));
-    };
-
-    const toggleValue = (value) => {
-      const currentValues = profileData.values || [];
-      if (currentValues.includes(value)) {
-        updateProfile('values', currentValues.filter(v => v !== value));
-      } else {
-        updateProfile('values', [...currentValues, value]);
-      }
-    };
-
-    const handleFinish = () => {
-      setUserData({ ...userData, profile: profileData, onboardingComplete: true });
-      setCurrentView('dashboard');
-    };
-
-    const coreValues = ['Security', 'Growth', 'Autonomy', 'Integrity', 'Community', 'Impact'];
-
-    const SelfAssessmentRadio = ({ label, options, selected, onChange }) => (
-      <div className="text-gray-800">
-        <label className="block font-semibold mb-2 text-blue-100">{label}</label>
-        <div className="flex bg-white/50 rounded-lg p-1">
-          {options.map(opt => (
-            <button
-              key={opt}
-              onClick={() => onChange(opt)}
-              className={`w-1/2 py-2 rounded-md font-medium text-sm transition-all ${
-                selected === opt ? 'bg-white text-blue-700 shadow' : 'text-gray-700 hover:bg-white/50'
-              }`}
-            >
-              {opt}
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-    
-    const steps = [
-      { step: 1, title: "Welcome to Calibrate", content: () => ( <><div className="text-center mb-8"><Brain className="w-20 h-20 mx-auto mb-4 animate-pulse" /><h1 className="text-5xl font-bold mb-4">Welcome to Calibrate</h1><p className="text-2xl text-blue-100">Know When to Trust Your Gut</p></div><p className="text-lg text-blue-50 mb-6">Before you start, let's set up your profile. This 2-minute process helps Calibrate understand your starting point.</p></>), nextAction: () => setStep(2), nextLabel: "Let's Get Started" },
-      { step: 2, title: "About You", content: () => (
-          <div className="space-y-4">
-            <div><label className="block font-semibold mb-2 text-blue-100">Display Name</label><input type="text" value={profileData.displayName} onChange={(e) => updateProfile('displayName', e.target.value)} placeholder="e.g., Jane Doe" className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-gray-800" /></div>
-            <div><label className="block font-semibold mb-2 text-blue-100">Professional Role</label><input type="text" value={profileData.professionalRole} onChange={(e) => updateProfile('professionalRole', e.target.value)} placeholder="e.g., Senior Product Manager" className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-gray-800" /></div>
-            <div><label className="block font-semibold mb-2 text-blue-100">Professional Bio / Summary</label><textarea value={profileData.professionalBio} onChange={(e) => updateProfile('professionalBio', e.target.value)} placeholder="Paste your LinkedIn summary or a brief bio here..." className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none h-24 resize-none text-gray-800" /></div>
-          </div>
-        ), nextAction: () => setStep(3), nextLabel: "Next" },
-      { step: 3, title: "How You See Yourself", content: () => (
-          <div className="space-y-6">
-            <p className="text-blue-100 mb-4 text-sm">How do you *think* you make decisions? (This helps us spot perception gaps).</p>
-            <SelfAssessmentRadio label="Thinking Style" options={QuadrantSystem.dimensions.thinkingStyle} selected={profileData.selfAssessment.thinkingStyle} onChange={(val) => updateSelfAssessment('thinkingStyle', val)} />
-            <SelfAssessmentRadio label="Decision Speed" options={QuadrantSystem.dimensions.decisionSpeed} selected={profileData.selfAssessment.decisionSpeed} onChange={(val) => updateSelfAssessment('decisionSpeed', val)} />
-            <SelfAssessmentRadio label="Risk Tolerance" options={QuadrantSystem.dimensions.riskTolerance} selected={profileData.selfAssessment.riskTolerance} onChange={(val) => updateSelfAssessment('riskTolerance', val)} />
-            <SelfAssessmentRadio label="Information Need" options={QuadrantSystem.dimensions.informationNeed} selected={profileData.selfAssessment.informationNeed} onChange={(val) => updateSelfAssessment('informationNeed', val)} />
-          </div>
-        ), nextAction: () => setStep(4), nextLabel: "Next" },
-      { step: 4, title: "What Drives You?", content: () => (
-          <div className="space-y-6">
-            <div>
-              <label className="block font-semibold mb-2 text-blue-100">What do you want to improve? (1 goal per line)</label>
-              <textarea value={profileData.goals ? profileData.goals.join('\n') : ''} onChange={(e) => updateProfile('goals', e.target.value.split('\n'))} placeholder="e.g., Be more confident in financial decisions&#10;e.g., Improve my leadership skills..." className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none h-24 resize-none text-gray-800" />
-            </div>
-            <div>
-              <label className="block font-semibold mb-2 text-blue-100">Which of these values resonate most?</label>
-              <div className="grid grid-cols-3 gap-2">
-                {coreValues.map(value => (
-                  <button
-                    key={value}
-                    onClick={() => toggleValue(value)}
-                    className={`py-3 px-2 rounded-lg font-medium text-sm transition-colors ${
-                      (profileData.values || []).includes(value)
-                        ? 'bg-green-400 text-black'
-                        : 'bg-white/50 text-gray-800 hover:bg-white/80'
-                    }`}
-                  >
-                    {value}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        ), nextAction: handleFinish, nextLabel: "Finish Setup" }
-    ];
-
-    const currentStepData = steps.find(s => s.step === step);
-    
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 text-white p-6 flex items-center justify-center">
-        <div className="max-w-2xl w-full bg-white/10 backdrop-blur-lg rounded-2xl p-8 shadow-2xl">
-          <div className="text-gray-800">
-            {step > 1 && <h2 className="text-3xl font-bold text-white mb-6">{currentStepData.title}</h2>}
-            {currentStepData.content()}
-          </div>
-          <div className="flex justify-between items-center mt-8 pt-6 border-t border-white/20">
-            <button 
-              onClick={() => setStep(s => s - 1)}
-              disabled={step === 1}
-              className="flex items-center gap-2 px-6 py-3 bg-white/30 text-white rounded-lg font-medium hover:bg-white/50 disabled:opacity-50"
-            >
-              <ChevronLeft className="w-5 h-5" />
-              Back
-            </button>
-            <button 
-              onClick={currentStepData.nextAction}
-              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold transition-colors ${step < 4 ? 'bg-white text-blue-700 hover:bg-blue-50' : 'bg-green-400 text-black hover:bg-green-300'}`}
-            >
-              {currentStepData.nextLabel}
-              {step < 4 ? <ChevronRight className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // ==================== CHARTS VIEW (Condensed for Final Delivery) ====================
-  const ChartsView = () => { 
-    const completedDecisions = userData.decisions.filter(d => d.outcome !== null);
-    const domainAccuracy = AnalyticsEngine.getAccuracyByDomain(userData.decisions);
-    const calibration = AnalyticsEngine.getCalibrationData(userData.decisions);
-    const profile = QuadrantSystem.assessFromDecisions(userData.decisions);
-    const stakesAccuracy = AnalyticsEngine.getAccuracyByStakes(userData.decisions);
-    const emotionAccuracy = AnalyticsEngine.getAccuracyByEmotion(userData.decisions);
-    const bias = AnalyticsEngine.checkForSelfServingBias(userData.decisions);
-    const consistency = AnalyticsEngine.getConsistencyScore(userData.decisions);
-
-    if (completedDecisions.length < 3) {
-      return (
-        <div className="max-w-4xl mx-auto">
-          <button onClick={() => setCurrentView('dashboard')} className="text-blue-600 hover:text-blue-800 mb-4 font-medium">← Back to Dashboard</button>
-          <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-8 text-center">
-            <BarChart3 className="w-16 h-16 mx-auto mb-4 text-yellow-600" />
-            <h3 className="text-2xl font-bold text-yellow-900 mb-2">Not Enough Data Yet</h3>
-            <p className="text-yellow-800">You need at least 3 completed outcomes to generate meaningful charts. Keep logging decisions and outcomes!</p>
-          </div>
-        </div>
-      );
-    }
-
-    const AccuracyBar = ({ label, accuracy, count }) => (
-      <div>
-        <div className="flex justify-between items-center mb-2">
-          <span className="font-medium capitalize">{label}</span>
-          <span className="text-sm text-gray-600">
-            {accuracy !== null ? `${accuracy.toFixed(0)}%` : 'No data'} 
-            <span className="text-xs ml-1">({count})</span>
-          </span>
-        </div>
-        <div className="h-8 bg-gray-100 rounded-lg overflow-hidden">
-          {accuracy !== null && (
-            <div 
-              className={`h-full flex items-center justify-center text-white text-sm font-medium transition-all ${
-                accuracy >= 70 ? 'bg-green-500' : 
-                accuracy >= 50 ? 'bg-yellow-500' : 
-                'bg-red-500'
-              }`}
-              style={{ width: `${Math.max(accuracy, 10)}%` }}
-            >
-              {accuracy >= 30 && `${accuracy.toFixed(0)}%`}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-    
-    return (
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <button onClick={() => setCurrentView('dashboard')} className="text-blue-600 hover:text-blue-800 font-medium">← Back to Dashboard</button>
-          <h2 className="text-3xl font-bold text-gray-800">Analytics & Charts</h2>
-          <div className="w-32"></div>
-        </div>
-
-        {profile && (
-          <div className="bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-300 rounded-xl p-6">
-            <div className="flex items-start gap-4">
-              <Users className="w-12 h-12 text-purple-600 flex-shrink-0" />
-              <div className="flex-1">
-                <h3 className="text-2xl font-bold text-purple-900 mb-2">{profile.title}</h3>
-                <p className="text-gray-700 mb-4">{profile.description}</p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                  <div className="bg-white rounded-lg p-3 border border-purple-200"><div className="text-xs text-gray-600">Thinking</div><div className="font-bold text-purple-900">{profile.dimensions.thinkingStyle}</div></div>
-                  <div className="bg-white rounded-lg p-3 border border-purple-200"><div className="text-xs text-gray-600">Speed</div><div className="font-bold text-purple-900">{profile.dimensions.decisionSpeed}</div></div>
-                  <div className="bg-white rounded-lg p-3 border border-purple-200"><div className="text-xs text-gray-600">Risk</div><div className="font-bold text-purple-900">{profile.dimensions.riskTolerance}</div></div>
-                  <div className="bg-white rounded-lg p-3 border border-purple-200"><div className="text-xs text-gray-600">Info Need</div><div className="font-bold text-purple-900">{profile.dimensions.informationNeed}</div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-6 md:col-span-2">
-            <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><Target className="w-6 h-6 text-purple-600" />Calibration Curve</h3>
-            {calibration.map(({ range, predicted, actual, count }) => (
-              <div key={range}>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium">{range} confidence</span>
-                  <span className="text-xs text-gray-600">{actual !== null ? `${actual.toFixed(0)}% actual` : 'No data'} ({count})</span>
-                </div>
-                {actual !== null ? (
-                  <div className="relative h-6 bg-gray-100 rounded-lg overflow-hidden">
-                    <div className="absolute h-full bg-blue-200 border-r-2 border-blue-400" style={{ width: `${predicted}%` }} title={`Predicted: ${predicted.toFixed(0)}%`}/>
-                    <div className="absolute h-full bg-green-500 opacity-75" style={{ width: `${actual}%` }} title={`Actual: ${actual.toFixed(0)}%`}/>
-                  </div>
-                ) : (<div className="h-6 bg-gray-100 rounded-lg" />)}
-              </div>
-            ))}
-          </div>
-
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
-             <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><AlertTriangle className="w-6 h-6 text-orange-600" />Behavioral Metrics</h3>
-             <div className="space-y-4">
-                <div className={`p-3 rounded-lg border ${bias && bias.severity === 'high' ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
-                    <div className="text-sm font-medium text-gray-900 mb-1">Self-Serving Bias</div>
-                    <p className="text-xs text-gray-800">{bias ? bias.message : "Not enough data/No significant bias detected."}</p>
-                </div>
-                <div className={`p-3 rounded-lg border ${consistency.isLow ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
-                    <div className="text-sm font-medium text-gray-900 mb-1">Consistency Score</div>
-                    <p className="text-xs text-gray-800">Your recent consistency score is **{consistency.score}%**. (Measures deviation from your average process.)</p>
-                </div>
-             </div>
-          </div>
-          
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
-            <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><BarChart3 className="w-6 h-6 text-blue-600" />Accuracy by Domain</h3>
-            <div className="space-y-4">{domainAccuracy.map(({ domain, accuracy, count }) => (<AccuracyBar key={domain} label={domain} accuracy={accuracy} count={count} />))}</div>
-          </div>
-          
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
-            <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><Flag className="w-6 h-6 text-red-600" />Accuracy by Stakes</h3>
-            <div className="space-y-4">{stakesAccuracy.map(({ stake, accuracy, count }) => (<AccuracyBar key={stake} label={stake} accuracy={accuracy} count={count} />))}</div>
-          </div>
-          
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
-            <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><Activity className="w-6 h-6 text-orange-600" />Accuracy by Emotion</h3>
-            <div className="space-y-4">{emotionAccuracy.map(({ emotion, accuracy, count }) => (<AccuracyBar key={emotion} label={emotion} accuracy={accuracy} count={count} />))}</div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-
-  // ==================== DASHBOARD (Condensed for Final Delivery) ====================
-  const Dashboard = () => {
-    const completedDecisions = userData.decisions.filter(d => d.outcome !== null);
-    const accuracy = AnalyticsEngine.calculateAccuracy(userData.decisions);
-    const profile = QuadrantSystem.assessFromDecisions(userData.decisions);
-    const { accuracy: highStakesAcc, count: highStakesCount } = AnalyticsEngine.calculateFilteredAccuracy(userData.decisions, d => d.stakes === 'high');
-
-    const needsOutcome = userData.decisions.filter(d => d.outcome === null && (new Date() - new Date(d.date)) / (1000 * 60 * 60 * 24) >= 7);
-    const consistency = AnalyticsEngine.getConsistencyScore(userData.decisions);
-    const bias = AnalyticsEngine.checkForSelfServingBias(userData.decisions);
-
-    return (
-      <div className="space-y-6">
-        <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl p-6">
-          <div className="flex justify-between items-start">
-            <h2 className="text-2xl font-bold mb-4">
-              Welcome back, {userData.profile.displayName || 'User'}!
-            </h2>
-            <button 
-              onClick={() => setCurrentView('onboarding')}
-              className="flex items-center gap-1 text-xs bg-white/20 px-3 py-1 rounded-full hover:bg-white/40"
-            >
-              <Edit className="w-3 h-3" />
-              Edit Profile
-            </button>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white/20 rounded-lg p-4">
-              <div className="text-sm text-blue-100">Total Decisions</div>
-              <div className="text-3xl font-bold">{userData.decisions.length}</div>
-            </div>
-            <div className="bg-white/20 rounded-lg p-4">
-              <div className="text-sm text-blue-100">Completed</div>
-              <div className="text-3xl font-bold">{completedDecisions.length}</div>
-            </div>
-            <div className="bg-white/20 rounded-lg p-4">
-              <div className="text-sm text-blue-100">Overall Accuracy</div>
-              <div className="text-3xl font-bold">
-                {accuracy !== null ? `${accuracy.toFixed(0)}%` : 'N/A'}
-              </div>
-            </div>
-            <div className="bg-white/20 rounded-lg p-4 border-2 border-red-300">
-              <div className="text-sm text-red-100">High-Stakes Acc.</div>
-              <div className="text-3xl font-bold">
-                {highStakesAcc !== null ? `${highStakesAcc.toFixed(0)}%` : 'N/A'}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {profile && (
-          <div className="bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-300 rounded-xl p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <Users className="w-8 h-8 text-purple-600" />
-              <div>
-                <h3 className="text-xl font-bold text-purple-900">{profile.title}</h3>
-                <p className="text-sm text-gray-700">{profile.description}</p>
-              </div>
-            </div>
-            <div className="bg-white/60 rounded-lg p-3 text-sm text-gray-700">
-              <strong>Team Value:</strong> {profile.teamValue}
-            </div>
-          </div>
-        )}
-        
-        {(consistency.isLow || (bias && bias.severity === 'high')) && (
-          <div className="bg-red-100 border-2 border-red-400 text-red-900 rounded-xl p-4 flex items-start gap-4">
-            <AlertTriangle className="w-6 h-6 flex-shrink-0 mt-1" />
-            <div>
-              <div className="font-bold">Urgent Behavioral Alert!</div>
-              <p className="text-sm mt-1">
-                {consistency.isLow && `Your **Consistency Score is only ${consistency.score}%**, indicating erratic decision-making behavior. `}
-                {(consistency.isLow && bias && bias.severity === 'high') && `| `}
-                {bias && bias.severity === 'high' && `You have a **Strong Self-Serving Bias**. `}
-              </p>
-              <button 
-                onClick={() => setShowAssistant(true)}
-                className="mt-2 text-sm text-blue-600 font-semibold hover:text-blue-800 underline"
-              >
-                Ask the Agent for a Fix →
-              </button>
-            </div>
-          </div>
-        )}
-
-        {needsOutcome.length > 0 && (
-          <div className="bg-yellow-100 border-2 border-yellow-400 text-yellow-900 rounded-xl p-4">
-            <div className="font-bold flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
-              {needsOutcome.length} Decision{needsOutcome.length !== 1 && 's'} Awaiting Outcome
-            </div>
-            <p className="text-sm mt-1">Don't miss the learning opportunity! Log outcomes for:</p>
-            <ul className="mt-2 space-y-1">
-              {needsOutcome.slice(0, 3).map(d => (
-                <li key={d.id} className="flex justify-between items-center text-sm">
-                  <span className="truncate flex-1">{d.title}</span>
-                  <button 
-                    onClick={() => setCurrentView(`log-outcome-${d.id}`)}
-                    className="text-xs bg-yellow-600 text-white px-3 py-1 rounded-full hover:bg-yellow-700 ml-3 flex-shrink-0"
-                  >
-                    Log Outcome
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button 
-            onClick={() => setCurrentView('log-decision')}
-            className="bg-white border-2 border-blue-200 rounded-xl p-6 hover:border-blue-400 hover:shadow-lg transition-all group"
-          >
-            <div className="flex items-center gap-4 mb-3">
-              <div className="p-3 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-                <Plus className="w-6 h-6 text-blue-600" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-800">Log Decision</h3>
-            </div>
-            <p className="text-gray-600 text-sm">Make a new prediction</p>
-          </button>
-
-          <button 
-            onClick={() => setCurrentView('charts')}
-            className="bg-white border-2 border-purple-200 rounded-xl p-6 hover:border-purple-400 hover:shadow-lg transition-all group"
-          >
-            <div className="flex items-center gap-4 mb-3">
-              <div className="p-3 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
-                <BarChart3 className="w-6 h-6 text-purple-600" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-800">Charts</h3>
-            </div>
-            <p className="text-gray-600 text-sm">View analytics & profile</p>
-          </button>
-
-          <button 
-            onClick={() => setShowAssistant(true)}
-            className="bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl p-6 hover:shadow-lg transition-all"
-          >
-            <div className="flex items-center gap-4 mb-3">
-              <div className="p-3 bg-white/30 rounded-lg">
-                <Zap className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-white">Ask the Agent</h3>
-            </div>
-            <p className="text-purple-100 text-sm">Get personalized suggestions</p>
-          </button>
-        </div>
-      </div>
-    );
-  };
-
-  // ==================== LOG DECISION (Condensed for Final Delivery) ====================
-  const LogDecision = () => {
-    const [newDecision, setNewDecision] = useState({
-      title: '', 
-      prediction: 'positive', 
-      confidence: 50, 
-      evidence: '', 
-      domain: 'career',
-      stakes: 'medium',
-      emotionalState: 'neutral',
-      timeToDecide: 'days',
-      alternativesConsidered: '',
-      decisionBasis: 'Data/Analysis' 
-    });
-
-    const handleSubmit = () => {
-      if (!newDecision.title) return;
-      const decision = { ...newDecision, id: Date.now(), date: new Date().toISOString(), outcome: null };
-      setUserData({ ...userData, decisions: [...userData.decisions, decision] });
-      setCurrentView('dashboard');
-    };
-    
-    // Helper for button groups
-    const ButtonGroup = ({ label, options, selected, field }) => (
-      <div>
-        <label className="block font-semibold mb-2">{label} *</label>
-        <div className="grid grid-cols-3 gap-2">
-          {options.map(opt => (
-            <button 
-              key={opt.value} 
-              onClick={() => setNewDecision({...newDecision, [field]: opt.value})}
-              className={`py-3 px-2 rounded-lg font-medium text-sm transition-colors ${
-                selected === opt.value 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-    
-    const BinarySelect = ({ label, options, selected, field }) => (
-      <div>
-        <label className="block font-semibold mb-2">{label} *</label>
-        <div className="flex bg-gray-100 rounded-lg p-1">
-          {options.map(opt => (
-            <button
-              key={opt.value}
-              onClick={() => setNewDecision({...newDecision, [field]: opt.value})}
-              className={`w-1/2 py-2 rounded-md font-medium text-sm transition-all ${
-                selected === opt.value 
-                  ? 'bg-white text-blue-700 shadow' 
-                  : 'text-gray-700 hover:bg-white/50'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-
-    return (
-      <div className="max-w-2xl mx-auto">
-        <button onClick={() => setCurrentView('dashboard')} className="text-blue-600 hover:text-blue-800 mb-4 font-medium">← Back to Dashboard</button>
-        <div className="bg-white rounded-xl border-2 border-gray-200 p-8 shadow-lg">
-          <h2 className="text-3xl font-bold mb-6">Log a Decision</h2>
-          <div className="space-y-6">
-            <div>
-              <label className="block font-semibold mb-2">What are you deciding? *</label>
-              <input type="text" value={newDecision.title} onChange={(e) => setNewDecision({...newDecision, title: e.target.value})} placeholder="e.g., Accepting job offer at Company X" className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" />
-            </div>
-            
-            <ButtonGroup label="Stakes" field="stakes" selected={newDecision.stakes} options={[{ value: 'low', label: 'Low' }, { value: 'medium', label: 'Medium' }, { value: 'high', label: 'High' }]}/>
-            <ButtonGroup label="Emotional State" field="emotionalState" selected={newDecision.emotionalState} options={[{ value: 'calm', label: 'Calm' }, { value: 'neutral', label: 'Neutral' }, { value: 'anxious', label: 'Anxious/Stressed' }]}/>
-            <ButtonGroup label="Time to Decide" field="timeToDecide" selected={newDecision.timeToDecide} options={[{ value: 'instant', label: 'Instant' }, { value: 'days', label: 'Days' }, { value: 'weeks', label: 'Weeks+' }]}/>
-            
-            <BinarySelect label="Primary Decision Basis" field="decisionBasis" selected={newDecision.decisionBasis} options={[{ value: 'Data/Analysis', label: 'Data / Analysis' }, { value: 'Gut/Intuition', label: 'Gut / Intuition' }]}/>
-            
-            <div>
-              <label className="block font-semibold mb-2">Domain *</label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {['career', 'relationships', 'health', 'financial'].map(domain => (<button key={domain} onClick={() => setNewDecision({...newDecision, domain})} className={`py-3 px-4 rounded-lg font-medium capitalize transition-colors ${newDecision.domain === domain ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>{domain}</button>))}
-              </div>
-            </div>
-
-            <ButtonGroup label="Your Prediction" field="prediction" selected={newDecision.prediction} options={[{ value: 'positive', label: '✅ Positive' }, { value: 'neutral', label: '😐 Neutral' }, { value: 'negative', label: '❌ Negative' }]}/>
-
-            <div>
-              <label className="block font-semibold mb-2">Confidence: {newDecision.confidence}% *</label>
-              <input type="range" min="10" max="90" step="5" value={newDecision.confidence} onChange={(e) => setNewDecision({...newDecision, confidence: parseInt(e.target.value)})} className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
-            </div>
-            
-            <div>
-              <label className="block font-semibold mb-2">Alternatives Considered (Optional)</label>
-              <textarea value={newDecision.alternativesConsidered} onChange={(e) => setNewDecision({...newDecision, alternativesConsidered: e.target.value})} placeholder="What other options did you rule out? e.g., 'Stay at current job', 'Negotiate for higher pay'..." className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none h-24 resize-none" />
-            </div>
-            
-            <div>
-              <label className="block font-semibold mb-2">Evidence / Reasoning (Optional)</label>
-              <textarea value={newDecision.evidence} onChange={(e) => setNewDecision({...newDecision, evidence: e.target.value})} placeholder="Key facts, data, or 'gut feel' behind your prediction..." className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none h-24 resize-none" />
-            </div>
-
-            <button onClick={handleSubmit} disabled={!newDecision.title} className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity">Log Decision</button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // ==================== LOG OUTCOME (Condensed for Final Delivery) ====================
-  const LogOutcome = ({ decisionId }) => {
-    const decision = userData.decisions.find(d => d.id === parseInt(decisionId));
-    
-    const [outcome, setOutcome] = useState(null);
-    const [notes, setNotes] = useState('');
-    const [attribution, setAttribution] = useState(null); 
-    const [surpriseLevel, setSurpriseLevel] = useState(50);
-    const [keyLearning, setKeyLearning] = useState('');
-
-    if (!decision) { setCurrentView('dashboard'); return null; }
-
-    const handleSubmit = () => {
-      if (outcome === null || attribution === null) return;
-
-      const updatedDecisions = userData.decisions.map(d => 
-        d.id === decision.id 
-          ? { ...d, 
-              outcome, 
-              outcomeNotes: notes, 
-              outcomeDate: new Date().toISOString(),
-              attribution, 
-              surpriseLevel,
-              keyLearning
+        .cosmic-card {
+            background: rgba(20, 20, 30, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .cosmic-glow {
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
+        }
+        .stat-orb {
+            background: radial-gradient(circle at 30% 30%, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.2));
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        .cosmic-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.5), transparent);
+        }
+        .message-bubble {
+            animation: fadeInUp 0.4s ease-out;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
             }
-          : d
-      );
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        input::placeholder, textarea::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+        .constellation-dot {
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            position: absolute;
+            animation: twinkle 3s ease-in-out infinite;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
 
-      setUserData({ ...userData, decisions: updatedDecisions });
-      setCurrentView('dashboard');
+```
+<script>
+    const { createElement: h, useState, useEffect, useRef, useMemo, Fragment } = React;
+
+    // Icons as minimal SVG components
+    const Brain = (props) => h('svg', { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", ...props },
+        h('circle', { cx: "12", cy: "12", r: "10", opacity: "0.3" }),
+        h('path', { d: "M12 2a10 10 0 0 1 0 20" }),
+        h('circle', { cx: "12", cy: "12", r: "3", fill: "currentColor" })
+    );
+
+    const Sparkles = (props) => h('svg', { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", ...props },
+        h('path', { d: "m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" }),
+        h('path', { d: "M5 3v4", opacity: "0.5" }),
+        h('path', { d: "M19 17v4", opacity: "0.5" }),
+        h('path', { d: "M3 5h4", opacity: "0.5" }),
+        h('path', { d: "M17 19h4", opacity: "0.5" })
+    );
+
+    const Send = (props) => h('svg', { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", ...props },
+        h('path', { d: "M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" }),
+        h('path', { d: "m21.854 2.147-10.94 10.939" })
+    );
+
+    const X = (props) => h('svg', { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", ...props },
+        h('path', { d: "M18 6 6 18" }),
+        h('path', { d: "m6 6 12 12" })
+    );
+
+    const Search = (props) => h('svg', { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", ...props },
+        h('circle', { cx: "11", cy: "11", r: "8" }),
+        h('path', { d: "m21 21-4.3-4.3" })
+    );
+
+    const Eye = (props) => h('svg', { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", ...props },
+        h('path', { d: "M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" }),
+        h('circle', { cx: "12", cy: "12", r: "3" })
+    );
+
+    const Moon = (props) => h('svg', { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", ...props },
+        h('path', { d: "M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" })
+    );
+
+    // ==================== QUADRANT SYSTEM ====================
+    const QuadrantSystem = {
+      dimensions: {
+        thinkingStyle: ['Analytical', 'Intuitive'],
+        decisionSpeed: ['Deliberate', 'Rapid'],
+        riskTolerance: ['Conservative', 'Bold'],
+        informationNeed: ['Comprehensive', 'Sufficient']
+      },
+
+      types: {
+        'Analytical-Deliberate-Conservative-Comprehensive': { title: 'Strategic Architect', description: 'Methodical planner who excels at complex analysis', strengths: ['Risk assessment', 'Long-term planning', 'Detail orientation'], blindSpots: ['Analysis paralysis', 'Missed opportunities', 'Slow in crisis'], teamValue: 'Prevents costly mistakes through thorough evaluation' },
+        'Analytical-Deliberate-Bold-Comprehensive': { title: 'Calculated Innovator', description: 'Data-driven risk-taker who bets on analyzed opportunities', strengths: ['Informed risk-taking', 'Strategic disruption', 'Evidence-based boldness'], blindSpots: ['Overconfidence in models', 'Slow to pivot', 'Data blind spots'], teamValue: 'Drives innovation with analytical backing' },
+        'Analytical-Rapid-Conservative-Comprehensive': { title: 'Efficient Optimizer', description: 'Quick analyst who streamlines without recklessness', strengths: ['Rapid problem-solving', 'Pattern recognition', 'Efficient execution'], blindSpots: ['Premature optimization', 'Missing nuance', 'Burnout risk'], teamValue: 'Accelerates execution while maintaining quality' },
+        'Analytical-Rapid-Bold-Comprehensive': { title: 'Decisive Strategist', description: 'Fast, data-informed decision-maker who seizes opportunities', strengths: ['Speed + accuracy', 'Competitive advantage', 'Crisis management'], blindSpots: ['Overcommitment', 'Team overwhelm', 'Sustainability'], teamValue: 'Capitalizes on time-sensitive opportunities' },
+        'Intuitive-Deliberate-Conservative-Comprehensive': { title: 'Wise Counselor', description: 'Thoughtful advisor who reads between the lines', strengths: ['Cultural intelligence', 'People reading', 'Long-term relationships'], blindSpots: ['Overthinking signals', 'Risk aversion', 'Slow decisions'], teamValue: 'Identifies human factors others miss' },
+        'Intuitive-Deliberate-Bold-Comprehensive': { title: 'Visionary Leader', description: 'Bold thinker who trusts conviction backed by reflection', strengths: ['Vision setting', 'Inspiring others', 'Strategic courage'], blindSpots: ['Confirmation bias', 'Groupthink', 'Execution gaps'], teamValue: 'Sets direction and rallies teams toward ambitious goals' },
+        'Intuitive-Rapid-Conservative-Sufficient': { title: 'Agile Adapter', description: 'Flexible responder who reads situations quickly', strengths: ['Adaptability', 'Relationship building', 'Conflict resolution'], blindSpots: ['Indecisiveness', 'Insufficient rigor', 'Boundary issues'], teamValue: 'Maintains team cohesion through change' },
+        'Intuitive-Rapid-Bold-Sufficient': { title: 'Dynamic Catalyst', description: 'Instinct-driven mover who acts on gut feel', strengths: ['First-mover advantage', 'Energy creation', 'Breaking inertia'], blindSpots: ['Impulsiveness', 'Overlooking risks', 'Inconsistency'], teamValue: 'Initiates action when others hesitate' },
+        'Analytical-Deliberate-Conservative-Sufficient': { title: 'Prudent Operator', description: 'Careful executor who values proven methods', strengths: ['Reliability', 'Quality control', 'Risk management'], blindSpots: ['Rigidity', 'Innovation resistance', 'Opportunity cost'], teamValue: 'Ensures operational excellence and stability' },
+        'Analytical-Deliberate-Bold-Sufficient': { title: 'Strategic Disruptor', description: 'Bold analyst who challenges conventions with data', strengths: ['Creative problem-solving', 'Strategic pivots', 'Competitive edge'], blindSpots: ['Overestimating data', 'Change fatigue', 'Execution risk'], teamValue: 'Questions assumptions and finds better ways' },
+        'Analytical-Rapid-Conservative-Sufficient': { title: 'Tactical Executor', description: 'Quick implementer who delivers without drama', strengths: ['Execution speed', 'Pragmatism', 'Consistency'], blindSpots: ['Tunnel vision', 'Missing opportunities', 'Burnout'], teamValue: 'Ships reliably and keeps projects moving' },
+        'Analytical-Rapid-Bold-Sufficient': { title: 'Entrepreneurial Driver', description: 'Fast-moving builder who trusts quick analysis', strengths: ['Rapid scaling', 'Market timing', 'Momentum building'], blindSpots: ['Technical debt', 'Team strain', 'Unsustainable pace'], teamValue: 'Drives aggressive growth and market capture' },
+        'Intuitive-Deliberate-Conservative-Sufficient': { title: 'Empathetic Guardian', description: 'People-first thinker who protects team wellbeing', strengths: ['Team morale', 'Culture building', 'Conflict prevention'], blindSpots: ['Avoiding conflict', 'Slow growth', 'Performance issues'], teamValue: 'Creates psychological safety and retention' },
+        'Intuitive-Deliberate-Bold-Sufficient': { title: 'Inspirational Maverick', description: 'Conviction-driven leader who trusts their vision', strengths: ['Charisma', 'Big bets', 'Culture transformation'], blindSpots: ['Reality disconnect', 'Blind loyalty', 'Sustainability'], teamValue: 'Transforms culture and inspires extraordinary effort' },
+        'Intuitive-Rapid-Conservative-Comprehensive': { title: 'Diplomatic Navigator', description: 'Quick reader who builds consensus carefully', strengths: ['Stakeholder management', 'Political savvy', 'Harmony'], blindSpots: ['Over-accommodation', 'Decision delay', 'Conflict avoidance'], teamValue: 'Navigates complex organizational dynamics' },
+        'Intuitive-Rapid-Bold-Comprehensive': { title: 'Transformative Pioneer', description: 'Bold intuitive who acts on holistic understanding', strengths: ['Change leadership', 'Pattern synthesis', 'Strategic courage'], blindSpots: ['Overextension', 'Unpredictability', 'Team whiplash'], teamValue: 'Leads transformative initiatives others fear' }
+      },
+      
+      assessFromDecisions: (decisions) => {
+        if (decisions.length < 5) return null;
+        const completed = decisions.filter(d => d.outcome !== null);
+        if (completed.length < 3) return null;
+
+        const analyticalDecisions = decisions.filter(d => d.decisionBasis === 'Data/Analysis').length;
+        const thinkingStyle = (analyticalDecisions / decisions.length) > 0.5 ? 'Analytical' : 'Intuitive';
+
+        const rapidDecisions = decisions.filter(d => d.timeToDecide === 'instant' || d.timeToDecide === 'hours').length;
+        const decisionSpeed = rapidDecisions / decisions.length > 0.5 ? 'Rapid' : 'Deliberate';
+
+        const highStakesDecisions = decisions.filter(d => d.stakes === 'high');
+        let boldScore = 0;
+        if (highStakesDecisions.length > 0) {
+          const avgConfidenceOnHighStakes = highStakesDecisions.reduce((sum, d) => sum + d.confidence, 0) / highStakesDecisions.length;
+          if (avgConfidenceOnHighStakes > 65) boldScore = 1.0; 
+        } else {
+          const mediumStakes = decisions.filter(d => d.stakes === 'medium');
+          if (mediumStakes.length > 0) {
+            const avgConfMedium = mediumStakes.reduce((sum, d) => sum + d.confidence, 0) / mediumStakes.length;
+            boldScore = (avgConfMedium > 70) ? 0.6 : 0.3;
+          }
+        }
+        const riskTolerance = boldScore > 0.5 ? 'Bold' : 'Conservative';
+
+        let comprehensiveScore = 0;
+        decisions.forEach(d => {
+          if (d.timeToDecide === 'weeks') comprehensiveScore += 2;
+          if (d.timeToDecide === 'days') comprehensiveScore += 1;
+          if (d.alternativesConsidered && d.alternativesConsidered.length > 30) comprehensiveScore += 1;
+          if (d.evidence && d.evidence.length > 120) comprehensiveScore += 1;
+        });
+        const informationNeed = (comprehensiveScore / decisions.length) > 1.0 ? 'Comprehensive' : 'Sufficient';
+
+        const key = `${thinkingStyle}-${decisionSpeed}-${riskTolerance}-${informationNeed}`;
+        const profile = QuadrantSystem.types[key] || QuadrantSystem.types['Analytical-Deliberate-Conservative-Sufficient'];
+
+        const currentProfile = Storage.loadSync().profile || {};
+
+        return {
+          ...profile,
+          dimensions: { thinkingStyle, decisionSpeed, riskTolerance, informationNeed },
+          key,
+          displayName: currentProfile.displayName,
+          values: currentProfile.values || [],
+          selfAssessment: currentProfile.selfAssessment
+        };
+      }
     };
 
-    return (
-      <div className="max-w-2xl mx-auto">
-        <button onClick={() => setCurrentView('dashboard')} className="text-blue-600 hover:text-blue-800 mb-4 font-medium">← Back to Dashboard</button>
-        <div className="bg-white rounded-xl border-2 border-gray-200 p-8 shadow-lg">
-          <h2 className="text-3xl font-bold mb-6">Log Outcome</h2>
-          <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6">
-            <div className="font-bold text-lg mb-2">{decision.title}</div>
-            <div className="text-sm text-gray-700">
-              <strong>Your prediction:</strong> {decision.prediction} ({decision.confidence}% confident)
-            </div>
-          </div>
+    // ==================== ANALYTICS ENGINE ====================
+    const AnalyticsEngine = {
+      
+      calculateAccuracy: (decisions) => {
+        const completed = decisions.filter(d => d.outcome !== null);
+        if (completed.length === 0) return null;
+        const correct = completed.filter(d => d.prediction === d.outcome).length;
+        return (correct / completed.length) * 100;
+      },
+      
+      calculateFilteredAccuracy: (decisions, filterFn) => {
+        const filtered = decisions.filter(filterFn);
+        const completed = filtered.filter(d => d.outcome !== null);
+        if (completed.length === 0) return { accuracy: null, count: 0 };
+        const correct = completed.filter(d => d.prediction === d.outcome).length;
+        return {
+          accuracy: (correct / completed.length) * 100,
+          count: completed.length
+        };
+      },
 
-          <div className="space-y-6">
-            <div>
-              <label className="block font-semibold mb-3">What actually happened? *</label>
-              <div className="grid grid-cols-3 gap-3">
-                {[{ value: 'positive', label: '✅ Positive' }, { value: 'neutral', label: '😐 Neutral' }, { value: 'negative', label: '❌ Negative' }].map(opt => (
-                  <button key={opt.value} onClick={() => setOutcome(opt.value)} className={`py-4 rounded-lg font-medium transition-all ${outcome === opt.value ? 'bg-green-600 text-white shadow-md' : 'bg-gray-100 hover:bg-gray-200'}`}>
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            <div>
-              <label className="block font-semibold mb-3">Attribution: Why did this happen? *</label>
-              <div className="grid grid-cols-2 gap-3">
-                {[{ value: 'my_skill', label: 'Internal (My Skill/Process)' }, { value: 'external', label: 'External (Luck/Market)' }].map(opt => (
-                  <button 
-                    key={opt.value} 
-                    onClick={() => setAttribution(opt.value)}
-                    className={`py-3 px-2 rounded-lg text-sm font-medium transition-all ${
-                      attribution === opt.value 
-                        ? 'bg-purple-600 text-white shadow-md' 
-                        : 'bg-gray-100 hover:bg-gray-200'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs text-gray-500 mt-2">
-                Be honest about the *primary* cause. (Helps the agent track your **Self-Serving Bias**).
-              </p>
-            </div>
-            
-            <div>
-              <label className="block font-semibold mb-2">Surprise Level: {surpriseLevel}%</label>
-              <input type="range" min="0" max="100" step="5" value={surpriseLevel} onChange={(e) => setSurpriseLevel(parseInt(e.target.value))} className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
-            </div>
-            
-            <div>
-              <label className="block font-semibold mb-2">Key Learning (Optional)</label>
-              <textarea value={keyLearning} onChange={(e) => setKeyLearning(e.target.value)} placeholder="What's the one lesson you'll take from this?" className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none h-20 resize-none" />
-            </div>
+      checkForSelfServingBias: (decisions) => {
+        const completed = decisions.filter(d => d.outcome !== null && d.attribution);
+        if (completed.length < 5) return null;
 
-            <div>
-              <label className="block font-semibold mb-2">Outcome Notes (Optional)</label>
-              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="What happened? Why?" className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none h-24 resize-none" />
-            </div>
+        let internalSuccesses = 0;
+        let externalFailures = 0;
+        let totalSuccesses = 0;
+        let totalFailures = 0;
+        
+        completed.forEach(d => {
+          const isCorrect = d.prediction === d.outcome;
+          
+          if (isCorrect) {
+            totalSuccesses++;
+            if (d.attribution === 'my_skill') internalSuccesses++;
+          } else {
+            totalFailures++;
+            if (d.attribution === 'external') externalFailures++;
+          }
+        });
 
-            <button onClick={handleSubmit} disabled={outcome === null || attribution === null} className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity">Save Outcome</button>
-          </div>
-        </div>
-      </div>
+        if (totalSuccesses === 0 || totalFailures === 0) return null;
+
+        const internalSuccessRate = internalSuccesses / totalSuccesses;
+        const externalFailureRate = externalFailures / totalFailures;
+
+        if (internalSuccessRate > 0.6 && externalFailureRate > 0.6) {
+          return { severity: 'high', message: "You exhibit a strong Self-Serving Bias. You tend to take credit for wins and blame losses on external factors." };
+        }
+        
+        if (internalSuccessRate > 0.5 && externalFailureRate > 0.5) {
+          return { severity: 'medium', message: "You show signs of a Self-Serving Bias. Try to be more objective." };
+        }
+        
+        return { severity: 'low', message: "Your attribution of outcomes is generally balanced." };
+      },
+
+      getConsistencyScore: (decisions) => {
+        if (decisions.length < 5) return { score: 100, deviation: 0, isLow: false };
+        
+        const timeMap = { 'instant': 1, 'hours': 4, 'days': 48, 'weeks': 168 };
+        const timeToDecideValues = decisions.map(d => timeMap[d.timeToDecide] || 48);
+        
+        const avgTime = timeToDecideValues.reduce((a, b) => a + b, 0) / timeToDecideValues.length;
+        const avgConfidence = decisions.reduce((sum, d) => sum + d.confidence, 0) / decisions.length;
+        
+        const recent = decisions.slice(-5);
+        if (recent.length < 3) return { score: 100, deviation: 0, isLow: false };
+
+        let totalDeviation = 0;
+        
+        recent.forEach(d => {
+          const timeDeviation = Math.abs((timeMap[d.timeToDecide] || 48) - avgTime) / avgTime;
+          const confidenceDeviation = Math.abs(d.confidence - avgConfidence) / 100; 
+          
+          totalDeviation += (timeDeviation * 0.5) + (confidenceDeviation * 0.5);
+        });
+
+        const averageDeviation = totalDeviation / recent.length;
+        const score = Math.max(0, 100 - (averageDeviation * 100));
+
+        return { 
+          score: score.toFixed(0), 
+          deviation: averageDeviation.toFixed(2),
+          isLow: score < 70
+        };
+      },
+
+      getContextualBlindSpot: (decisions, userQuery) => {
+        const lowerQuery = userQuery.toLowerCase();
+        
+        let domainFocus = null;
+        if (lowerQuery.includes('invest') || lowerQuery.includes('stock') || lowerQuery.includes('crypto') || lowerQuery.includes('money') || lowerQuery.includes('financial')) {
+          domainFocus = 'financial';
+        } else if (lowerQuery.includes('job') || lowerQuery.includes('career') || lowerQuery.includes('promotion') || lowerQuery.includes('work') || lowerQuery.includes('business')) {
+          domainFocus = 'career';
+        } else if (lowerQuery.includes('relationship') || lowerQuery.includes('friend') || lowerQuery.includes('partner') || lowerQuery.includes('conflict') || lowerQuery.includes('team')) {
+          domainFocus = 'relationships';
+        } else if (lowerQuery.includes('health') || lowerQuery.includes('diet') || lowerQuery.includes('fitness') || lowerQuery.includes('wellbeing') || lowerQuery.includes('sleep')) {
+          domainFocus = 'health';
+        }
+
+        if (domainFocus) {
+          const { accuracy, count } = AnalyticsEngine.calculateFilteredAccuracy(decisions, d => d.domain === domainFocus);
+          if (count > 2 && accuracy < 60) {
+            return { type: 'domain', focus: domainFocus, accuracy: accuracy.toFixed(0), message: `Your accuracy in ${domainFocus} decisions is low (${accuracy.toFixed(0)}%).` };
+          }
+        }
+        
+        const consistency = AnalyticsEngine.getConsistencyScore(decisions);
+        if (consistency.isLow) {
+           return { type: 'consistency', focus: 'erratic_process', message: `Your decision-making process is becoming erratic (Consistency Score: ${consistency.score}!).` };
+        }
+        
+        const bias = AnalyticsEngine.checkForSelfServingBias(decisions);
+        if (bias && bias.severity === 'high') {
+          return { type: 'bias', focus: 'self_serving', message: bias.message };
+        }
+        
+        return { type: 'none', focus: 'general', message: 'You are performing well. Let\'s focus on reinforcement.' };
+      },
+
+      generateAgentResponse: (decisions, profile, userQuery) => {
+        const defaultResponse = {
+          message: "I need more data to be a useful friend! Log at least 5 decisions and 3 completed outcomes.",
+          insights: ["Track decisions consistently", "Be honest about outcomes"],
+          actionSteps: ["Log your next decision today", "Set a reminder to track outcomes"],
+          searchQuery: "how to log decisions consistently"
+        };
+
+        const completed = decisions.filter(d => d.outcome !== null);
+        if (completed.length < 3) return defaultResponse;
+        
+        const accuracy = AnalyticsEngine.calculateAccuracy(decisions);
+        const blindSpot = AnalyticsEngine.getContextualBlindSpot(decisions, userQuery);
+        const bsType = blindSpot.type;
+        const bsFocus = blindSpot.focus;
+        
+        let generalSearchQuery = userQuery;
+        let personalizedInsight = "";
+        let actionSteps = [];
+        
+        if (userQuery.toLowerCase().trim() !== 'get insight') {
+          
+          if (bsType === 'domain' && profile.dimensions.riskTolerance === 'Bold') {
+              personalizedInsight = `I see your query. Given your Bold style and low ${bsFocus} accuracy (${blindSpot.accuracy}%), the best external information for you is structured risk mitigation.`;
+              generalSearchQuery = `${userQuery} + structured risk mitigation strategies for ${bsFocus} + avoid impulsive action`;
+              actionSteps = [`Search for a "pre-mortem" exercise related to ${bsFocus}.`, `Reduce your confidence prediction by 20% on your next ${bsFocus} decision.`];
+              
+          } else if (bsType === 'bias' || bsType === 'consistency') {
+              personalizedInsight = `Your query relates to the external world, but our data shows your process is the current blocker (${blindSpot.message}). External information is only useful if your internal process is sound.`;
+              generalSearchQuery = `${userQuery} + how to objectively assess process failure + decision journaling methods`;
+              actionSteps = [`Write down your 'Attribution' for your last three outcomes. Were they honest?`, `Focus on your core strength: ${profile.strengths[0]} before executing any search result.`];
+              
+          } else if (profile.dimensions.thinkingStyle === 'Intuitive' && bsType === 'confidence') {
+              personalizedInsight = `As an Intuitive thinker, your gut is powerful, but your miscalibration means you need solid proof. I'm searching for objective data to test your intuition.`;
+              generalSearchQuery = `objective data on ${userQuery} + external expert consensus + statistical validation`;
+              actionSteps = [`Before acting on the search results, find one piece of data that contradicts your intuition.`, `Log an updated decision in 48 hours to track confidence drift.`];
+              
+          } else {
+              personalizedInsight = `Your overall performance is ${accuracy.toFixed(0)}%. As a ${profile.title}, I'll filter the world's information to reinforce your strength in ${profile.strengths[0]}.`;
+              generalSearchQuery = `leveraging ${profile.strengths[0]} in the context of ${userQuery}`;
+              actionSteps = [`Think about how the search results align with your core value of ${profile.values && profile.values.length > 0 ? profile.values[0] : 'Growth'}.`, `Share the search result with a colleague to test its rigor.`];
+          }
+
+          return {
+            message: userQuery,
+            insights: [personalizedInsight],
+            actionSteps: actionSteps,
+            searchQuery: generalSearchQuery
+          };
+
+        } else {
+          
+          const overallBlindSpot = AnalyticsEngine.getContextualBlindSpot(decisions, 'general');
+
+          let message = `Hello, ${profile.displayName || 'Friend'}. Your overall accuracy is ${accuracy.toFixed(0)}%. My current focus is your ${overallBlindSpot.message}`;
+          let suggestion = "";
+          let searchQuery = "";
+          actionSteps = [];
+
+          if (overallBlindSpot.type === 'consistency') {
+            suggestion = `You're deviating from your norms. As a ${profile.title}, you excel with structure. My advice is to pause and explicitly write down your Confidence and Evidence before proceeding.`;
+            searchQuery = `how to improve consistency in decision making process`;
+            actionSteps = ["Review the average time and confidence of your last 5 decisions", "Take a 24-hour break before the next major decision."];
+            
+          } else if (overallBlindSpot.type === 'bias') {
+            suggestion = `The data shows you might be avoiding responsibility for losses (Self-Serving Bias). Next time you fail, consciously attribute the cause to a lack of skill or poor process.`;
+            searchQuery = `strategies to overcome self-serving bias in professional context`;
+            actionSteps = ["Find one example of a failure and write down three internal reasons for it.", "Review your attribution rates in the Charts section."];
+          
+          } else if (overallBlindSpot.type === 'domain') {
+            suggestion = `Your ${overallBlindSpot.focus.toUpperCase()} decisions are struggling. As a ${profile.title}, you need ${profile.dimensions.informationNeed === 'Comprehensive' ? 'more external data/experts' : 'a quicker feedback loop'} for this domain.`;
+            searchQuery = `best practices for ${overallBlindSpot.focus} decision making and risk assessment`;
+            actionSteps = [`Seek an expert opinion for the next ${overallBlindSpot.focus} decision.`, `Log the exact data points you used for your next ${overallBlindSpot.focus} decision.`];
+          
+          } else {
+             message = `You're performing well! Your overall accuracy is ${accuracy.toFixed(0)}%. Let's reinforce your strengths.`;
+             suggestion = `Your profile is a ${profile.title}. Leverage your top strength: ${profile.strengths[0]}. Think about how you can teach this skill to someone else.`;
+             searchQuery = `how to leverage the strengths of a ${profile.title} decision style`;
+             actionSteps = ["Write down your favorite success story where you used your primary strength.", "Mentor a colleague on one of your strengths."];
+          }
+
+          return {
+            message: message,
+            insights: [suggestion],
+            actionSteps: actionSteps,
+            searchQuery: searchQuery
+          };
+        }
+      }
+    };
+
+    // ==================== STORAGE ====================
+    const Storage = {
+      loadSync() { 
+        try {
+          const result = localStorage.getItem('calibrate_v6_data');
+          return result ? JSON.parse(result) : {};
+        } catch (e) {
+          console.error('Storage sync load error:', e);
+          return {};
+        }
+      },
+
+      async load() {
+        return Storage.loadSync();
+      },
+
+      async save(data) {
+        try {
+          localStorage.setItem('calibrate_v6_data', JSON.stringify(data));
+          return true;
+        } catch (e) {
+          console.error('Storage save error:', e);
+          return false;
+        }
+      }
+    };
+
+    // ==================== COMPONENTS ====================
+    const Modal = ({ children, onClose }) => (
+      h('div', { 
+        className: "fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4",
+        onClick: (e) => e.target === e.currentTarget && onClose()
+      },
+        h('div', { className: "cosmic-card w-full max-w-2xl h-[85vh] flex flex-col rounded-2xl overflow-hidden" },
+          children
+        )
+      )
     );
-  };
 
-
-  // ==================== MAIN RENDER ====================
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Brain className="w-16 h-16 mx-auto mb-4 text-blue-600 animate-pulse" />
-          <p className="text-gray-600">Loading Calibrate...</p>
-        </div>
-      </div>
+    const PromptChip = ({ label, onClick }) => (
+      h('button', { 
+        onClick: onClick,
+        className: "px-4 py-2 rounded-full text-xs font-light tracking-wide cosmic-card hover:cosmic-glow transition-all whitespace-nowrap"
+      }, label)
     );
-  }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {currentView === 'onboarding' && <OnboardingWizard />}
+    const DecisionAssistant = ({ userData, setUserData, onClose }) => {
+      const decisions = userData.decisions;
+      const profile = QuadrantSystem.assessFromDecisions(decisions);
+      const [chatInput, setChatInput] = useState('');
+      const chatEndRef = useRef(null);
+      
+      const initialAgentResponse = useMemo(() => {
+        if (!profile) return null;
+        return AnalyticsEngine.generateAgentResponse(decisions, profile, 'get insight');
+      }, [decisions, profile]);
 
-      {currentView !== 'onboarding' && (
-        <>
-          <div className="bg-white border-b shadow-sm sticky top-0 z-40">
-            <div className="max-w-7xl mx-auto px-4 py-4">
-              <div className="flex items-center justify-between">
-                <button onClick={() => setCurrentView('dashboard')} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                  <Brain className="w-8 h-8 text-blue-600" />
-                  <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Calibrate</h1>
-                    <p className="text-sm text-gray-600">Decision Intelligence System</p>
-                  </div>
-                </button>
+      const [chatMessages, setChatMessages] = useState(
+        initialAgentResponse ? [{ role: 'assistant', ...initialAgentResponse }] : []
+      );
 
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => setShowAssistant(true)}
-                    className="px-4 py-2 rounded-lg font-medium transition-colors bg-purple-600 text-white hover:bg-purple-700"
-                  >
-                    <Zap className="w-5 h-5 inline mr-2" />
-                    Agent
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+      useEffect(() => {
+        if (chatEndRef.current) {
+          chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, [chatMessages]);
+      
+      const handleQuery = (query) => {
+        const finalQuery = query || chatInput;
+        if (!finalQuery.trim()) return;
+        
+        setChatMessages(prev => [...prev, { role: 'user', content: finalQuery }]);
+        setChatInput('');
 
-          <div className="max-w-7xl mx-auto px-4 py-8">
-            {currentView === 'dashboard' && <Dashboard />}
-            {currentView === 'log-decision' && <LogDecision />}
-            {currentView === 'charts' && <ChartsView />}
-            {currentView.startsWith('log-outcome-') && (
-              <LogOutcome decisionId={currentView.replace('log-outcome-', '')} />
-            )}
-          </div>
+        const insight = AnalyticsEngine.generateAgentResponse(decisions, profile, finalQuery);
 
-          {showAssistant && (
-            <DecisionAssistant 
-              userData={userData} 
-              setUserData={setUserData} 
-              onClose={() => setShowAssistant(false)} 
-            />
-          )}
-        </>
-      )}
-    </div>
-  );
-};
+        setTimeout(() => {
+          setChatMessages(prev => [...prev, {
+            role: 'assistant',
+            ...insight
+          }]);
+        }, 500);
+      };
 
-export default Calibrate;
+      if (!profile) {
+        return h(Modal, { onClose },
+          h('div', { className: "text-center p-12" },
+            h('div', { className: "inline-block animate-float mb-6" },
+              h(Moon, { className: "w-20 h-20 text-purple-400" })
+            ),
+            h('h3', { className: "text-2xl serif mb-3" }, "Agent Dormant"),
+            h('p', { className: "text-gray-400 font-light" }, "Need at least 5 decisions and 3 outcomes to awaken the oracle.")
+          )
+        );
+      }
+
+      return h(Modal, { onClose },
+        h('div', { className: "flex flex-col h-full" },
+          h('div', { className: "relative p-6 border-b border-white/10" },
+            h('button', { 
+              onClick: onClose, 
+              className: "absolute top-6 right-6 text-gray-400 hover:text-white transition-colors"
+            },
+              h(X, { className: "w-5 h-5" })
+            ),
+            h('div', { className: "flex items-center gap-3" },
+              h(Sparkles, { className: "w-6 h-6 text-purple-400" }),
+              h('h3', { className: "text-2xl serif" }, "Your Oracle")
+            ),
+            h('p', { className: "text-sm text-gray-400 mt-2 font-light" }, "Personalized guidance from your decision patterns")
+          ),
+
+          h('div', { className: "flex-1 overflow-y-auto p-6 space-y-6" },
+            chatMessages.map((msg, idx) =>
+              h('div', { 
+                key: idx, 
+                className: `message-bubble ${msg.role === 'user' ? 'text-right' : 'text-left'}`
+              },
+                h('div', { 
+                  className: `inline-block max-w-[85%] p-4 rounded-2xl ${
+                    msg.role === 'user' 
+                      ? 'bg-gradient-to-br from-purple-600 to-blue-600 text-white' 
+                      : 'cosmic-card'
+                  }`,
+                  style: msg.role === 'assistant' ? { borderLeft: '2px solid rgba(139, 92, 246, 0.5)' } : {}
+                },
+                  msg.role === 'user' ? (
+                    h('p', { className: "text-sm font-light" }, msg.content)
+                  ) : (
+                    h(Fragment, null,
+                      h('div', { className: "text-xs uppercase tracking-widest text-purple-400 mb-3 font-light" },
+                        msg.message === 'get insight' ? 'PERSONAL READING' : 'COSMIC FILTER'
+                      ),
+                      
+                      msg.message !== 'get insight' && h('p', { 
+                        className: "text-sm text-gray-400 italic mb-4 font-light",
+                        dangerouslySetInnerHTML: { __html: `Interpreting <span class="text-white">"${msg.message}"</span> through your patterns...` }
+                      }),
+                      
+                      msg.insights && msg.insights.length > 0 && h('div', { className: "space-y-3" },
+                        msg.insights.map((insight, i) =>
+                          h('div', { 
+                            key: i, 
+                            className: "text-sm leading-relaxed font-light",
+                            dangerouslySetInnerHTML: { __html: insight.replace(/\*\*(.*?)\*\*/g, '<span class="text-purple-300">$1</span>') }
+                          })
+                        )
+                      ),
+
+                      msg.searchQuery && h('div', { className: "mt-4 pt-4 border-t border-white/10" },
+                        h('div', { className: "text-xs uppercase tracking-widest text-blue-400 mb-2 flex items-center gap-2 font-light" },
+                          h(Search, { className: "w-3 h-3" }),
+                          "External Knowledge"
+                        ),
+                        h('a', {
+                          href: `https://www.google.com/search?q=${encodeURIComponent(msg.searchQuery)}`,
+                          target: "_blank",
+                          rel: "noopener noreferrer",
+                          className: "text-xs text-blue-300 hover:text-blue-200 underline block break-words font-light"
+                        }, msg.searchQuery)
+                      ),
+                      
+                      msg.actionSteps && msg.actionSteps.length > 0 && h('div', { className: "mt-4 pt-4 border-t border-white/10" },
+                        h('div', { className: "text-xs uppercase tracking-widest text-green-400 mb-3 font-light" }, "Next Steps"),
+                        h('div', { className: "space-y-2" },
+                          msg.actionSteps.map((step, i) =>
+                            h('div', { key: i, className: "flex items-start gap-3" },
+                              h('div', { className: "w-5 h-5 rounded-full border border-green-400/30 flex items-center justify-center flex-shrink-0 mt-0.5" },
+                                h('span', { className: "text-xs text-green-400" }, i + 1)
+                              ),
+                              h('p', { className: "text-xs text-gray-300 font-light flex-1" }, step)
+                            )
+                          )
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            ),
+            h('div', { ref: chatEndRef })
+          ),
+
+          h('div', { className: "p-6 border-t border-white/10" },
+            h('div', { className: "text-xs uppercase tracking-widest text-gray-500 mb-3 font-light" }, "Suggested Queries"),
+            h('div', { className: "flex gap-2 mb-4 overflow-x-auto pb-1" },
+              h(PromptChip, { label: "Crypto investing?", onClick: () => handleQuery("How do I invest in crypto?") }),
+              h(PromptChip, { label: "My blind spots", onClick: () => handleQuery("get insight") }),
+              h(PromptChip, { label: "Career advice", onClick: () => handleQuery("How to ask for a raise?") })
+            ),
+            h('form', { 
+              onSubmit: (e) => { e.preventDefault(); handleQuery(); },
+              className: "flex gap-2"
+            },
+              h('input', {
+                type: "text",
+                value: chatInput,
+                onChange: (e) => setChatInput(e.target.value),
+                placeholder: "Ask your oracle...",
+                className: "flex-1 px-4 py-3 cosmic-card rounded-xl focus:outline-none focus:ring-1 focus:ring-purple-500 text-sm font-light"
+              }),
+              h('button', {
+                type: "submit",
+                className: "bg-gradient-to-br from-purple-600 to-blue-600 text-white p-3 rounded-xl hover:opacity-90 transition-opacity"
+              },
+                h(Send, { className: "w-5 h-5" })
+              )
+            )
+          )
+        )
+      );
+    };
+
+    // ==================== MAIN APP ====================
+    const Calibrate = () => {
+      const [loading, setLoading] = useState(true);
+      const [showAssistant, setShowAssistant] = useState(false);
+      const [userData, setUserData] = useState({
+        onboardingComplete: false,
+        decisions: [],
+        joinedDate: new Date().toISOString(),
+        profile: {
+          displayName: 'Demo User',
+          professionalRole: 'Product Manager',
+          professionalBio: 'Experienced PM with focus on data-driven decisions',
+          goals: ['Improve financial decisions', 'Be more confident in high-stakes situations'],
+          values: ['Growth', 'Integrity', 'Impact'],
+          selfAssessment: { 
+            thinkingStyle: 'Analytical',
+            decisionSpeed: 'Deliberate',
+            riskTolerance: 'Bold',
+            informationNeed: 'Comprehensive'
+          }
+        }
+      });
+
+      useEffect(() => {
+        const loadData = async () => {
+          const saved = await Storage.load();
+          if (saved && Object.keys(saved).length > 0 && saved.decisions && saved.decisions.length > 0) {
+            setUserData(saved);
+          } else {
+            const demoDecisions = [
+              {
+                id: 1,
+                title: "Accept job offer at TechCorp",
+                prediction: "positive",
+                confidence: 75,
+                evidence: "Higher salary, better growth opportunities",
+                domain: "career",
+                stakes: "high",
+                emotionalState: "neutral",
+                timeToDecide: "days",
+                alternativesConsidered: "Stay at current company, freelancing",
+                decisionBasis: "Data/Analysis",
+                date: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
+                outcome: "positive",
+                attribution: "my_skill",
+                outcomeDate: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
+              },
+              {
+                id: 2,
+                title: "Invest in cryptocurrency portfolio",
+                prediction: "positive",
+                confidence: 80,
+                evidence: "Market trends look favorable",
+                domain: "financial",
+                stakes: "high",
+                emotionalState: "anxious",
+                timeToDecide: "instant",
+                alternativesConsidered: "Index funds, real estate",
+                decisionBasis: "Gut/Intuition",
+                date: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+                outcome: "negative",
+                attribution: "external",
+                outcomeDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+              },
+              {
+                id: 3,
+                title: "Launch new product feature early",
+                prediction: "positive",
+                confidence: 70,
+                evidence: "Customer feedback is positive",
+                domain: "career",
+                stakes: "medium",
+                emotionalState: "calm",
+                timeToDecide: "days",
+                alternativesConsidered: "Wait for more testing, MVP approach",
+                decisionBasis: "Data/Analysis",
+                date: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
+                outcome: "positive",
+                attribution: "my_skill",
+                outcomeDate: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString()
+              },
+              {
+                id: 4,
+                title: "Invest in another crypto project",
+                prediction: "positive",
+                confidence: 85,
+                evidence: "Strong community, innovative tech",
+                domain: "financial",
+                stakes: "high",
+                emotionalState: "anxious",
+                timeToDecide: "instant",
+                alternativesConsidered: "Traditional stocks, bonds",
+                decisionBasis: "Gut/Intuition",
+                date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+                outcome: "negative",
+                attribution: "external",
+                outcomeDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
+              },
+              {
+                id: 5,
+                title: "Hire senior engineer for team",
+                prediction: "positive",
+                confidence: 65,
+                evidence: "Strong technical skills, good culture fit",
+                domain: "career",
+                stakes: "medium",
+                emotionalState: "neutral",
+                timeToDecide: "weeks",
+                alternativesConsidered: "Promote internally, contract worker",
+                decisionBasis: "Data/Analysis",
+                date: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+                outcome: "positive",
+                attribution: "my_skill",
+                outcomeDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+              },
+              {
+                id: 6,
+                title: "Start new exercise routine",
+                prediction: "positive",
+                confidence: 60,
+                evidence: "Have gym membership, motivated",
+                domain: "health",
+                stakes: "low",
+                emotionalState: "calm",
+                timeToDecide: "days",
+                alternativesConsidered: "Home workouts, yoga classes",
+                decisionBasis: "Gut/Intuition",
+                date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+                outcome: null,
+                outcomeDate: null
+              }
+            ];
+            
+            setUserData(prev => ({
+              ...prev,
+              decisions: demoDecisions,
+              onboardingComplete: true
+            }));
+          }
+          setLoading(false);
+        };
+        loadData();
+      }, []);
+
+      useEffect(() => {
+        if (!loading) {
+          Storage.save(userData);
+        }
+      }, [userData, loading]);
+
+      if (loading) {
+        return h('div', { className: "min-h-screen cosmic-bg flex items-center justify-center" },
+          h('div', { className: "text-center" },
+            h('div', { className: "inline-block animate-float mb-4" },
+              h(Moon, { className: "w-16 h-16 text-purple-400" })
+            ),
+            h('p', { className: "text-gray-400 font-light tracking-wide" }, "Loading your cosmos...")
+          )
+        );
+      }
+
+      const profile = QuadrantSystem.assessFromDecisions(userData.decisions);
+      const completedCount = userData.decisions.filter(d => d.outcome !== null).length;
+      const accuracy = profile ? AnalyticsEngine.calculateAccuracy(userData.decisions) : null;
+      const financialAcc = profile ? AnalyticsEngine.calculateFilteredAccuracy(userData.decisions, d => d.domain === 'financial').accuracy : null;
+
+      return h('div', { className: "min-h-screen cosmic-bg relative overflow-hidden" },
+        // Constellation background dots
+        h('div', { className: "absolute inset-0 overflow-hidden pointer-events-none" },
+          Array.from({ length: 50 }).map((_, i) =>
+            h('div', {
+              key: i,
+              className: "constellation-dot",
+              style: {
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 3}s`
+              }
+            })
+          )
+        ),
+
+        // Header
+        h('div', { className: "relative border-b border-white/10" },
+          h('div', { className: "max-w-5xl mx-auto px-6 py-6" },
+            h('div', { className: "flex items-center justify-between" },
+              h('div', { className: "flex items-center gap-3" },
+                h(Brain, { className: "w-8 h-8 text-purple-400" }),
+                h('div', null,
+                  h('h1', { className: "text-2xl serif" }, "Calibrate"),
+                  h('p', { className: "text-xs text-gray-500 font-light tracking-widest uppercase" }, "Decision Oracle")
+                )
+              ),
+              h('button', {
+                onClick: () => setShowAssistant(true),
+                className: "px-5 py-2.5 rounded-full font-light tracking-wide text-sm cosmic-card hover:cosmic-glow transition-all flex items-center gap-2"
+              },
+                h(Sparkles, { className: "w-4 h-4" }),
+                "Consult Oracle"
+              )
+            )
+          )
+        ),
+
+        // Main content
+        h('div', { className: "relative max-w-5xl mx-auto px-6 py-12" },
+          h('div', { className: "space-y-8" },
+            // Hero section
+            h('div', { className: "text-center mb-16" },
+              h('div', { className: "inline-block animate-float mb-6" },
+                h(Eye, { className: "w-16 h-16 text-purple-400" })
+              ),
+              h('h2', { className: "text-4xl serif mb-4 gradient-text" }, 
+                userData.profile.displayName
+              ),
+              h('p', { className: "text-gray-400 font-light text-lg" }, 
+                userData.profile.professionalRole
+              )
+            ),
+
+            // Stats orbs
+            h('div', { className: "grid grid-cols-2 md:grid-cols-4 gap-6 mb-12" },
+              h('div', { className: "stat-orb rounded-3xl p-6 text-center" },
+                h('div', { className: "text-4xl font-light mb-2" }, userData.decisions.length),
+                h('div', { className: "text-xs uppercase tracking-widest text-gray-400" }, "Decisions")
+              ),
+              h('div', { className: "stat-orb rounded-3xl p-6 text-center" },
+                h('div', { className: "text-4xl font-light mb-2" }, completedCount),
+                h('div', { className: "text-xs uppercase tracking-widest text-gray-400" }, "Outcomes")
+              ),
+              h('div', { className: "stat-orb rounded-3xl p-6 text-center" },
+                h('div', { className: "text-4xl font-light mb-2" }, 
+                  accuracy ? `${accuracy.toFixed(0)}%` : '—'
+                ),
+                h('div', { className: "text-xs uppercase tracking-widest text-gray-400" }, "Accuracy")
+              ),
+              h('div', { className: "stat-orb rounded-3xl p-6 text-center border-2 border-red-500/30" },
+                h('div', { className: "text-4xl font-light mb-2 text-red-400" }, 
+                  financialAcc !== null ? `${financialAcc.toFixed(0)}%` : '—'
+                ),
+                h('div', { className: "text-xs uppercase tracking-widest text-red-300" }, "Financial")
+              )
+            ),
+
+            // Profile card
+            profile && h('div', { className: "cosmic-card rounded-3xl p-8 mb-8" },
+              h('div', { className: "text-xs uppercase tracking-widest text-purple-400 mb-4 font-light" }, "Your Archetype"),
+              h('h3', { className: "text-3xl serif mb-3" }, profile.title),
+              h('p', { className: "text-gray-400 mb-6 font-light leading-relaxed" }, profile.description),
+              
+              h('div', { className: "cosmic-divider mb-6" }),
+              
+              h('div', { className: "grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" },
+                h('div', null,
+                  h('div', { className: "text-xs text-gray-500 mb-1 uppercase tracking-wider" }, "Thinking"),
+                  h('div', { className: "text-purple-300 font-light" }, profile.dimensions.thinkingStyle)
+                ),
+                h('div', null,
+                  h('div', { className: "text-xs text-gray-500 mb-1 uppercase tracking-wider" }, "Speed"),
+                  h('div', { className: "text-purple-300 font-light" }, profile.dimensions.decisionSpeed)
+                ),
+                h('div', null,
+                  h('div', { className: "text-xs text-gray-500 mb-1 uppercase tracking-wider" }, "Risk"),
+                  h('div', { className: "text-purple-300 font-light" }, profile.dimensions.riskTolerance)
+                ),
+                h('div', null,
+                  h('div', { className: "text-xs text-gray-500 mb-1 uppercase tracking-wider" }, "Info Need"),
+                  h('div', { className: "text-purple-300 font-light" }, profile.dimensions.informationNeed)
+                )
+              ),
+              
+              h('div', { className: "cosmic-divider mb-6" }),
+              
+              h('div', null,
+                h('div', { className: "text-xs uppercase tracking-widest text-gray-500 mb-3" }, "Strengths"),
+                h('div', { className: "flex flex-wrap gap-2 mb-6" },
+                  profile.strengths.map((strength, i) =>
+                    h('span', { 
+                      key: i, 
+                      className: "px-3 py-1.5 rounded-full text-xs font-light border border-green-500/30 text-green-300"
+                    }, strength)
+                  )
+                ),
+                h('div', { className: "text-xs uppercase tracking-widest text-gray-500 mb-3" }, "Blind Spots"),
+                h('div', { className: "flex flex-wrap gap-2" },
+                  profile.blindSpots.map((spot, i) =>
+                    h('span', { 
+                      key: i, 
+                      className: "px-3 py-1.5 rounded-full text-xs font-light border border-red-500/30 text-red-300"
+                    }, spot)
+                  )
+                )
+              )
+            ),
+
+            // Alert card
+            financialAcc === 0 && h('div', { className: "cosmic-card rounded-3xl p-8 border-2 border-red-500/30 mb-8" },
+              h('div', { className: "flex items-start gap-4" },
+                h('div', { className: "w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0" },
+                  h(Eye, { className: "w-6 h-6 text-red-400" })
+                ),
+                h('div', { className: "flex-1" },
+                  h('h3', { className: "text-xl serif mb-2 text-red-300" }, "Financial Pattern Detected"),
+                  h('p', { className: "text-gray-400 mb-4 font-light leading-relaxed" }, 
+                    "Your accuracy in financial decisions is 0%. As a Bold, Analytical thinker, you may be over-trusting your analysis in volatile markets. The oracle suggests caution."
+                  ),
+                  h('button', {
+                    onClick: () => setShowAssistant(true),
+                    className: "px-4 py-2 rounded-full text-sm font-light cosmic-card hover:cosmic-glow transition-all"
+                  }, "Consult Oracle →")
+                )
+              )
+            ),
+
+            // Action cards
+            h('div', { className: "grid grid-cols-1 md:grid-cols-3 gap-6" },
+              h('button', { 
+                className: "cosmic-card rounded-3xl p-8 hover:cosmic-glow transition-all text-left group"
+              },
+                h('div', { className: "mb-6 opacity-60 group-hover:opacity-100 transition-opacity" },
+                  h('svg', { 
+                    className: "w-10 h-10 text-purple-400",
+                    viewBox: "0 0 24 24",
+                    fill: "none",
+                    stroke: "currentColor",
+                    strokeWidth: "1.5"
+                  },
+                    h('path', { d: "M12 5v14M5 12h14" })
+                  )
+                ),
+                h('h3', { className: "text-xl serif mb-2" }, "Log Decision"),
+                h('p', { className: "text-sm text-gray-500 font-light" }, "Record a new prediction")
+              ),
+
+              h('button', { 
+                className: "cosmic-card rounded-3xl p-8 hover:cosmic-glow transition-all text-left group"
+              },
+                h('div', { className: "mb-6 opacity-60 group-hover:opacity-100 transition-opacity" },
+                  h('svg', { 
+                    className: "w-10 h-10 text-blue-400",
+                    viewBox: "0 0 24 24",
+                    fill: "none",
+                    stroke: "currentColor",
+                    strokeWidth: "1.5"
+                  },
+                    h('path', { d: "M3 3v16a2 2 0 0 0 2 2h16" }),
+                    h('path', { d: "M18 17V9M13 17V5M8 17v-3" })
+                  )
+                ),
+                h('h3', { className: "text-xl serif mb-2" }, "View Charts"),
+                h('p', { className: "text-sm text-gray-500 font-light" }, "Explore your patterns")
+              ),
+
+              h('button', { 
+                onClick: () => setShowAssistant(true),
+                className: "cosmic-card rounded-3xl p-8 cosmic-glow text-left group relative overflow-hidden"
+              },
+                h('div', { 
+                  className: "absolute inset-0 bg-gradient-to-br from-purple-600/20 to-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity"
+                }),
+                h('div', { className: "relative" },
+                  h('div', { className: "mb-6 animate-float" },
+                    h(Sparkles, { className: "w-10 h-10 text-purple-300" })
+                  ),
+                  h('h3', { className: "text-xl serif mb-2" }, "Oracle"),
+                  h('p', { className: "text-sm text-gray-500 font-light" }, "Receive guidance")
+                )
+              )
+            )
+          )
+        ),
+
+        showAssistant && h(DecisionAssistant, {
+          userData: userData,
+          setUserData: setUserData,
+          onClose: () => setShowAssistant(false)
+        })
+      );
+    };
+
+    // ==================== RENDER ====================
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(h(Calibrate));
+</script>
+```
+
+</body>
+</html>
